@@ -2,7 +2,7 @@
 
 OBLIG 3 OPPGAVE 5 Readychecks: 
 
-1. 
+1. Adrian 
 2.
 3.
 4.
