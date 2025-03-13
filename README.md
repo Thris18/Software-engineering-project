@@ -3,7 +3,7 @@
 OBLIG 3 OPPGAVE 5 Readychecks: 
 
 1. Adrian 
-2.
+2. Thrisanth
 3.
 4.
 5.
