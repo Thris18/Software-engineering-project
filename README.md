@@ -6,5 +6,5 @@ OBLIG 3 OPPGAVE 5 Readychecks:
 2. Thrisanth
 3. Aayan
 4. Carl
-5.
+5. Hedda
 6. 
