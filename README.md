@@ -7,4 +7,4 @@ OBLIG 3 OPPGAVE 5 Readychecks:
 3. Aayan
 4. Carl
 5. Hedda
-6. 
+6. Simen
