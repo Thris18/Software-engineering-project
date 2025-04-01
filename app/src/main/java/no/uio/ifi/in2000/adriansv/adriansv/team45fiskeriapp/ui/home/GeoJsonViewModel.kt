@@ -6,6 +6,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.GeoJsonDataSource
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.GeoJsonRepository
 
 class GeoJsonViewModel : ViewModel() {
     // Create repository directly in the ViewModel
