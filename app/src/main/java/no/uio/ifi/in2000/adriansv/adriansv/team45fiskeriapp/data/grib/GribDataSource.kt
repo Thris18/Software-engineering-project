@@ -1,6 +1,5 @@
 package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.grib
 
-
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
