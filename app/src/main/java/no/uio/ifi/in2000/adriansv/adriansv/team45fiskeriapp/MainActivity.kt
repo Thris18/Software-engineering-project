@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.farevarsel.MapLibreInitializer
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.navigation.MainNavigation
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.theme.OslofjordGribAppTheme
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.theme.Team45FiskeriAppTheme
 import org.osmdroid.config.Configuration
 
 class MainActivity : ComponentActivity() {
@@ -19,7 +19,7 @@ class MainActivity : ComponentActivity() {
         MapLibreInitializer.initialize(applicationContext)
 
         setContent {
-            OslofjordGribAppTheme {
+            Team45FiskeriAppTheme {
                 MainNavigation()
             }
         }
