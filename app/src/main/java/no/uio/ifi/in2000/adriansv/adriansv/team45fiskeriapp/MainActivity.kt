@@ -1,4 +1,4 @@
-package no.uio.ifi.in2000.carlorr.btapp
+package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
