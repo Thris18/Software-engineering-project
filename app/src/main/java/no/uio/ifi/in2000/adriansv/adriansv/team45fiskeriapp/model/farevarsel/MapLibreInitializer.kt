@@ -5,7 +5,7 @@ import org.maplibre.android.MapLibre
 import org.maplibre.android.WellKnownTileServer
 
 object MapLibreInitializer {
-fun initialize(context: Context) {
-    MapLibre.getInstance(context, "oMZQoq4zniKOHeMvi7oA", WellKnownTileServer.MapTiler)
+    fun initialize(context: Context) {
+        MapLibre.getInstance(context, "oMZQoq4zniKOHeMvi7oA", WellKnownTileServer.MapTiler)
     }
 }
