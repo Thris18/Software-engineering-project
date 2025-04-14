@@ -13,7 +13,7 @@ import org.json.JSONObject
 
 private const val TAG = "GeoJsonViewModel"
 
-// UI-tilstand for MapScreen
+// UI State for MapScreen
 data class MapUiState(
     val geoJsonData: String? = null,
     val selectedAlert: JSONObject? = null,
@@ -60,5 +60,9 @@ class GeoJsonViewModel : ViewModel() {
 
     fun setSelectedAlert(alert: JSONObject?) {
         _uiState.update { it.copy(selectedAlert = alert) }
+    }
+
+    fun retry() {
+        loadGeoJsonData()
     }
 }

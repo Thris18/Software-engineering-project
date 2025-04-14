@@ -8,7 +8,7 @@ import java.net.URL
 private const val TAG = "GeoJsonDataSource"
 
 class GeoJsonDataSource {
-    suspend fun fetchGeoJson(): String? {
+    fun fetchGeoJson(): String? {
         try {
             val connection = URL("https://api.met.no/weatherapi/metalerts/2.0/current.json").openConnection() as HttpURLConnection
             connection.requestMethod = "GET"

@@ -1,4 +1,4 @@
-package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.farevarsel;
+package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.farevarsel
 
 import android.content.Context
 import org.maplibre.android.MapLibre

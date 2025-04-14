@@ -1,0 +1,93 @@
+package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.grib
+
+data class GribData(
+    val values: FloatArray,
+    val width: Int,
+    val height: Int,
+    val latitudes: FloatArray,
+    val longitudes: FloatArray,
+    val minValue: Float,
+    val maxValue: Float,
+    val variableName: String,
+    val unit: String,
+    val referenceTime: String,
+    val temperature: Float? = null,
+    val windSpeed: Float? = null,
+    val windDirection: Float? = null,
+    val waveHeight: Float? = null,
+    val waveDirection: Float? = null,
+    val currentSpeed: Float? = null,
+    val currentDirection: Float? = null,
+    val pressure: Float? = null,
+    val precipitation: Float? = null,
+    val lat: Float? = null,
+    val lon: Float? = null,
+    val time: String? = null,
+    val reftime: String? = null,
+    val height_above_ground: Float? = null,
+    val height_above_ground1: Float? = null
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as GribData
+
+        if (!values.contentEquals(other.values)) return false
+        if (width != other.width) return false
+        if (height != other.height) return false
+        if (!latitudes.contentEquals(other.latitudes)) return false
+        if (!longitudes.contentEquals(other.longitudes)) return false
+        if (minValue != other.minValue) return false
+        if (maxValue != other.maxValue) return false
+        if (variableName != other.variableName) return false
+        if (unit != other.unit) return false
+        if (referenceTime != other.referenceTime) return false
+        if (temperature != other.temperature) return false
+        if (windSpeed != other.windSpeed) return false
+        if (windDirection != other.windDirection) return false
+        if (waveHeight != other.waveHeight) return false
+        if (waveDirection != other.waveDirection) return false
+        if (currentSpeed != other.currentSpeed) return false
+        if (currentDirection != other.currentDirection) return false
+        if (pressure != other.pressure) return false
+        if (precipitation != other.precipitation) return false
+        if (lat != other.lat) return false
+        if (lon != other.lon) return false
+        if (time != other.time) return false
+        if (reftime != other.reftime) return false
+        if (height_above_ground != other.height_above_ground) return false
+        if (height_above_ground1 != other.height_above_ground1) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = values.contentHashCode()
+        result = 31 * result + width
+        result = 31 * result + height
+        result = 31 * result + latitudes.contentHashCode()
+        result = 31 * result + longitudes.contentHashCode()
+        result = 31 * result + minValue.hashCode()
+        result = 31 * result + maxValue.hashCode()
+        result = 31 * result + variableName.hashCode()
+        result = 31 * result + unit.hashCode()
+        result = 31 * result + referenceTime.hashCode()
+        result = 31 * result + (temperature?.hashCode() ?: 0)
+        result = 31 * result + (windSpeed?.hashCode() ?: 0)
+        result = 31 * result + (windDirection?.hashCode() ?: 0)
+        result = 31 * result + (waveHeight?.hashCode() ?: 0)
+        result = 31 * result + (waveDirection?.hashCode() ?: 0)
+        result = 31 * result + (currentSpeed?.hashCode() ?: 0)
+        result = 31 * result + (currentDirection?.hashCode() ?: 0)
+        result = 31 * result + (pressure?.hashCode() ?: 0)
+        result = 31 * result + (precipitation?.hashCode() ?: 0)
+        result = 31 * result + (lat?.hashCode() ?: 0)
+        result = 31 * result + (lon?.hashCode() ?: 0)
+        result = 31 * result + (time?.hashCode() ?: 0)
+        result = 31 * result + (reftime?.hashCode() ?: 0)
+        result = 31 * result + (height_above_ground?.hashCode() ?: 0)
+        result = 31 * result + (height_above_ground1?.hashCode() ?: 0)
+        return result
+    }
+}
