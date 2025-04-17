@@ -95,7 +95,8 @@ dependencies {
     // NetCDF/GRIB parser dependencies
     implementation("edu.ucar:cdm-core:5.3.3")
     implementation("edu.ucar:grib:5.3.3")
-    implementation("com.google.guava:guava:32.1.2-android") // Required by NetCDF
+    implementation("com.google.guava:guava:32.1.2-android")
+    implementation(libs.play.services.maps) // Required by NetCDF
 
     // Testing
     testImplementation("junit:junit:4.13.2")
