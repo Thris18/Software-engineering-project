@@ -76,14 +76,7 @@ class ShipDataSource {
                         val shipJson = jsonArray.getJSONObject(i)
                         val mmsi = shipJson.getString("mmsi")
                         
-                        // Sjekk om skipet har navn og tell
-                        if (shipJson.has("name") && !shipJson.isNull("name") && shipJson.getString("name") != "string") {
-                            shipsWithName++
-                            val name = shipJson.getString("name")
-                            Log.d(TAG, "Skip med navn: MMSI=$mmsi, Navn=$name")
-                        } else {
-                            shipsWithoutName++
-                        }
+
                         
                         // Hent skipsinformasjon
                         val name = if (shipJson.has("name") && !shipJson.isNull("name") && shipJson.getString("name") != "string") 
@@ -171,15 +164,7 @@ class ShipDataSource {
                         }
                     }
 
-                    // Log statistikk om skipsnavn
-                    Log.i(TAG, """
-                        ===== Skipsnavnstatistikk =====
-                        Antall skip med navn: $shipsWithName
-                        Antall skip uten navn: $shipsWithoutName
-                        Totalt antall skip: ${ships.size}
-                        Prosentandel med navn: ${(shipsWithName.toFloat() / ships.size * 100).toInt()}%
-                        ================================
-                    """.trimIndent())
+
 
                     Result.success(ShipResponse(ships))
                 } else {
