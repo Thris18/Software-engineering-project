@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.farevarsel.MapScreen
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.map.MapScreen
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.farevarsel.MapLibreInitializer
 
 class MainActivity : ComponentActivity() {
