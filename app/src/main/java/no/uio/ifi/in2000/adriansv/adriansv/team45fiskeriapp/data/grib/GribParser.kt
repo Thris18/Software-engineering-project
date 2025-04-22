@@ -11,13 +11,11 @@ import java.util.Locale
 import kotlin.math.max
 import kotlin.math.min
 
-// Parser for GRIB-filene som bruker NetCDF-biblioteket
-
 class GribParser {
     companion object {
         private const val TAG = "GribParser"
 
-        fun parseGribFile(gribFile: File): GribData? {
+        fun parseGribFile(gribFile: File, variableName: String? = null): GribData? {
             try {
                 Log.d(TAG, "Parser GRIB-fil: ${gribFile.absolutePath}")
 
@@ -70,60 +68,78 @@ class GribParser {
                 Log.d(TAG, "Latitude range: $latRange")
                 Log.d(TAG, "Longitude range: $lonRange")
 
-                // Finner første datavariabel
-                val dataVars = dataset.variables.filter {
-                    !it.shortName.equals("lat", ignoreCase = true) &&
-                            !it.shortName.equals("lon", ignoreCase = true) &&
-                            !it.shortName.equals("latitude", ignoreCase = true) &&
-                            !it.shortName.equals("longitude", ignoreCase = true) &&
-                            !it.shortName.equals("time", ignoreCase = true) &&
-                            !it.shortName.equals("reftime", ignoreCase = true) &&
-                            it.shape.size >= 2  // Using shape.size instead of rank()
+                // Finner datavariabel basert på variabelnavn eller søker etter standard variabler
+                val dataVar = if (variableName != null) {
+                    dataset.findVariable(variableName) ?: run {
+                        Log.e(TAG, "Kunne ikke finne variabel: $variableName")
+                        dataset.close()
+                        return null
+                    }
+                } else {
+                    // Finner første datavariabel
+                    val dataVars = dataset.variables.filter {
+                        !it.shortName.equals("lat", ignoreCase = true) &&
+                                !it.shortName.equals("lon", ignoreCase = true) &&
+                                !it.shortName.equals("latitude", ignoreCase = true) &&
+                                !it.shortName.equals("longitude", ignoreCase = true) &&
+                                !it.shortName.equals("time", ignoreCase = true) &&
+                                !it.shortName.equals("reftime", ignoreCase = true) &&
+                                it.shape.size >= 2
+                    }
+
+                    Log.d(TAG, "Funnet potensielle data variabler: ${dataVars.joinToString(", ") { it.shortName }}")
+
+                    if (dataVars.isEmpty()) {
+                        Log.e(TAG, "Fant ikke data variabler i GRIB-filen som passer")
+                        dataset.close()
+                        return null
+                    }
+
+                    // Prøver å finne variabler som faktisk har data
+                    val preferredVars = listOf(
+                        "Pressure_height_above_ground",
+                        "Wind_speed_gust",
+                        "Significant_height_of_wind_waves",
+                        "Temperature",
+                        "u-component_of_wind",
+                        "v-component_of_wind",
+                        "u-component_of_current",
+                        "v-component_of_current",
+                        "Total_precipitation"
+                    )
+                    dataVars.find { varName ->
+                        preferredVars.any { preferred -> varName.shortName.contains(preferred, ignoreCase = true) }
+                    } ?: dataVars.first()
                 }
-
-                Log.d(TAG, "Funnet potensielle data variabler: ${dataVars.joinToString(", ") { it.shortName }}")
-
-                if (dataVars.isEmpty()) {
-                    Log.e(TAG, "Fant ikke data variabler i GRIB-filen som passer")
-                    dataset.close()
-                    return null
-                }
-
-                // Prøver å finne variabler som faktisk har data
-                val preferredVars = listOf(
-                    "Pressure_height_above_ground",
-                    "Wind_speed_gust",
-                    "Significant_height_of_wind_waves",
-                    "Temperature",
-                    "u-component_of_wind",
-                    "v-component_of_wind",
-                    "u-component_of_current",
-                    "v-component_of_current",
-                    "Total_precipitation"
-                )
-                val dataVar = dataVars.find { varName ->
-                    preferredVars.any { preferred -> varName.shortName.contains(preferred, ignoreCase = true) }
-                } ?: dataVars.first()
 
                 // Henter variabelnavn og enhet
-                val variableName = dataVar.shortName
+                val varName = dataVar.shortName
                 val unit = dataVar.unitsString ?: ""
 
                 // Logger detaljer rundt variabler
-                Log.d(TAG, "Bruker data variabel: $variableName (${dataVar.dataType}, ${dataVar.shape.joinToString("x")})")
+                Log.d(TAG, "Bruker data variabel: $varName (${dataVar.dataType}, ${dataVar.shape.joinToString("x")})")
                 Log.d(TAG, "Variabelenhet: $unit")
 
-                // Henter referansetid
-                val timeVar = dataset.findVariable("time")
-                val referenceTime = if (timeVar != null) {
-                    val timeArray = timeVar.read()
+                // Spesialhåndtering for time og reftime
+                val referenceTime = if (varName.equals("time", ignoreCase = true) || varName.equals("reftime", ignoreCase = true)) {
+                    val timeArray = dataVar.read()
                     val timeIdx = Index.factory(timeArray.shape)
                     timeIdx.set(0)
                     val timeValue = timeArray.getDouble(timeIdx)
                     val formatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
                     formatter.format(Date((timeValue * 1000).toLong()))
                 } else {
-                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).format(Date())
+                    val timeVar = dataset.findVariable("time")
+                    if (timeVar != null) {
+                        val timeArray = timeVar.read()
+                        val timeIdx = Index.factory(timeArray.shape)
+                        timeIdx.set(0)
+                        val timeValue = timeArray.getDouble(timeIdx)
+                        val formatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
+                        formatter.format(Date((timeValue * 1000).toLong()))
+                    } else {
+                        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).format(Date())
+                    }
                 }
 
                 Log.d(TAG, "Referansetid: $referenceTime")
@@ -138,28 +154,101 @@ class GribParser {
                 var nanCount = 0
                 var validCount = 0
 
-                // Håndterer forskjellige dimensjoner
+                // Logg dimensjoner og form
+                Log.d(TAG, "Data variabel form: ${dataVar.shape.joinToString("x")}")
+                Log.d(TAG, "Data array dimensjoner: ${dataArray.shape.joinToString("x")}")
+
                 try {
                     // Bestemmer hvilken dimensjon basert på form
                     val shape = dataVar.shape
                     val dimCount = shape.size
 
-                    if (dimCount >= 4) {
-                        // Eksempel: (time, level, lat, lon) eller (ensemble, time, lat, lon)
-                        var index = 0
+                    Log.d(TAG, "Antall dimensjoner: $dimCount")
+                    Log.d(TAG, "Shape: ${shape.joinToString(", ")}")
 
+                    // Spesialhåndtering for 1D-variabler
+                    if (dimCount == 1) {
+                        val totalSize = dataArray.size.toInt()
+                        Log.d(TAG, "Håndterer 1D-variabel med størrelse: $totalSize")
+
+                        // For 1D-variabler, kopierer vi verdien til alle punkter
+                        val value = when (dataVar.dataType) {
+                            ucar.ma2.DataType.DOUBLE -> dataArray.getDouble(0).toFloat()
+                            ucar.ma2.DataType.FLOAT -> dataArray.getFloat(0)
+                            ucar.ma2.DataType.INT -> dataArray.getInt(0).toFloat()
+                            else -> dataArray.getFloat(0)
+                        }
+
+                        Log.d(TAG, "1D-variabel verdi: $value")
+
+                        for (i in values.indices) {
+                            values[i] = value
+                            if (!value.isNaN()) {
+                                minValue = min(minValue, value)
+                                maxValue = max(maxValue, value)
+                                validCount++
+                            } else {
+                                nanCount++
+                            }
+                        }
+                    } else {
+                        // Sjekker om vi har nok dimensjoner
+                        if (dimCount < 2) {
+                            Log.e(TAG, "Dataarrayet har for få dimensjoner: $dimCount")
+                            throw IllegalArgumentException("Dataarrayet har for få dimensjoner")
+                        }
+
+                        // Beregner total størrelse
+                        val totalSize = dataArray.size.toInt()
+                        Log.d(TAG, "Total størrelse på dataarray: $totalSize")
+
+                        // Beregner forventet størrelse basert på bredde og høyde
+                        val expectedSize = width * height
+                        Log.d(TAG, "Forventet størrelse: $expectedSize")
+
+                        // Sjekker om vi har nok data
+                        if (totalSize < expectedSize) {
+                            Log.e(TAG, "Dataarrayet er for lite: $totalSize < $expectedSize")
+                            throw IllegalArgumentException("Dataarrayet er for lite")
+                        }
+
+                        // Leser data på en sikrere måte
+                        var index = 0
                         for (y in 0 until height) {
                             for (x in 0 until width) {
                                 try {
                                     val idx = Index.factory(shape)
-                                    // Setter første dimensjoner til 0, siste to til y,x
-                                    for (d in 0 until dimCount - 2) {
-                                        idx.setDim(d, 0)
-                                    }
-                                    idx.setDim(dimCount - 2, y)  // second-last dimension (lat)
-                                    idx.setDim(dimCount - 1, x)  // last dimension (lon)
 
-                                    val value = dataArray.getFloat(idx)
+                                    // Setter indekser basert på dimensjoner
+                                    when (dimCount) {
+                                        2 -> {
+                                            // 2D data (lat, lon)
+                                            idx.setDim(0, y)
+                                            idx.setDim(1, x)
+                                        }
+                                        3 -> {
+                                            // 3D data (time, lat, lon)
+                                            idx.setDim(0, 0)  // første tidspunkt
+                                            idx.setDim(1, y)
+                                            idx.setDim(2, x)
+                                        }
+                                        else -> {
+                                            // 4D eller mer (time, level, lat, lon)
+                                            for (d in 0 until dimCount - 2) {
+                                                idx.setDim(d, 0)  // setter første dimensjoner til 0
+                                            }
+                                            idx.setDim(dimCount - 2, y)  // latitude
+                                            idx.setDim(dimCount - 1, x)  // longitude
+                                        }
+                                    }
+
+                                    val value = when (dataVar.dataType) {
+                                        ucar.ma2.DataType.DOUBLE -> dataArray.getDouble(idx).toFloat()
+                                        ucar.ma2.DataType.FLOAT -> dataArray.getFloat(idx)
+                                        ucar.ma2.DataType.INT -> dataArray.getInt(idx).toFloat()
+                                        else -> dataArray.getFloat(idx)
+                                    }
+
                                     values[index] = value
 
                                     if (!value.isNaN()) {
@@ -171,67 +260,8 @@ class GribParser {
                                     }
                                 } catch (e: Exception) {
                                     Log.e(TAG, "Error ved lesing av dataverdi for ($x, $y): ${e.message}")
+                                    Log.e(TAG, "Stack trace: ${e.stackTraceToString()}")
                                     values[index] = 0f
-                                    nanCount++
-                                }
-                                index++
-                            }
-                        }
-                    } else if (dimCount == 3) {
-                        // 3D data (time, lat, lon) eller (ensemble, lat, lon)
-                        val firstDimIndex = 0  // Bruker første tid eller ensemble slice
-                        var index = 0
-
-                        for (y in 0 until height) {
-                            for (x in 0 until width) {
-                                try {
-                                    val idx = Index.factory(shape)
-                                    idx.setDim(0, firstDimIndex)
-                                    idx.setDim(1, y)
-                                    idx.setDim(2, x)
-
-                                    val value = dataArray.getFloat(idx)
-                                    values[index] = value
-
-                                    if (!value.isNaN()) {
-                                        minValue = min(minValue, value)
-                                        maxValue = max(maxValue, value)
-                                        validCount++
-                                    } else {
-                                        nanCount++
-                                    }
-                                } catch (e: Exception) {
-                                    Log.e(TAG, "Error ved lesning av dataverdi for ($x, $y): ${e.message}")
-                                    values[index] = 0f  // Use 0 instead of NaN
-                                    nanCount++
-                                }
-                                index++
-                            }
-                        }
-                    } else {
-                        // 2D data (lat, lon)
-                        var index = 0
-
-                        for (y in 0 until height) {
-                            for (x in 0 until width) {
-                                try {
-                                    val idx = Index.factory(shape)
-                                    idx.setDim(0, y)
-                                    idx.setDim(1, x)
-
-                                    val value = dataArray.getFloat(idx)
-                                    values[index] = value
-
-                                    if (!value.isNaN()) {
-                                        minValue = min(minValue, value)
-                                        maxValue = max(maxValue, value)
-                                        validCount++
-                                    } else {
-                                        nanCount++
-                                    }
-                                } catch (e: Exception) {
-                                    Log.e(TAG, "Error ved lesning av dataverdi for ($x, $y): ${e.message}")
-                                    values[index] = 0f  // Bruker 0 istedet for NaN
                                     nanCount++
                                 }
                                 index++
@@ -239,13 +269,13 @@ class GribParser {
                         }
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error ved lesning av data array: ${e.message}")
+                    Log.e(TAG, "Error ved lesing av data array: ${e.message}")
 
                     // Forsøk en fallback approach ved å bruke direkte iterasjon
                     try {
                         // Fyller array med noe meningsfull data
                         for (i in values.indices) {
-                            values[i] = 0f  // Standard verdi
+                            values[i] = 0f
                         }
 
                         // Prøver å hente ut verdier direkte fra arrayet
@@ -254,7 +284,7 @@ class GribParser {
 
                         for (i in 0 until valueCount) {
                             try {
-                                val flatIndex = i % totalSize  // Passer på at vi ikke går out of bounds
+                                val flatIndex = i % totalSize
                                 val value = dataArray.getFloat(flatIndex)
 
                                 if (!value.isNaN()) {
@@ -266,11 +296,9 @@ class GribParser {
                                     nanCount++
                                 }
                             } catch (e2: Exception) {
-                                Log.e(TAG, "Error ved lesning: ${e2.message}")
+                                Log.e(TAG, "Error ved lesing: ${e2.message}")
                             }
                         }
-
-
                     } catch (e2: Exception) {
                         Log.e(TAG, "Backup-lesemetoden feilet: ${e2.message}")
                     }
@@ -284,7 +312,7 @@ class GribParser {
                     maxValue = 1f
                 }
 
-                Log.d(TAG, "Klarte å parse GRIB-fil. Variabel: $variableName, Min: $minValue, Max: $maxValue")
+                Log.d(TAG, "Klarte å parse GRIB-fil. Variabel: $varName, Min: $minValue, Max: $maxValue")
                 Log.d(TAG, "Datakvalitet: $validCount valide punkter, $nanCount NaN-verdier ${width * height} totale antall punkter")
 
                 return GribData(
@@ -295,7 +323,7 @@ class GribParser {
                     longitudes = longitudes,
                     minValue = minValue,
                     maxValue = maxValue,
-                    variableName = variableName,
+                    variableName = varName,
                     unit = unit,
                     referenceTime = referenceTime
                 )
