@@ -48,6 +48,8 @@ import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.Weather
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherViewModelFactory
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherInfoBox
 import android.graphics.Color
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.BaatvettButton
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.BaatvettOverlay
 import org.maplibre.android.style.layers.FillLayer
 
 private const val TAG = "MapScreen"
@@ -379,6 +381,35 @@ fun MapScreen() {
                         contentDescription = "Innstillinger",
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(28.dp)
+                    )
+                }
+            }
+
+            // Båtvett Button
+            BaatvettButton(
+                onClick = { showBaatvettRules = !showBaatvettRules },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp)
+            )
+
+            // Båtvett Overlay
+            if (showBaatvettRules) {
+                BaatvettOverlay(
+                    onDismiss = { showBaatvettRules = false },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+
+            uiState.selectedAlert?.let { alert ->
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(16.dp)
+                ) {
+                    AlertInfoCard(
+                        alertData = alert,
+                        onDismiss = { viewModel.setSelectedAlert(null) }
                     )
                 }
             }
