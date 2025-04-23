@@ -48,7 +48,10 @@ import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.Weather
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherViewModelFactory
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherInfoBox
 import android.graphics.Color
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.BaatvettButton
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.BaatvettOverlay
 import org.maplibre.android.style.layers.FillLayer
+
 
 private const val TAG = "MapScreen"
 private const val SHIP_LAYER_ID = "ship-layer"
@@ -104,6 +107,7 @@ fun MapScreen() {
     var showGrib by remember { mutableStateOf(true) }
     var showAlerts by remember { mutableStateOf(true) }
     var showShips by remember { mutableStateOf(true) }
+    var showBaatvettRules by remember { mutableStateOf(false) }
 
     // Helper function to reset selection states
     fun resetSelections() {
@@ -383,6 +387,22 @@ fun MapScreen() {
                 }
             }
 
+            // Båtvett Button
+            BaatvettButton(
+                onClick = { showBaatvettRules = !showBaatvettRules },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(bottom = 120.dp, end = 16.dp)
+            )
+
+            // Båtvett Overlay
+            if (showBaatvettRules) {
+                BaatvettOverlay(
+                    onDismiss = { showBaatvettRules = false },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+
             // Settings menu
             if (showFilterMenu) {
                 SettingsMenu(
@@ -471,12 +491,12 @@ fun MapScreen() {
                 }
             }
 
-            // Legg til WeatherInfoBox i nederste høyre hjørne
+            // Legg til WeatherInfoBox i midten av høyre kant
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(bottom = 16.dp, end = 16.dp),
-                contentAlignment = Alignment.BottomEnd
+                    .padding(end = 16.dp),
+                contentAlignment = Alignment.CenterEnd
             ) {
                 WeatherInfoBox(weatherUiState.weather)
             }
