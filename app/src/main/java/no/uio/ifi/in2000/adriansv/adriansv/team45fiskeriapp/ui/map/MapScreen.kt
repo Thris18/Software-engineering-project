@@ -2,8 +2,12 @@ package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.map
 
 import android.content.Context
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.util.Log
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,45 +17,43 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.grib.GribRepository
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.WeatherDataSource
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.WeatherRepository
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.grib.GribPoint
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.ship.ShipViewModel
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.ship.Ship
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.BaatvettButton
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.BaatvettOverlay
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.NavigationBar
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.ProfilePopup
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.SettingsPopup
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.farevarsel.AlertInfoCard
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.farevarsel.FarevarselPopup
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.farevarsel.GeoJsonViewModel
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.ship.ShipInfoCard
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.ship.ShipViewModel
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.ship.setupShipLayer
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.ship.updateShipSource
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.farevarsel.GeoJsonViewModel
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.farevarsel.FarevarselPopup
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.theme.Team45FiskeriAppTheme
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherInfoBox
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherViewModel
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherViewModelFactory
+import org.json.JSONObject
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
+import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.OnMapReadyCallback
 import org.maplibre.android.maps.Style
-import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.style.expressions.Expression
+import org.maplibre.android.style.layers.FillLayer
+import org.maplibre.android.style.layers.Property
 import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.layers.SymbolLayer
 import org.maplibre.android.style.sources.GeoJsonSource
-import org.json.JSONObject
-import kotlinx.coroutines.launch
-import org.maplibre.android.style.expressions.Expression
 import java.io.InputStream
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.ship.Ship
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.farevarsel.AlertInfoCard
-import org.maplibre.android.style.layers.Property
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Close
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherViewModel
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.WeatherDataSource
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.WeatherRepository
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherViewModelFactory
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherInfoBox
-import android.graphics.Color
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.BaatvettButton
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.BaatvettOverlay
-import org.maplibre.android.style.layers.FillLayer
-
 
 private const val TAG = "MapScreen"
 private const val SHIP_LAYER_ID = "ship-layer"
@@ -108,6 +110,15 @@ fun MapScreen() {
     var showAlerts by remember { mutableStateOf(true) }
     var showShips by remember { mutableStateOf(true) }
     var showBaatvettRules by remember { mutableStateOf(false) }
+    
+    // Profil og innstillinger states
+    var showProfilePopup by remember { mutableStateOf(false) }
+    var showSettingsPopup by remember { mutableStateOf(false) }
+    var userName by remember { mutableStateOf("") }
+    var isDarkMode by remember { mutableStateOf(false) }
+    
+    // Sett opp dark mode
+    val isDarkTheme = isDarkMode
 
     // Helper function to reset selection states
     fun resetSelections() {
@@ -121,7 +132,7 @@ fun MapScreen() {
         shipViewModel.startPeriodicUpdates()
     }
 
-    Team45FiskeriAppTheme {
+    Team45FiskeriAppTheme(darkTheme = isDarkTheme) {
         Box(modifier = Modifier.fillMaxSize()) {
             if (uiState.isLoading) {
                 CircularProgressIndicator(
@@ -387,12 +398,25 @@ fun MapScreen() {
                 }
             }
 
+            // Navigasjonsbar nederst på skjermen
+            NavigationBar(
+                onProfileClick = {
+                    if (showProfilePopup || showSettingsPopup) {
+                        showProfilePopup = false
+                        showSettingsPopup = false
+                    } else {
+                        showProfilePopup = true
+                    }
+                },
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
+
             // Båtvett Button
             BaatvettButton(
                 onClick = { showBaatvettRules = !showBaatvettRules },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(bottom = 120.dp, end = 16.dp)
+                    .padding(bottom = 82.dp, end = 16.dp)
             )
 
             // Båtvett Overlay
@@ -499,6 +523,28 @@ fun MapScreen() {
                 contentAlignment = Alignment.CenterEnd
             ) {
                 WeatherInfoBox(weatherUiState.weather)
+            }
+
+            // Profilpopup
+            if (showProfilePopup) {
+                ProfilePopup(
+                    userName = userName,
+                    onUserNameChange = { userName = it },
+                    onSettingsClick = { showSettingsPopup = true },
+                    onDismiss = { 
+                        showProfilePopup = false
+                        showSettingsPopup = false 
+                    }
+                )
+            }
+
+            // Settings popup
+            if (showSettingsPopup) {
+                SettingsPopup(
+                    isDarkMode = isDarkMode,
+                    onDarkModeChange = { isDarkMode = it },
+                    onDismiss = { showSettingsPopup = false }
+                )
             }
 
             // LaunchedEffect for å håndtere polygon-visning når selectedAlert endres
