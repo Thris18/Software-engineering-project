@@ -14,7 +14,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun SearchBar(
+fun SokeKnapp(
     modifier: Modifier = Modifier,
     onSearch: (String) -> Unit
 ) {

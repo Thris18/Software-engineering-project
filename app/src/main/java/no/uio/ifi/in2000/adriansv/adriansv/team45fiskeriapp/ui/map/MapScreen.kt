@@ -12,8 +12,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.CreationExtras
 import kotlinx.coroutines.launch
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.grib.GribRepository
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.WeatherDataSource
@@ -24,6 +28,7 @@ import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.Baatve
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.BaatvettOverlay
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.ProfilePopup
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.SettingsPopup
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.SokeKnapp
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.farevarsel.AlertInfoCard
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.farevarsel.FarevarselPopup
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.farevarsel.GeoJsonViewModel
@@ -50,6 +55,8 @@ import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.layers.SymbolLayer
 import org.maplibre.android.style.sources.GeoJsonSource
 import java.io.InputStream
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 
 private const val TAG = "MapScreen"
 private const val SHIP_LAYER_ID = "ship-layer"
@@ -93,7 +100,13 @@ fun MapScreen(
     val weatherViewModel: WeatherViewModel = viewModel(
         factory = WeatherViewModelFactory(weatherRepository)
     )
-    val viewModel: GeoJsonViewModel = viewModel()
+    
+    // Oppretter GeoJsonViewModel direkte med context
+    val appContext = LocalContext.current.applicationContext
+    val viewModel = remember {
+        GeoJsonViewModel(appContext)
+    }
+    
     val shipViewModel: ShipViewModel = viewModel()
     
     // Collect states
@@ -137,8 +150,29 @@ fun MapScreen(
         shipViewModel.startPeriodicUpdates()
     }
 
+    // Observer for søkeresultat
+    val searchTarget by viewModel.searchTarget.collectAsStateWithLifecycle()
+    
+    // Håndterer kameraflytt når søkeresultat er tilgjengelig
+    LaunchedEffect(searchTarget) {
+        if (searchTarget != null && mapLibreMap != null) {
+            mapLibreMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(searchTarget!!, 12.0))
+        }
+    }
+
     Team45FiskeriAppTheme(darkTheme = isDarkTheme) {
         Box(modifier = Modifier.fillMaxSize()) {
+            // Søkeknapp plassert øverst på skjermen
+            SokeKnapp(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 16.dp, start = 16.dp, end = 16.dp)
+                    .zIndex(1f),
+                onSearch = { query ->
+                    viewModel.searchAndMoveToLocation(query)
+                }
+            )
+            
             if (uiState.isLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center)
