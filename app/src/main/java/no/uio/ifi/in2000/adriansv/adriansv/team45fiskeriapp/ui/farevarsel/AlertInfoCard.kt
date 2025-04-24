@@ -10,7 +10,8 @@ import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.grib.GribData
 @Composable
 fun AlertInfoCard(
     alertData: GribData,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    modifier: Modifier
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,

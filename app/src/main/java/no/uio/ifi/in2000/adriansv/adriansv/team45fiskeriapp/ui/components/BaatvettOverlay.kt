@@ -28,13 +28,14 @@ fun BaatvettButton(
     FloatingActionButton(
         onClick = onClick,
         modifier = modifier,
-        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface,
         shape = RoundedCornerShape(16.dp)
     ) {
         Image(
             painter = painterResource(id = R.drawable.baatvett_icon),
             contentDescription = "Båtvett regler",
-            modifier = Modifier.size(32.dp),
+            modifier = Modifier.size(40.dp),
             contentScale = ContentScale.Fit
         )
     }

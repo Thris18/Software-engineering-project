@@ -8,39 +8,120 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.R
 
 @Composable
 fun NavigationBar(
-    onProfileClick: () -> Unit,
+    currentRoute: String,
+    onNavigate: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .height(64.dp)
-            .offset(y = 4.dp),
-        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f),
+            .height(72.dp),
+        color = MaterialTheme.colorScheme.surface,
         shape = RectangleShape,
         tonalElevation = 4.dp
     ) {
-        Box(
+        Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(end = 16.dp),
-            contentAlignment = Alignment.CenterEnd
+                .padding(horizontal = 32.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(
-                onClick = onProfileClick,
-                modifier = Modifier.size(54.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = "Profil",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(36.dp)
-                )
-            }
+            // Kart-knapp
+            NavigationItem(
+                icon = painterResource(id = R.drawable.map_marker),
+                label = "Kart",
+                selected = currentRoute == "kart",
+                onClick = { onNavigate("kart") }
+            )
+
+            // Profil-knapp
+            NavigationItem(
+                icon = Icons.Default.Person,
+                label = "Profil",
+                selected = currentRoute == "profil",
+                onClick = { onNavigate("profil") }
+            )
         }
+    }
+}
+
+@Composable
+private fun NavigationItem(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .padding(horizontal = 12.dp)
+            .height(56.dp)
+    ) {
+        IconButton(
+            onClick = onClick,
+            modifier = Modifier.size(32.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = if (selected) 
+                    MaterialTheme.colorScheme.primary 
+                else 
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+        }
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = if (selected) 
+                MaterialTheme.colorScheme.primary 
+            else 
+                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+        )
+    }
+}
+
+@Composable
+private fun NavigationItem(
+    icon: androidx.compose.ui.graphics.painter.Painter,
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .padding(horizontal = 12.dp)
+            .height(56.dp)
+    ) {
+        IconButton(
+            onClick = onClick,
+            modifier = Modifier.size(32.dp)
+        ) {
+            Icon(
+                painter = icon,
+                contentDescription = label,
+                tint = if (selected) 
+                    MaterialTheme.colorScheme.primary 
+                else 
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+        }
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = if (selected) 
+                MaterialTheme.colorScheme.primary 
+            else 
+                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+        )
     }
 } 

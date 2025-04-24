@@ -22,10 +22,10 @@ private val LightBlue = Color(0xFF1976D2)
 private val NavyBlue = Color(0xFF002171)
 private val SkyBlue = Color(0xFF42A5F5)
 private val TurquoiseBlue = Color(0xFF00BCD4)
-private val DarkSurface = Color(0xFF121212)
-private val DarkBackground = Color(0xFF1C1C1C)
-private val LightSurface = Color(0xFFF5F5F5)
-private val LightBackground = Color(0xFFFFFFFF)
+private val DarkSurface = ProfileDarkBackground
+private val DarkBackground = ProfileDarkBackground
+private val LightSurface = ProfileLightBackground
+private val LightBackground = ProfileLightBackground
 
 private val DarkColorScheme = darkColorScheme(
     primary = SkyBlue,
@@ -42,8 +42,8 @@ private val DarkColorScheme = darkColorScheme(
     onBackground = Color.White,
     surface = DarkSurface,
     onSurface = Color.White,
-    surfaceVariant = Color(0xFF303030),
-    onSurfaceVariant = Color(0xFFBBBBBB),
+    surfaceVariant = ProfileDarkSurface,
+    onSurfaceVariant = Color.White.copy(alpha = 0.7f),
     error = Color(0xFFCF6679),
     onError = Color.Black
 )
@@ -63,15 +63,15 @@ private val LightColorScheme = lightColorScheme(
     onBackground = Color.Black,
     surface = LightSurface,
     onSurface = Color.Black,
-    surfaceVariant = Color(0xFFE0E0E0),
-    onSurfaceVariant = Color(0xFF666666),
+    surfaceVariant = ProfileLightSurface,
+    onSurfaceVariant = Color.Black.copy(alpha = 0.7f),
     error = Color(0xFFB00020),
     onError = Color.White
 )
 
 @Composable
 fun Team45FiskeriAppTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = true,
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
