@@ -48,10 +48,17 @@ import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.Weather
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherViewModelFactory
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherInfoBox
 import android.graphics.Color
+import android.graphics.Point
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.BaatvettButton
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.BaatvettOverlay
 import org.maplibre.android.style.layers.FillLayer
-
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish.FishLogViewModel
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish.AddFishDialog
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish.FishLogDialog
+import androidx.compose.material.icons.filled.Add
+import com.google.android.gms.common.Feature
+import org.maplibre.android.style.layers.PropertyFactory.*
+import android.net.Uri
 
 private const val TAG = "MapScreen"
 private const val SHIP_LAYER_ID = "ship-layer"
@@ -109,11 +116,42 @@ fun MapScreen() {
     var showShips by remember { mutableStateOf(true) }
     var showBaatvettRules by remember { mutableStateOf(false) }
 
+    // Add FishLog ViewModel
+    val fishLogViewModel = viewModel { FishLogViewModel(context) }
+    val fishLogUiState by fishLogViewModel.uiState.collectAsStateWithLifecycle()
+    
+    // Add FishLog states
+    var showFishLogDialog by remember { mutableStateOf(false) }
+    var showAddFishDialog by remember { mutableStateOf(false) }
+    var selectedLocation by remember { mutableStateOf<Pair<Double, Double>?>(null) }
+    var showActionDialog by remember { mutableStateOf(false) }
+    var showLocationSelectionDialog by remember { mutableStateOf(false) }
+    var selectedLocationForFish by remember { mutableStateOf<Pair<Double, Double>?>(null) }
+    
+    // State for AddFishDialog
+    var fishType by remember { mutableStateOf("") }
+    var location by remember { mutableStateOf("") }
+    var area by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var weight by remember { mutableStateOf("") }
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
+
     // Helper function to reset selection states
     fun resetSelections() {
         selectedPoint = null
         showPopup = false
         viewModel.setSelectedAlert(null)
+    }
+
+    // Helper function to reset fish dialog state
+    fun resetFishDialogState() {
+        fishType = ""
+        location = ""
+        area = ""
+        description = ""
+        weight = ""
+        imageUri = null
+        selectedLocationForFish = null
     }
 
     // Start ship updates when the screen is created
@@ -275,79 +313,108 @@ fun MapScreen() {
                                     style.addLayerBelow(polygonLayer, "alert-symbol-layer")
 
                                     map.addOnMapClickListener { point ->
-                                        val screenPoint = map.projection.toScreenLocation(point)
-                                        
-                                        // Check for alerts (prioritert)
-                                        val alertFeatures = map.queryRenderedFeatures(screenPoint, "alert-symbol-layer")
-                                        if (alertFeatures.isNotEmpty()) {
-                                            val feature = alertFeatures[0]
-                                            val properties = feature.properties()
-                                            if (properties != null) {
-                                                val jsonObject = JSONObject(properties.toString())
-                                                val id = properties.get("id").asString
-                                                resetSelections()
-                                                viewModel.setSelectedAlert(jsonObject)
-                                                
-                                                // Vis polygon for dette varselet
-                                                map.getStyle { style ->
-                                                    updateAlertPolygon(style, id)
-                                                }
-                                            }
-                                            return@addOnMapClickListener true
-                                        }
-                                        
-                                        // Check for ships
-                                        val shipFeatures = map.queryRenderedFeatures(screenPoint, SHIP_LAYER_ID)
-                                        if (shipFeatures.isNotEmpty()) {
-                                            resetSelections()  // Nullstill alerts og grib-state først
-                                            val feature = shipFeatures[0]
-                                            val properties = feature.properties()
+                                        if (showLocationSelectionDialog) {
+                                            selectedLocationForFish = point.latitude to point.longitude
+                                            showLocationSelectionDialog = false
+                                            showAddFishDialog = true
+                                            true
+                                        } else if (!showAddFishDialog && !showLocationSelectionDialog && !showFishLogDialog) {
+                                            val screenPoint = map.projection.toScreenLocation(point)
                                             
-                                            if (properties != null) {
-                                                val mmsi = properties.get("mmsi")?.asString
-                                                if (mmsi != null) {
-                                                    selectedShip = shipUiState.ships.find { it.mmsi == mmsi }
-                                                    if (selectedShip != null) {
-                                                        selectedShipScreenPosition = mapLibreMap?.projection?.toScreenLocation(
-                                                            LatLng(selectedShip!!.latitude, selectedShip!!.longitude)
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                            
-                                            // Gjem polygon når skip velges
-                                            map.getStyle { style ->
-                                                updateAlertPolygon(style, null)
-                                            }
-                                            return@addOnMapClickListener true
-                                        }
-
-                                        // If no alert or ship was clicked, show GRIB data
-                                        if (uiState.selectedAlert == null) {
-                                            scope.launch {
-                                                val gribData = gribRepository.getGribData(
-                                                    GribPoint(
-                                                        latitude = point.latitude,
-                                                        longitude = point.longitude
-                                                    )
+                                            // Check for fish markers first
+                                            fishLogUiState.fishLogs.forEach { fishLog ->
+                                                val fishPoint = map.projection.toScreenLocation(
+                                                    LatLng(fishLog.latitude, fishLog.longitude)
                                                 )
-                                                if (gribData != null) {
-                                                    resetSelections()
-                                                    selectedPoint = GribPoint(
-                                                        latitude = point.latitude,
-                                                        longitude = point.longitude,
-                                                        data = gribData
+                                                if (fishPoint != null) {
+                                                    val distance = Math.sqrt(
+                                                        Math.pow((fishPoint.x - screenPoint.x).toDouble(), 2.0) +
+                                                        Math.pow((fishPoint.y - screenPoint.y).toDouble(), 2.0)
                                                     )
-                                                    showPopup = true
-                                                    
-                                                    // Gjem polygon når GRIB data vises
-                                                    map.getStyle { style ->
-                                                        updateAlertPolygon(style, null)
+                                                    if (distance < 50) { // 50 pixels tolerance
+                                                        showFishLogDialog = true
+                                                        selectedLocation = fishLog.latitude to fishLog.longitude
+                                                        selectedPoint = null
+                                                        showPopup = false
+                                                        return@addOnMapClickListener true
                                                     }
                                                 }
                                             }
+                                            
+                                            // Check for alerts (prioritert)
+                                            val alertFeatures = map.queryRenderedFeatures(screenPoint, "alert-symbol-layer")
+                                            if (alertFeatures.isNotEmpty()) {
+                                                val feature = alertFeatures[0]
+                                                val properties = feature.properties()
+                                                if (properties != null) {
+                                                    val jsonObject = JSONObject(properties.toString())
+                                                    val id = properties.get("id").asString
+                                                    resetSelections()
+                                                    viewModel.setSelectedAlert(jsonObject)
+                                                    
+                                                    // Vis polygon for dette varselet
+                                                    map.getStyle { style ->
+                                                        updateAlertPolygon(style, id)
+                                                    }
+                                                }
+                                                return@addOnMapClickListener true
+                                            }
+                                            
+                                            // Check for ships
+                                            val shipFeatures = map.queryRenderedFeatures(screenPoint, SHIP_LAYER_ID)
+                                            if (shipFeatures.isNotEmpty()) {
+                                                resetSelections()  // Nullstill alerts og grib-state først
+                                                val feature = shipFeatures[0]
+                                                val properties = feature.properties()
+                                                
+                                                if (properties != null) {
+                                                    val mmsi = properties.get("mmsi")?.asString
+                                                    if (mmsi != null) {
+                                                        selectedShip = shipUiState.ships.find { it.mmsi == mmsi }
+                                                        if (selectedShip != null) {
+                                                            selectedShipScreenPosition = mapLibreMap?.projection?.toScreenLocation(
+                                                                LatLng(selectedShip!!.latitude, selectedShip!!.longitude)
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                                
+                                                // Gjem polygon når skip velges
+                                                map.getStyle { style ->
+                                                    updateAlertPolygon(style, null)
+                                                }
+                                                return@addOnMapClickListener true
+                                            }
+
+                                            // If no alert or ship was clicked, show GRIB data
+                                            if (uiState.selectedAlert == null) {
+                                                scope.launch {
+                                                    val gribData = gribRepository.getGribData(
+                                                        GribPoint(
+                                                            latitude = point.latitude,
+                                                            longitude = point.longitude
+                                                        )
+                                                    )
+                                                    if (gribData != null) {
+                                                        resetSelections()
+                                                        selectedPoint = GribPoint(
+                                                            latitude = point.latitude,
+                                                            longitude = point.longitude,
+                                                            data = gribData
+                                                        )
+                                                        showPopup = true
+                                                        
+                                                        // Gjem polygon når GRIB data vises
+                                                        map.getStyle { style ->
+                                                            updateAlertPolygon(style, null)
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            false
+                                        } else {
+                                            false
                                         }
-                                        false
                                     }
 
                                     // Update layer visibility based on filters
@@ -365,25 +432,43 @@ fun MapScreen() {
                 )
             }
 
-            // Settings button
-            Surface(
+            // Add Fiskelogg button next to Settings button
+            Row(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(top = 24.dp, end = 16.dp),
-                shape = MaterialTheme.shapes.medium,
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-                tonalElevation = 2.dp
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                IconButton(
-                    onClick = { showFilterMenu = !showFilterMenu },
-                    modifier = Modifier.size(48.dp)
+                // Fiskelogg button
+                Button(
+                    onClick = { 
+                        showFishLogDialog = true
+                        selectedLocation = null
+                        selectedPoint = null
+                        showPopup = false
+                    },
+                    modifier = Modifier.height(48.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Settings,
-                        contentDescription = "Innstillinger",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(28.dp)
-                    )
+                    Text("Fiskelogg")
+                }
+
+                // Existing Settings button
+                Surface(
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                    tonalElevation = 2.dp
+                ) {
+                    IconButton(
+                        onClick = { showFilterMenu = !showFilterMenu },
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Innstillinger",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
                 }
             }
 
@@ -510,12 +595,146 @@ fun MapScreen() {
                     )
                 }
             }
+
+            // Show fish log dialog
+            if (showFishLogDialog) {
+                FishLogDialog(
+                    fishLogs = fishLogUiState.fishLogs,
+                    onDismiss = { 
+                        showFishLogDialog = false
+                        selectedLocation = null
+                    },
+                    onClearLogs = { 
+                        fishLogViewModel.clearFishLogs()
+                        // Fjern alle fiskelag og kilder når loggen tømmes
+                        mapLibreMap?.getStyle { style ->
+                            fishLogUiState.fishLogs.forEach { fishLog ->
+                                style.getLayer("fish_${fishLog.timestamp}")?.let { style.removeLayer(it) }
+                                style.getSource("fish_${fishLog.timestamp}")?.let { style.removeSource(it) }
+                                style.removeImage("fish_${fishLog.timestamp}")
+                            }
+                        }
+                    },
+                    onAddFish = {
+                        showFishLogDialog = false
+                        showAddFishDialog = true
+                        selectedLocation = null
+                    },
+                    selectedLocation = selectedLocation
+                )
+            }
+
+            // Show add fish dialog
+            if (showAddFishDialog) {
+                AddFishDialog(
+                    onDismiss = { 
+                        showAddFishDialog = false
+                        resetFishDialogState()
+                        selectedLocation = null
+                    },
+                    onAddFish = { fishLog ->
+                        fishLogViewModel.addFishLog(fishLog)
+                        showAddFishDialog = false
+                        resetFishDialogState()
+                        selectedLocation = null
+                    },
+                    latitude = selectedLocationForFish?.first ?: 59.9139,
+                    longitude = selectedLocationForFish?.second ?: 10.7522,
+                    onSelectLocation = {
+                        showAddFishDialog = false
+                        showLocationSelectionDialog = true
+                        selectedLocation = null
+                        selectedPoint = null
+                        showPopup = false
+                    },
+                    initialFishType = fishType,
+                    initialLocation = location,
+                    initialArea = area,
+                    initialDescription = description,
+                    initialWeight = weight,
+                    initialImageUri = imageUri,
+                    onFishTypeChange = { fishType = it },
+                    onLocationChange = { location = it },
+                    onAreaChange = { area = it },
+                    onDescriptionChange = { description = it },
+                    onWeightChange = { weight = it },
+                    onImageUriChange = { imageUri = it }
+                )
+            }
         }
     }
 
     DisposableEffect(Unit) {
         onDispose {
             mapView?.onDestroy()
+        }
+    }
+
+    // Add fish markers to map
+    LaunchedEffect(fishLogUiState.fishLogs) {
+        mapLibreMap?.getStyle { style ->
+            // Fjern alle eksisterende fiskelag og kilder
+            fishLogUiState.fishLogs.forEach { fishLog ->
+                style.getLayer("fish_${fishLog.timestamp}")?.let { style.removeLayer(it) }
+                style.getSource("fish_${fishLog.timestamp}")?.let { style.removeSource(it) }
+                style.removeImage("fish_${fishLog.timestamp}")
+            }
+
+            // Legg til nye fiskelag
+            fishLogUiState.fishLogs.forEach { fishLog ->
+                if (fishLog.imageUri != null) {
+                    try {
+                        Log.d("MapScreen", "Prøver å laste bilde fra: ${fishLog.imageUri}")
+                        val uri = Uri.parse(fishLog.imageUri)
+                        val image = if (uri.scheme == "file") {
+                            BitmapFactory.decodeFile(uri.path)
+                        } else {
+                            context.contentResolver.openInputStream(uri)?.use { stream ->
+                                BitmapFactory.decodeStream(stream)
+                            }
+                        }
+                        
+                        if (image != null) {
+                            Log.d("MapScreen", "Bilde lastet inn, størrelse: ${image.width}x${image.height}")
+                            val imageId = "fish_${fishLog.timestamp}"
+                            
+                            // Legg til bildet
+                            style.addImage(imageId, image)
+                            Log.d("MapScreen", "Bilde lagt til på kartet med ID: $imageId")
+                            
+                            // Legg til GeoJSON kilde
+                            val source = GeoJsonSource(
+                                "fish_${fishLog.timestamp}",
+                                "{\"type\":\"Feature\",\"geometry\":{\"type\":\"Point\",\"coordinates\":[${fishLog.longitude},${fishLog.latitude}]}}"
+                            )
+                            style.addSource(source)
+                            Log.d("MapScreen", "GeoJSON kilde lagt til for posisjon: ${fishLog.latitude}, ${fishLog.longitude}")
+                            
+                            // Legg til symbol lag
+                            val layer = SymbolLayer(
+                                "fish_${fishLog.timestamp}",
+                                "fish_${fishLog.timestamp}"
+                            ).withProperties(
+                                iconImage(imageId),
+                                iconSize(0.05f),
+                                iconAllowOverlap(true),
+                                iconIgnorePlacement(true),
+                                iconAnchor(Property.ICON_ANCHOR_CENTER),
+                                iconOpacity(0.8f)
+                            )
+                            style.addLayer(layer)
+                            Log.d("MapScreen", "Symbol lag lagt til for fisk: ${fishLog.fishType}")
+                        } else {
+                            Log.e("MapScreen", "Kunne ikke laste inn bilde fra: ${fishLog.imageUri}")
+                        }
+                    } catch (e: Exception) {
+                        Log.e("MapScreen", "Feil ved visning av fiskebilde: ${e.message}")
+                        e.printStackTrace()
+                    }
+                } else {
+                    Log.d("MapScreen", "Ingen bilde-URI for fisk: ${fishLog.fishType}")
+                }
+            }
         }
     }
 }

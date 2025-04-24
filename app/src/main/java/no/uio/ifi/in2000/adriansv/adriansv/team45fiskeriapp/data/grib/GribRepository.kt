@@ -72,10 +72,10 @@ class GribRepository(private val context: Context) {
 
             // Hent tidspunkt data
             val timeData = GribParser.parseGribFile(weatherFile, "time") ?: return@withContext null
-            val time = getValueAtCoordinates(timeData, point.latitude, point.longitude)?.toString() ?: "0"
+            val time = timeData.referenceTime
 
             val reftimeData = GribParser.parseGribFile(weatherFile, "reftime") ?: return@withContext null
-            val reftime = getValueAtCoordinates(reftimeData, point.latitude, point.longitude)?.toString() ?: "0"
+            val reftime = reftimeData.referenceTime
 
             // Hent strøm data
             val currentFile = downloadGribFile("current")

@@ -78,6 +78,7 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.runtime:runtime-livedata")
     implementation("androidx.navigation:navigation-compose:2.7.5")
+    implementation("androidx.compose.material:material-icons-extended")
 
     // Alternativ mapping bibilotek - bruker OSMDroid istedet for MapBox
     implementation("org.osmdroid:osmdroid-android:6.1.16")
@@ -96,7 +97,8 @@ dependencies {
     implementation("edu.ucar:cdm-core:5.3.3")
     implementation("edu.ucar:grib:5.3.3")
     implementation("com.google.guava:guava:32.1.2-android")
-    implementation(libs.play.services.maps) // Required by NetCDF
+    implementation(libs.play.services.maps)
+    implementation(libs.androidx.camera.core) // Required by NetCDF
 
     // Testing
     testImplementation("junit:junit:4.13.2")
@@ -113,4 +115,7 @@ dependencies {
 
     // JSON
     implementation("org.json:json:20230227")
+
+    implementation("io.coil-kt:coil-compose:2.5.0")
+
 }
