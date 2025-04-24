@@ -2,6 +2,7 @@ package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.map
 
 import android.content.Context
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -11,47 +12,51 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.CreationExtras
+import kotlinx.coroutines.launch
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.grib.GribRepository
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.WeatherDataSource
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.WeatherRepository
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.grib.GribPoint
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.ship.ShipViewModel
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.ship.Ship
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.BaatvettButton
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.BaatvettOverlay
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.ProfilePopup
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.SettingsPopup
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.SokeKnapp
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.farevarsel.AlertInfoCard
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.farevarsel.FarevarselPopup
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.farevarsel.GeoJsonViewModel
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.ship.ShipInfoCard
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.ship.ShipViewModel
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.ship.setupShipLayer
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.ship.updateShipSource
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.farevarsel.GeoJsonViewModel
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.farevarsel.FarevarselPopup
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.theme.Team45FiskeriAppTheme
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherInfoBox
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherViewModel
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherViewModelFactory
+import org.json.JSONObject
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
+import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.OnMapReadyCallback
 import org.maplibre.android.maps.Style
-import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.style.expressions.Expression
+import org.maplibre.android.style.layers.FillLayer
+import org.maplibre.android.style.layers.Property
 import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.layers.SymbolLayer
 import org.maplibre.android.style.sources.GeoJsonSource
-import org.json.JSONObject
-import kotlinx.coroutines.launch
-import org.maplibre.android.style.expressions.Expression
 import java.io.InputStream
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.ship.Ship
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.farevarsel.AlertInfoCard
-import org.maplibre.android.style.layers.Property
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Close
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherViewModel
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.WeatherDataSource
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.WeatherRepository
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherViewModelFactory
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherInfoBox
-import android.graphics.Color
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.BaatvettButton
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.BaatvettOverlay
-import org.maplibre.android.style.layers.FillLayer
-
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 
 private const val TAG = "MapScreen"
 private const val SHIP_LAYER_ID = "ship-layer"
@@ -78,13 +83,30 @@ private fun updateAlertPolygon(style: Style, alertId: String?) {
 }
 
 @Composable
-fun MapScreen() {
+fun MapScreen(
+    onNavigateToProfile: () -> Unit,
+    currentRoute: String,
+    onNavigate: (String) -> Unit,
+    isDarkMode: Boolean,
+    showGrib: Boolean,
+    showAlerts: Boolean,
+    showShips: Boolean,
+    onGribFilterChanged: (Boolean) -> Unit,
+    onAlertsFilterChanged: (Boolean) -> Unit,
+    onShipsFilterChanged: (Boolean) -> Unit
+) {
     val weatherDataSource = WeatherDataSource()
     val weatherRepository = WeatherRepository(weatherDataSource)
     val weatherViewModel: WeatherViewModel = viewModel(
         factory = WeatherViewModelFactory(weatherRepository)
     )
-    val viewModel: GeoJsonViewModel = viewModel()
+    
+    // Oppretter GeoJsonViewModel direkte med context
+    val appContext = LocalContext.current.applicationContext
+    val viewModel = remember {
+        GeoJsonViewModel(appContext)
+    }
+    
     val shipViewModel: ShipViewModel = viewModel()
     
     // Collect states
@@ -103,11 +125,18 @@ fun MapScreen() {
     val gribRepository = remember { GribRepository(context) }
     
     // Filter states
-    var showFilterMenu by remember { mutableStateOf(false) }
-    var showGrib by remember { mutableStateOf(true) }
-    var showAlerts by remember { mutableStateOf(true) }
-    var showShips by remember { mutableStateOf(true) }
     var showBaatvettRules by remember { mutableStateOf(false) }
+    var showSettingsPopup by remember { mutableStateOf(false) }
+    var showProfilePopup by remember { mutableStateOf(false) }
+    
+    // Brukerinformasjon states
+    var firstName by remember { mutableStateOf("") }
+    var lastName by remember { mutableStateOf("") }
+    var phoneNumber by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    
+    // Sett opp dark mode
+    val isDarkTheme = isDarkMode
 
     // Helper function to reset selection states
     fun resetSelections() {
@@ -121,8 +150,29 @@ fun MapScreen() {
         shipViewModel.startPeriodicUpdates()
     }
 
-    Team45FiskeriAppTheme {
+    // Observer for søkeresultat
+    val searchTarget by viewModel.searchTarget.collectAsStateWithLifecycle()
+    
+    // Håndterer kameraflytt når søkeresultat er tilgjengelig
+    LaunchedEffect(searchTarget) {
+        if (searchTarget != null && mapLibreMap != null) {
+            mapLibreMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(searchTarget!!, 12.0))
+        }
+    }
+
+    Team45FiskeriAppTheme(darkTheme = isDarkTheme) {
         Box(modifier = Modifier.fillMaxSize()) {
+            // Søkeknapp plassert øverst på skjermen
+            SokeKnapp(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 16.dp, start = 16.dp, end = 16.dp)
+                    .zIndex(1f),
+                onSearch = { query ->
+                    viewModel.searchAndMoveToLocation(query)
+                }
+            )
+            
             if (uiState.isLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center)
@@ -140,6 +190,7 @@ fun MapScreen() {
             }
 
             if (uiState.geoJsonData != null) {
+                // Map view
                 AndroidView(
                     factory = { ctx ->
                         MapView(ctx).also { view ->
@@ -277,53 +328,57 @@ fun MapScreen() {
                                     map.addOnMapClickListener { point ->
                                         val screenPoint = map.projection.toScreenLocation(point)
                                         
-                                        // Check for alerts (prioritert)
-                                        val alertFeatures = map.queryRenderedFeatures(screenPoint, "alert-symbol-layer")
-                                        if (alertFeatures.isNotEmpty()) {
-                                            val feature = alertFeatures[0]
-                                            val properties = feature.properties()
-                                            if (properties != null) {
-                                                val jsonObject = JSONObject(properties.toString())
-                                                val id = properties.get("id").asString
-                                                resetSelections()
-                                                viewModel.setSelectedAlert(jsonObject)
-                                                
-                                                // Vis polygon for dette varselet
-                                                map.getStyle { style ->
-                                                    updateAlertPolygon(style, id)
-                                                }
-                                            }
-                                            return@addOnMapClickListener true
-                                        }
-                                        
-                                        // Check for ships
-                                        val shipFeatures = map.queryRenderedFeatures(screenPoint, SHIP_LAYER_ID)
-                                        if (shipFeatures.isNotEmpty()) {
-                                            resetSelections()  // Nullstill alerts og grib-state først
-                                            val feature = shipFeatures[0]
-                                            val properties = feature.properties()
-                                            
-                                            if (properties != null) {
-                                                val mmsi = properties.get("mmsi")?.asString
-                                                if (mmsi != null) {
-                                                    selectedShip = shipUiState.ships.find { it.mmsi == mmsi }
-                                                    if (selectedShip != null) {
-                                                        selectedShipScreenPosition = mapLibreMap?.projection?.toScreenLocation(
-                                                            LatLng(selectedShip!!.latitude, selectedShip!!.longitude)
-                                                        )
+                                        // Check for alerts (prioritert) - kun hvis alerts er aktivert
+                                        if (showAlerts) {
+                                            val alertFeatures = map.queryRenderedFeatures(screenPoint, "alert-symbol-layer")
+                                            if (alertFeatures.isNotEmpty()) {
+                                                val feature = alertFeatures[0]
+                                                val properties = feature.properties()
+                                                if (properties != null) {
+                                                    val jsonObject = JSONObject(properties.toString())
+                                                    val id = properties.get("id").asString
+                                                    resetSelections()
+                                                    viewModel.setSelectedAlert(jsonObject)
+                                                    
+                                                    // Vis polygon for dette varselet
+                                                    map.getStyle { style ->
+                                                        updateAlertPolygon(style, id)
                                                     }
                                                 }
+                                                return@addOnMapClickListener true
                                             }
-                                            
-                                            // Gjem polygon når skip velges
-                                            map.getStyle { style ->
-                                                updateAlertPolygon(style, null)
-                                            }
-                                            return@addOnMapClickListener true
                                         }
-
-                                        // If no alert or ship was clicked, show GRIB data
-                                        if (uiState.selectedAlert == null) {
+                                        
+                                        // Check for ships - kun hvis ships er aktivert
+                                        if (showShips) {
+                                            val shipFeatures = map.queryRenderedFeatures(screenPoint, SHIP_LAYER_ID)
+                                            if (shipFeatures.isNotEmpty()) {
+                                                resetSelections()  // Nullstill alerts og grib-state først
+                                                val feature = shipFeatures[0]
+                                                val properties = feature.properties()
+                                                
+                                                if (properties != null) {
+                                                    val mmsi = properties.get("mmsi")?.asString
+                                                    if (mmsi != null) {
+                                                        selectedShip = shipUiState.ships.find { it.mmsi == mmsi }
+                                                        if (selectedShip != null) {
+                                                            selectedShipScreenPosition = mapLibreMap?.projection?.toScreenLocation(
+                                                                LatLng(selectedShip!!.latitude, selectedShip!!.longitude)
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                                
+                                                // Gjem polygon når skip velges
+                                                map.getStyle { style ->
+                                                    updateAlertPolygon(style, null)
+                                                }
+                                                return@addOnMapClickListener true
+                                            }
+                                        }
+                                        
+                                        // If no alert or ship was clicked, show GRIB data if enabled
+                                        if (showGrib && uiState.selectedAlert == null) {
                                             scope.launch {
                                                 val gribData = gribRepository.getGribData(
                                                     GribPoint(
@@ -347,6 +402,7 @@ fun MapScreen() {
                                                 }
                                             }
                                         }
+                                        
                                         false
                                     }
 
@@ -365,71 +421,112 @@ fun MapScreen() {
                 )
             }
 
-            // Settings button
-            Surface(
+            // UI Elements
+            Column(
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = 24.dp, end = 16.dp),
-                shape = MaterialTheme.shapes.medium,
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-                tonalElevation = 2.dp
+                    .fillMaxSize()
+                    .padding(16.dp)
             ) {
-                IconButton(
-                    onClick = { showFilterMenu = !showFilterMenu },
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Settings,
-                        contentDescription = "Innstillinger",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
-            }
+                Spacer(modifier = Modifier.weight(1f))
 
-            // Båtvett Button
-            BaatvettButton(
-                onClick = { showBaatvettRules = !showBaatvettRules },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(bottom = 120.dp, end = 16.dp)
-            )
-
-            // Båtvett Overlay
-            if (showBaatvettRules) {
-                BaatvettOverlay(
-                    onDismiss = { showBaatvettRules = false },
-                    modifier = Modifier.fillMaxSize()
+                // Båtvett button
+                BaatvettButton(
+                    onClick = { showBaatvettRules = true },
+                    modifier = Modifier
+                        .padding(bottom = 16.dp)
+                        .align(Alignment.End)
                 )
             }
 
-            // Settings menu
-            if (showFilterMenu) {
-                SettingsMenu(
+            // Weather info box - now directly in the main Box, vertically centered
+            if (weatherUiState.weather != null) {
+                WeatherInfoBox(
+                    weather = weatherUiState.weather!!,
+                    weatherState = weatherUiState,
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 8.dp)
+                )
+            }
+            
+            // Popups and overlays
+            if (showBaatvettRules) {
+                BaatvettOverlay(
+                    onDismiss = { showBaatvettRules = false }
+                )
+            }
+
+            if (showSettingsPopup) {
+                SettingsPopup(
+                    isDarkMode = isDarkMode,
                     showGrib = showGrib,
                     showAlerts = showAlerts,
                     showShips = showShips,
-                    onGribFilterChanged = { show ->
-                        showGrib = show
-                        selectedPoint = if (!show) null else selectedPoint
-                        showPopup = showGrib && selectedPoint != null
+                    onDarkModeChange = { newDarkMode ->
+                        // Handle dark mode change
+                        onNavigate("kart") // Refresh the screen with new theme
                     },
-                    onAlertsFilterChanged = { show ->
-                        showAlerts = show
-                        mapLibreMap?.getStyle()?.getLayer("alert-symbol-layer")?.setProperties(
-                            PropertyFactory.iconOpacity(Expression.literal(if (show) 1f else 0f))
-                        )
-                        if (!show) viewModel.setSelectedAlert(null)
-                    },
-                    onShipsFilterChanged = { show ->
-                        showShips = show
-                        mapLibreMap?.getStyle()?.getLayer(SHIP_LAYER_ID)?.setProperties(
-                            PropertyFactory.iconOpacity(Expression.literal(if (show) 1f else 0f))
-                        )
-                        if (!show) selectedShip = null
-                    },
-                    onDismiss = { showFilterMenu = false }
+                    onGribFilterChanged = onGribFilterChanged,
+                    onAlertsFilterChanged = onAlertsFilterChanged,
+                    onShipsFilterChanged = onShipsFilterChanged,
+                    onDismiss = { showSettingsPopup = false }
                 )
+            }
+
+            if (showProfilePopup) {
+                ProfilePopup(
+                    userName = "$firstName $lastName",
+                    onUserNameChange = { /* Handle name change */ },
+                    onSettingsClick = { 
+                        showSettingsPopup = true
+                        showProfilePopup = false
+                    },
+                    onYourInformationClick = {
+                        // Handle your information click
+                    },
+                    onDismiss = { showProfilePopup = false }
+                )
+            }
+
+            // Show ship info card if a ship is selected
+            selectedShip?.let { ship ->
+                ShipInfoCard(
+                    ship = ship,
+                    onDismiss = {
+                        selectedShip = null
+                        selectedShipScreenPosition = null
+                    },
+                    shipScreenPosition = selectedShipScreenPosition
+                )
+            }
+
+            // Vis farevarsel-popup hvis et farevarsel er valgt
+            uiState.selectedAlert?.let { alert ->
+                FarevarselPopup(
+                    alertData = alert,
+                    onDismiss = {
+                        viewModel.setSelectedAlert(null)
+                    },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(16.dp)
+                )
+            }
+
+            // Show GRIB popup if GRIB data is enabled
+            if (showGrib && showPopup && selectedPoint != null && uiState.selectedAlert == null) {
+                selectedPoint!!.data?.let {
+                    AlertInfoCard(
+                        alertData = it,
+                        onDismiss = {
+                            selectedPoint = null
+                            showPopup = false
+                        },
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(16.dp)
+                    )
+                }
             }
 
             // Update ship positions when they change
@@ -437,68 +534,6 @@ fun MapScreen() {
                 mapLibreMap?.getStyle()?.let { style ->
                     updateShipSource(context, style, shipUiState.ships)
                 }
-            }
-
-            // Show ship info card if a ship is selected
-            selectedShip?.let { ship ->
-                Box(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    ShipInfoCard(
-                        ship = ship,
-                        onDismiss = {
-                            selectedShip = null
-                            selectedShipScreenPosition = null
-                        },
-                        shipScreenPosition = selectedShipScreenPosition,
-                        modifier = Modifier.align(Alignment.TopStart)
-                    )
-                }
-            }
-
-            // Vis farevarsel-popup hvis et farevarsel er valgt
-            uiState.selectedAlert?.let { alert ->
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(16.dp)
-                ) {
-                    FarevarselPopup(
-                        alertData = alert,
-                        onDismiss = {
-                            viewModel.setSelectedAlert(null)
-                        }
-                    )
-                }
-            }
-
-            // Show GRIB popup if GRIB data is enabled
-            if (showGrib && showPopup && selectedPoint != null && uiState.selectedAlert == null) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(16.dp)
-                ) {
-                    selectedPoint!!.data?.let {
-                        AlertInfoCard(
-                            alertData = it,
-                            onDismiss = {
-                                selectedPoint = null
-                                showPopup = false
-                            }
-                        )
-                    }
-                }
-            }
-
-            // Legg til WeatherInfoBox i midten av høyre kant
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(end = 16.dp),
-                contentAlignment = Alignment.CenterEnd
-            ) {
-                WeatherInfoBox(weatherUiState.weather)
             }
 
             // LaunchedEffect for å håndtere polygon-visning når selectedAlert endres

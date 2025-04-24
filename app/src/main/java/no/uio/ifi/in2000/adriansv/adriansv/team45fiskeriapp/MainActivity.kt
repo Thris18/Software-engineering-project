@@ -7,23 +7,24 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.map.MapScreen
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.farevarsel.MapLibreInitializer
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.navigation.NavigationHandler
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.theme.Team45FiskeriAppTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        
         // Initialize MapLibre
         MapLibreInitializer.initialize(applicationContext)
-
+        
         setContent {
-            MaterialTheme {
+            Team45FiskeriAppTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MapScreen()
+                    NavigationHandler()
                 }
             }
         }

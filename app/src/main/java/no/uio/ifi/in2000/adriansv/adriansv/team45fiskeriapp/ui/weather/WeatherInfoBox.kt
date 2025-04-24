@@ -26,88 +26,89 @@ fun isDay(): Int {
 }
 
 @Composable
-fun WeatherInfoBox(weatherState: LocationWeather?) {
-    if (weatherState != null) {
-        Box(
-            modifier = Modifier
-                .padding(bottom = 80.dp, end = 6.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(Color.White)
-                .padding(8.dp)
+fun WeatherInfoBox(
+    weather: LocationWeather,
+    weatherState: WeatherUiState,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color.White)
+            .padding(8.dp)
+    ) {
+        Row(
+            modifier = Modifier.height(IntrinsicSize.Min),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row(
-                modifier = Modifier.height(IntrinsicSize.Min),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // Temperatur
-                Text(
-                    text = "${weatherState.temperature.toInt()}°C",
-                    fontSize = 16.sp,
-                    color = Color.Black
+            // Temperatur
+            Text(
+                text = "${weather.temperature.toInt()}°C",
+                fontSize = 16.sp,
+                color = Color.Black
+            )
+            
+            // Værikon - Load SVG directly from assets
+            val context = LocalContext.current
+            val svgString = remember(weather.symbolCode) {
+                try {
+                    // Legg til "svg/" i banen
+                    val iconPath = weather.symbolCode.replace("symboler/lightmode/", "symbols/lightmode/svg/")
+                    val rawSvg = context.assets.open(iconPath).bufferedReader().use { it.readText() }
+                    """
+                    <html>
+                        <head>
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                            <style>
+                                body {
+                                    margin: 0;
+                                    padding: 0;
+                                    display: flex;
+                                    justify-content: center;
+                                    align-items: center;
+                                    background-color: transparent;
+                                    width: 24px;
+                                    height: 24px;
+                                }
+                                svg {
+                                    width: 100%;
+                                    height: 100%;
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            $rawSvg
+                        </body>
+                    </html>
+                    """.trimIndent()
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to load weather icon: ${weather.symbolCode}", e)
+                    null
+                }
+            }
+            
+            if (svgString != null) {
+                AndroidView(
+                    factory = { ctx ->
+                        android.webkit.WebView(ctx).apply {
+                            setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                            settings.javaScriptEnabled = false
+                            settings.useWideViewPort = false
+                            settings.loadWithOverviewMode = true
+                        }
+                    },
+                    update = { webView ->
+                        webView.loadDataWithBaseURL(
+                            null,
+                            svgString,
+                            "text/html",
+                            "UTF-8",
+                            null
+                        )
+                    },
+                    modifier = Modifier.size(24.dp)
                 )
-                
-                // Værikon - Load SVG directly from assets
-                val context = LocalContext.current
-                val svgString = remember(weatherState.symbolCode) {
-                    try {
-                        // Legg til "svg/" i banen
-                        val iconPath = weatherState.symbolCode.replace("symboler/lightmode/", "symbols/lightmode/svg/")
-                        val rawSvg = context.assets.open(iconPath).bufferedReader().use { it.readText() }
-                        """
-                        <html>
-                            <head>
-                                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                                <style>
-                                    body {
-                                        margin: 0;
-                                        padding: 0;
-                                        display: flex;
-                                        justify-content: center;
-                                        align-items: center;
-                                        background-color: transparent;
-                                        width: 24px;
-                                        height: 24px;
-                                    }
-                                    svg {
-                                        width: 100%;
-                                        height: 100%;
-                                    }
-                                </style>
-                            </head>
-                            <body>
-                                $rawSvg
-                            </body>
-                        </html>
-                        """.trimIndent()
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Failed to load weather icon: ${weatherState.symbolCode}", e)
-                        null
-                    }
-                }
-                
-                if (svgString != null) {
-                    AndroidView(
-                        factory = { ctx ->
-                            android.webkit.WebView(ctx).apply {
-                                setBackgroundColor(android.graphics.Color.TRANSPARENT)
-                                settings.javaScriptEnabled = false
-                                settings.useWideViewPort = false
-                                settings.loadWithOverviewMode = true
-                            }
-                        },
-                        update = { webView ->
-                            webView.loadDataWithBaseURL(
-                                null,
-                                svgString,
-                                "text/html",
-                                "UTF-8",
-                                null
-                            )
-                        },
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
             }
         }
     }
