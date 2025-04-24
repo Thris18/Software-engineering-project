@@ -44,7 +44,7 @@ fun ProfileScreen(
                 .padding(16.dp)
         ) {
             Text(
-                text = "Profile",
+                text = "Profil",
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(bottom = 24.dp)

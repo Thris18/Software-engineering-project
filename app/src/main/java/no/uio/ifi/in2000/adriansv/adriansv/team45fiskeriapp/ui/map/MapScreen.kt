@@ -393,24 +393,6 @@ fun MapScreen(
                     .fillMaxSize()
                     .padding(16.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp),
-                    contentAlignment = Alignment.CenterEnd
-                ) {
-                    // Weather info box
-                    if (weatherUiState.weather != null) {
-                        WeatherInfoBox(
-                            weather = weatherUiState.weather!!,
-                            weatherState = weatherUiState,
-                            modifier = Modifier
-                                .padding(bottom = 80.dp, end = 6.dp)
-                                .align(Alignment.Center)
-                        )
-                    }
-                }
-
                 Spacer(modifier = Modifier.weight(1f))
 
                 // Båtvett button
@@ -422,6 +404,17 @@ fun MapScreen(
                 )
             }
 
+            // Weather info box - now directly in the main Box, vertically centered
+            if (weatherUiState.weather != null) {
+                WeatherInfoBox(
+                    weather = weatherUiState.weather!!,
+                    weatherState = weatherUiState,
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 8.dp)
+                )
+            }
+            
             // Popups and overlays
             if (showBaatvettRules) {
                 BaatvettOverlay(
