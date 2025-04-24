@@ -59,6 +59,7 @@ import androidx.compose.material.icons.filled.Add
 import com.google.android.gms.common.Feature
 import org.maplibre.android.style.layers.PropertyFactory.*
 import android.net.Uri
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.fish.FishLog
 
 private const val TAG = "MapScreen"
 private const val SHIP_LAYER_ID = "ship-layer"
@@ -135,6 +136,10 @@ fun MapScreen() {
     var description by remember { mutableStateOf("") }
     var weight by remember { mutableStateOf("") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
+
+    // Add state for tracking loaded images
+    var loadedImages by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var failedImageLoads by remember { mutableStateOf<Set<String>>(emptySet()) }
 
     // Helper function to reset selection states
     fun resetSelections() {
@@ -433,26 +438,14 @@ fun MapScreen() {
             }
 
             // Add Fiskelogg button next to Settings button
-            Row(
+            Column(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(top = 24.dp, end = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Fiskelogg button
-                Button(
-                    onClick = { 
-                        showFishLogDialog = true
-                        selectedLocation = null
-                        selectedPoint = null
-                        showPopup = false
-                    },
-                    modifier = Modifier.height(48.dp)
-                ) {
-                    Text("Fiskelogg")
-                }
-
-                // Existing Settings button
+                // Settings button
                 Surface(
                     shape = MaterialTheme.shapes.medium,
                     color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
@@ -469,6 +462,19 @@ fun MapScreen() {
                             modifier = Modifier.size(28.dp)
                         )
                     }
+                }
+
+                // Fiskelogg button
+                Button(
+                    onClick = { 
+                        showFishLogDialog = true
+                        selectedLocation = null
+                        selectedPoint = null
+                        showPopup = false
+                    },
+                    modifier = Modifier.height(48.dp)
+                ) {
+                    Text("Fiskelogg")
                 }
             }
 
@@ -614,13 +620,19 @@ fun MapScreen() {
                                 style.removeImage("fish_${fishLog.timestamp}")
                             }
                         }
+                        loadedImages = emptySet()
+                        failedImageLoads = emptySet()
                     },
                     onAddFish = {
                         showFishLogDialog = false
                         showAddFishDialog = true
                         selectedLocation = null
                     },
-                    selectedLocation = selectedLocation
+                    selectedLocation = selectedLocation,
+                    failedImageLoads = failedImageLoads,
+                    onImageLoadError = { imageId ->
+                        failedImageLoads = failedImageLoads + imageId
+                    }
                 )
             }
 
@@ -670,72 +682,85 @@ fun MapScreen() {
         }
     }
 
+    // Helper function to load image
+    fun loadImage(style: Style, fishLog: FishLog) {
+        val imageId = "fish_${fishLog.timestamp}"
+        
+        // Skip if already loaded or failed
+        if (imageId in loadedImages || imageId in failedImageLoads) {
+            return
+        }
+
+        try {
+            val uri = Uri.parse(fishLog.imageUri)
+            val image = if (uri.scheme == "file") {
+                BitmapFactory.decodeFile(uri.path)
+            } else {
+                context.contentResolver.openInputStream(uri)?.use { stream ->
+                    BitmapFactory.decodeStream(stream)
+                }
+            }
+            
+            if (image != null) {
+                try {
+                    // Legg til bildet
+                    style.addImage(imageId, image)
+                    loadedImages = loadedImages + imageId
+                    fishLogViewModel.addLoadedImage(imageId)
+                    
+                    // Legg til GeoJSON kilde
+                    val source = GeoJsonSource(
+                        "fish_${fishLog.timestamp}",
+                        "{\"type\":\"Feature\",\"geometry\":{\"type\":\"Point\",\"coordinates\":[${fishLog.longitude},${fishLog.latitude}]}}"
+                    )
+                    style.addSource(source)
+                    
+                    // Legg til symbol lag
+                    val layer = SymbolLayer(
+                        "fish_${fishLog.timestamp}",
+                        "fish_${fishLog.timestamp}"
+                    ).withProperties(
+                        iconImage(imageId),
+                        iconSize(0.05f),
+                        iconAllowOverlap(true),
+                        iconIgnorePlacement(true),
+                        iconAnchor(Property.ICON_ANCHOR_CENTER),
+                        iconOpacity(0.8f)
+                    )
+                    style.addLayer(layer)
+                } catch (e: Exception) {
+                    Log.e("MapScreen", "Feil ved oppretting av kartlag: ${e.message}")
+                    failedImageLoads = failedImageLoads + imageId
+                    fishLogViewModel.addFailedImageLoad(imageId)
+                }
+            } else {
+                Log.e("MapScreen", "Kunne ikke laste bilde: $imageId")
+                failedImageLoads = failedImageLoads + imageId
+                fishLogViewModel.addFailedImageLoad(imageId)
+            }
+        } catch (e: Exception) {
+            Log.e("MapScreen", "Feil ved lasting av bilde: ${e.message}")
+            failedImageLoads = failedImageLoads + imageId
+            fishLogViewModel.addFailedImageLoad(imageId)
+        }
+    }
+
     // Add fish markers to map
     LaunchedEffect(fishLogUiState.fishLogs) {
         mapLibreMap?.getStyle { style ->
-            // Fjern alle eksisterende fiskelag og kilder
-            fishLogUiState.fishLogs.forEach { fishLog ->
-                style.getLayer("fish_${fishLog.timestamp}")?.let { style.removeLayer(it) }
-                style.getSource("fish_${fishLog.timestamp}")?.let { style.removeSource(it) }
-                style.removeImage("fish_${fishLog.timestamp}")
+            // Fjern gamle lag og kilder som ikke lenger er i bruk
+            val currentImageIds = fishLogUiState.fishLogs.map { "fish_${it.timestamp}" }.toSet()
+            loadedImages.filter { it !in currentImageIds }.forEach { oldImageId ->
+                style.getLayer(oldImageId)?.let { style.removeLayer(it) }
+                style.getSource(oldImageId)?.let { style.removeSource(it) }
+                style.removeImage(oldImageId)
             }
-
+            loadedImages = loadedImages.filter { it in currentImageIds }.toSet()
+            
             // Legg til nye fiskelag
             fishLogUiState.fishLogs.forEach { fishLog ->
                 if (fishLog.imageUri != null) {
-                    try {
-                        Log.d("MapScreen", "Prøver å laste bilde fra: ${fishLog.imageUri}")
-                        val uri = Uri.parse(fishLog.imageUri)
-                        val image = if (uri.scheme == "file") {
-                            BitmapFactory.decodeFile(uri.path)
-                        } else {
-                            context.contentResolver.openInputStream(uri)?.use { stream ->
-                                BitmapFactory.decodeStream(stream)
-                            }
-                        }
-                        
-                        if (image != null) {
-                            Log.d("MapScreen", "Bilde lastet inn, størrelse: ${image.width}x${image.height}")
-                            val imageId = "fish_${fishLog.timestamp}"
-                            
-                            // Sjekk om bildet allerede eksisterer
-                            if (style.getImage(imageId) == null) {
-                                // Legg til bildet
-                                style.addImage(imageId, image)
-                                Log.d("MapScreen", "Bilde lagt til på kartet med ID: $imageId")
-                            }
-                            
-                            // Legg til GeoJSON kilde
-                            val source = GeoJsonSource(
-                                "fish_${fishLog.timestamp}",
-                                "{\"type\":\"Feature\",\"geometry\":{\"type\":\"Point\",\"coordinates\":[${fishLog.longitude},${fishLog.latitude}]}}"
-                            )
-                            style.addSource(source)
-                            Log.d("MapScreen", "GeoJSON kilde lagt til for posisjon: ${fishLog.latitude}, ${fishLog.longitude}")
-                            
-                            // Legg til symbol lag
-                            val layer = SymbolLayer(
-                                "fish_${fishLog.timestamp}",
-                                "fish_${fishLog.timestamp}"
-                            ).withProperties(
-                                iconImage(imageId),
-                                iconSize(0.05f),
-                                iconAllowOverlap(true),
-                                iconIgnorePlacement(true),
-                                iconAnchor(Property.ICON_ANCHOR_CENTER),
-                                iconOpacity(0.8f)
-                            )
-                            style.addLayer(layer)
-                            Log.d("MapScreen", "Symbol lag lagt til for fisk: ${fishLog.fishType}")
-                        } else {
-                            Log.e("MapScreen", "Kunne ikke laste inn bilde fra: ${fishLog.imageUri}")
-                        }
-                    } catch (e: Exception) {
-                        Log.e("MapScreen", "Feil ved visning av fiskebilde: ${e.message}")
-                        e.printStackTrace()
-                    }
-                } else {
-                    Log.d("MapScreen", "Ingen bilde-URI for fisk: ${fishLog.fishType}")
+                    loadImage(style, fishLog)
                 }
             }
         }

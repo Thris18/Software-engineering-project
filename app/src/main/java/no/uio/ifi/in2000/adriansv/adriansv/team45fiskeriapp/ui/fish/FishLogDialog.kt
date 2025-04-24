@@ -25,7 +25,9 @@ fun FishLogDialog(
     onDismiss: () -> Unit,
     onClearLogs: () -> Unit,
     onAddFish: () -> Unit,
-    selectedLocation: Pair<Double, Double>? = null
+    selectedLocation: Pair<Double, Double>? = null,
+    failedImageLoads: Set<String> = emptySet(),
+    onImageLoadError: (String) -> Unit = {}
 ) {
     val selectedFishLog = if (selectedLocation != null) {
         fishLogs.find { it.latitude == selectedLocation.first && it.longitude == selectedLocation.second }
@@ -60,7 +62,12 @@ fun FishLogDialog(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 if (selectedFishLog != null) {
-                    FishLogItem(selectedFishLog, true)
+                    FishLogItem(
+                        fishLog = selectedFishLog,
+                        showAllDetails = true,
+                        failedImageLoads = failedImageLoads,
+                        onImageLoadError = onImageLoadError
+                    )
                 } else if (fishLogs.isEmpty()) {
                     Text(
                         "Ingen fisker logget ennå",
@@ -73,7 +80,11 @@ fun FishLogDialog(
                             .heightIn(max = 400.dp)
                     ) {
                         items(fishLogs) { fishLog ->
-                            FishLogItem(fishLog)
+                            FishLogItem(
+                                fishLog = fishLog,
+                                failedImageLoads = failedImageLoads,
+                                onImageLoadError = onImageLoadError
+                            )
                         }
                     }
                 }
@@ -101,9 +112,15 @@ fun FishLogDialog(
 }
 
 @Composable
-private fun FishLogItem(fishLog: FishLog, showAllDetails: Boolean = false) {
+private fun FishLogItem(
+    fishLog: FishLog,
+    showAllDetails: Boolean = false,
+    failedImageLoads: Set<String> = emptySet(),
+    onImageLoadError: (String) -> Unit = {}
+) {
     val dateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
     var showDetails by remember { mutableStateOf(showAllDetails) }
+    val imageId = "fish_${fishLog.timestamp}"
     
     Card(
         modifier = Modifier
@@ -131,10 +148,13 @@ private fun FishLogItem(fishLog: FishLog, showAllDetails: Boolean = false) {
                 }
             }
             
-            if (fishLog.imageUri != null) {
+            if (fishLog.imageUri != null && imageId !in failedImageLoads) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Image(
-                    painter = rememberAsyncImagePainter(Uri.parse(fishLog.imageUri)),
+                    painter = rememberAsyncImagePainter(
+                        model = Uri.parse(fishLog.imageUri),
+                        onError = { onImageLoadError(imageId) }
+                    ),
                     contentDescription = "Bilde av ${fishLog.fishType}",
                     modifier = Modifier
                         .fillMaxWidth()

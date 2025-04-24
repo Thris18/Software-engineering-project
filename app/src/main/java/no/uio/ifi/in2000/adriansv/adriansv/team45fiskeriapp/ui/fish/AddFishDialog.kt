@@ -142,16 +142,19 @@ fun AddFishDialog(
 
                 OutlinedTextField(
                     value = weight,
-                    onValueChange = { 
-                        weight = it
-                        onWeightChange(it)
+                    onValueChange = { newValue ->
+                        // Tillat kun tall og punktum
+                        if (newValue.isEmpty() || newValue.matches(Regex("^\\d*\\.?\\d*$"))) {
+                            weight = newValue
+                            onWeightChange(newValue)
+                        }
                     },
                     label = { Text("Vekt (kg)") },
+                    modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Decimal,
                         imeAction = ImeAction.Done
-                    ),
-                    modifier = Modifier.fillMaxWidth()
+                    )
                 )
 
                 OutlinedTextField(
