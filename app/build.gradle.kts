@@ -113,4 +113,10 @@ dependencies {
 
     // JSON
     implementation("org.json:json:20230227")
+
+    implementation("io.coil-kt:coil-compose:2.4.0")
+
+    implementation("androidx.compose.material:material-icons-extended:1.5.4")
+
+
 }
