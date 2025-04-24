@@ -698,9 +698,12 @@ fun MapScreen() {
                             Log.d("MapScreen", "Bilde lastet inn, størrelse: ${image.width}x${image.height}")
                             val imageId = "fish_${fishLog.timestamp}"
                             
-                            // Legg til bildet
-                            style.addImage(imageId, image)
-                            Log.d("MapScreen", "Bilde lagt til på kartet med ID: $imageId")
+                            // Sjekk om bildet allerede eksisterer
+                            if (style.getImage(imageId) == null) {
+                                // Legg til bildet
+                                style.addImage(imageId, image)
+                                Log.d("MapScreen", "Bilde lagt til på kartet med ID: $imageId")
+                            }
                             
                             // Legg til GeoJSON kilde
                             val source = GeoJsonSource(
