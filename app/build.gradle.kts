@@ -118,5 +118,9 @@ dependencies {
 
     implementation("androidx.compose.material:material-icons-extended:1.5.4")
 
+    // Til GIF
+    implementation("io.coil-kt:coil-compose:2.4.0")
+    implementation("io.coil-kt:coil-gif:2.4.0")
+
 
 }

@@ -10,6 +10,7 @@ import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.Weather
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.WeatherRepository
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.NavigationBar
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.SettingsPopup
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.WelcomeScreen
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.YourInformationScreen
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.map.MapScreen
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.map.ProfileScreen
@@ -19,14 +20,14 @@ import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherVi
 
 @Composable
 fun NavigationHandler() {
-    // Shared states
-    var currentRoute by remember { mutableStateOf("kart") }
+    // Delte tilstander
+    var currentRoute by remember { mutableStateOf("welcome") } // Starter med velkomstskjerm
     var isDarkMode by remember { mutableStateOf(true) }
     var showGrib by remember { mutableStateOf(true) }
     var showAlerts by remember { mutableStateOf(true) }
     var showShips by remember { mutableStateOf(true) }
-    
-    // Profile states
+
+    // Profil-tilstander
     var showSettings by remember { mutableStateOf(false) }
     var showYourInfo by remember { mutableStateOf(false) }
     var userName by remember { mutableStateOf("") }
@@ -35,19 +36,23 @@ fun NavigationHandler() {
     var phoneNumber by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
 
-    // Weather state
+    // Værdata
     val weatherViewModel: WeatherViewModel = viewModel(
         factory = WeatherViewModelFactory(WeatherRepository(WeatherDataSource()))
     )
     val weatherUiState by weatherViewModel.uiState.collectAsStateWithLifecycle()
 
-    // Theme
+    // Tema
     Team45FiskeriAppTheme(darkTheme = isDarkMode) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
-                // Content area
+
+                // Innholdsområde
                 Box(modifier = Modifier.weight(1f)) {
                     when (currentRoute) {
+                        "welcome" -> WelcomeScreen(
+                            onNavigateToHome = { currentRoute = "kart" }
+                        )
                         "kart" -> MapScreen(
                             onNavigateToProfile = { currentRoute = "profil" },
                             currentRoute = currentRoute,
@@ -56,15 +61,15 @@ fun NavigationHandler() {
                             showGrib = showGrib,
                             showAlerts = showAlerts,
                             showShips = showShips,
-                            onGribFilterChanged = { newValue -> 
+                            onGribFilterChanged = { newValue ->
                                 showGrib = newValue
                                 currentRoute = currentRoute
                             },
-                            onAlertsFilterChanged = { newValue -> 
+                            onAlertsFilterChanged = { newValue ->
                                 showAlerts = newValue
                                 currentRoute = currentRoute
                             },
-                            onShipsFilterChanged = { newValue -> 
+                            onShipsFilterChanged = { newValue ->
                                 showShips = newValue
                                 currentRoute = currentRoute
                             }
@@ -81,32 +86,34 @@ fun NavigationHandler() {
                                 isDarkMode = newValue
                                 currentRoute = currentRoute
                             },
-                            onGribFilterChanged = { newValue -> 
+                            onGribFilterChanged = { newValue ->
                                 showGrib = newValue
                                 currentRoute = currentRoute
                             },
-                            onAlertsFilterChanged = { newValue -> 
+                            onAlertsFilterChanged = { newValue ->
                                 showAlerts = newValue
                                 currentRoute = currentRoute
                             },
-                            onShipsFilterChanged = { newValue -> 
+                            onShipsFilterChanged = { newValue ->
                                 showShips = newValue
                                 currentRoute = currentRoute
                             }
                         )
                     }
                 }
-                
-                // Persistent navigation bar at the bottom
-                NavigationBar(
-                    currentRoute = currentRoute,
-                    onNavigate = { route -> currentRoute = route },
-                    weather = weatherUiState.weather,
-                    weatherState = weatherUiState
-                )
+
+                // Navigasjonsmeny nederst – skjules på velkomstskjermen
+                if (currentRoute != "welcome") {
+                    NavigationBar(
+                        currentRoute = currentRoute,
+                        onNavigate = { route -> currentRoute = route },
+                        weather = weatherUiState.weather,
+                        weatherState = weatherUiState
+                    )
+                }
             }
 
-            // Popups
+            // Innstillinger-popup
             if (showSettings) {
                 SettingsPopup(
                     isDarkMode = isDarkMode,
@@ -115,18 +122,17 @@ fun NavigationHandler() {
                     showShips = showShips,
                     onDarkModeChange = { newValue ->
                         isDarkMode = newValue
-                        // Oppdater tema umiddelbart
-                        currentRoute = currentRoute // Dette vil trigge en recomposition med nytt tema
+                        currentRoute = currentRoute
                     },
-                    onGribFilterChanged = { newValue -> 
+                    onGribFilterChanged = { newValue ->
                         showGrib = newValue
                         currentRoute = currentRoute
                     },
-                    onAlertsFilterChanged = { newValue -> 
+                    onAlertsFilterChanged = { newValue ->
                         showAlerts = newValue
                         currentRoute = currentRoute
                     },
-                    onShipsFilterChanged = { newValue -> 
+                    onShipsFilterChanged = { newValue ->
                         showShips = newValue
                         currentRoute = currentRoute
                     },
@@ -134,6 +140,7 @@ fun NavigationHandler() {
                 )
             }
 
+            // Brukerinformasjon-popup
             if (showYourInfo) {
                 YourInformationScreen(
                     firstName = firstName,
@@ -149,4 +156,4 @@ fun NavigationHandler() {
             }
         }
     }
-} 
+}
