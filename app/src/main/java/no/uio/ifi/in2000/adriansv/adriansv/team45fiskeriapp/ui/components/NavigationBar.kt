@@ -11,12 +11,17 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.R
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.weather.LocationWeather
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherInfoBox
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherUiState
 
 @Composable
 fun NavigationBar(
     currentRoute: String,
     onNavigate: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    weather: LocationWeather? = null,
+    weatherState: WeatherUiState? = null
 ) {
     Surface(
         modifier = modifier
@@ -29,8 +34,8 @@ fun NavigationBar(
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 32.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Kart-knapp
@@ -40,6 +45,15 @@ fun NavigationBar(
                 selected = currentRoute == "kart",
                 onClick = { onNavigate("kart") }
             )
+
+            // Vær-knapp
+            if (weather != null && weatherState != null) {
+                WeatherInfoBox(
+                    weather = weather,
+                    weatherState = weatherState,
+                    modifier = Modifier
+                )
+            }
 
             // Profil-knapp
             NavigationItem(
@@ -62,7 +76,7 @@ private fun NavigationItem(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .padding(horizontal = 12.dp)
+            .padding(horizontal = 8.dp)
             .height(56.dp)
     ) {
         IconButton(
@@ -99,7 +113,7 @@ private fun NavigationItem(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .padding(horizontal = 12.dp)
+            .padding(horizontal = 8.dp)
             .height(56.dp)
     ) {
         IconButton(

@@ -109,7 +109,7 @@ enum class WeatherIcon(private val iconName: String) {
     SNOW_HEAVY_2("50.svg");
 
     // Henter full sti til SVG filen i assets
-    fun getAssetPath(): String = "symboler/lightmode/$iconName"
+    fun getAssetPath(): String = "symbols/lightmode/svg/$iconName"
 
     companion object {
         fun fromWeatherCode(code: String, hour: Int): WeatherIcon {

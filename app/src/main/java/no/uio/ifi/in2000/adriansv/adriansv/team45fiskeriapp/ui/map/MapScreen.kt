@@ -76,6 +76,9 @@ import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.R
 import androidx.compose.ui.graphics.ColorFilter
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.NavigationBar
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.weather.LocationWeather
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherUiState
 
 private const val TAG = "MapScreen"
 private const val SHIP_LAYER_ID = "ship-layer"
@@ -649,18 +652,8 @@ fun MapScreen(
                         .align(Alignment.End)
                 )
             }
-
-            // Weather info box - now directly in the main Box, vertically centered
-            if (weatherUiState.weather != null) {
-                WeatherInfoBox(
-                    weather = weatherUiState.weather!!,
-                    weatherState = weatherUiState,
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .padding(end = 8.dp)
-                )
-            }
             
+
             // Popups and overlays
             if (showBaatvettRules) {
                 BaatvettOverlay(
