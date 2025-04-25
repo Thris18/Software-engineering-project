@@ -4,12 +4,18 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.WeatherDataSource
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.WeatherRepository
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.NavigationBar
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.SettingsPopup
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.YourInformationScreen
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.map.MapScreen
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.map.ProfileScreen
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.theme.Team45FiskeriAppTheme
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherViewModel
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherViewModelFactory
 
 @Composable
 fun NavigationHandler() {
@@ -28,6 +34,12 @@ fun NavigationHandler() {
     var lastName by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
+
+    // Weather state
+    val weatherViewModel: WeatherViewModel = viewModel(
+        factory = WeatherViewModelFactory(WeatherRepository(WeatherDataSource()))
+    )
+    val weatherUiState by weatherViewModel.uiState.collectAsStateWithLifecycle()
 
     // Theme
     Team45FiskeriAppTheme(darkTheme = isDarkMode) {
@@ -88,7 +100,9 @@ fun NavigationHandler() {
                 // Persistent navigation bar at the bottom
                 NavigationBar(
                     currentRoute = currentRoute,
-                    onNavigate = { route -> currentRoute = route }
+                    onNavigate = { route -> currentRoute = route },
+                    weather = weatherUiState.weather,
+                    weatherState = weatherUiState
                 )
             }
 
