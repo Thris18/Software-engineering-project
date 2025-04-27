@@ -2,16 +2,19 @@ package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -19,22 +22,37 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.decode.GifDecoder
 import coil.request.ImageRequest
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.R
+import kotlin.math.min
 
 @Composable
 fun WelcomeScreen(onNavigateToHome: () -> Unit) {
     val pirateFont = FontFamily(Font(R.font.pirataone_regular))
+    
+    // Get screen dimensions for responsive sizing
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val screenHeight = configuration.screenHeightDp.dp
+    
+    // Calculate appropriate sizes based on screen dimensions
+    val titleSize = min(screenWidth.value * 0.15f, 72f).sp
+    val imageSize = min(screenWidth.value * 0.8f, 350f).dp
+    val buttonWidth = min(screenWidth.value * 0.8f, 350f).dp
 
     Box(
         modifier = Modifier
@@ -44,35 +62,42 @@ fun WelcomeScreen(onNavigateToHome: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(80.dp))
+            // Responsive spacing at top (smaller on small screens)
+            Spacer(modifier = Modifier.height((screenHeight.value * 0.05f).dp))
 
-            // Appnavn med font
+            // Appnavn med responsiv fontstørrelse
             Text(
                 text = "AppNavn",
                 style = TextStyle(
                     fontFamily = pirateFont,
-                    fontSize = 72.sp,
+                    fontSize = titleSize,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF00334d)
-                )
+                ),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height((screenHeight.value * 0.02f).dp))
 
-            // Maskotbilde
+            // Maskotbilde med responsiv størrelse
             Image(
                 painter = painterResource(id = R.drawable.sailor_mascot),
                 contentDescription = "Sjømannsmaskott",
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
-                    .size(410.dp)
+                    .widthIn(max = imageSize)
+                    .padding(8.dp)
             )
 
-            Spacer(modifier = Modifier.weight(2f))
+            // Flexible space that grows or shrinks based on screen size
+            Spacer(modifier = Modifier.weight(1f))
 
+            // Fiskeanimasjon - større størrelse
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(R.drawable.fish_jump)
@@ -80,30 +105,36 @@ fun WelcomeScreen(onNavigateToHome: () -> Unit) {
                     .build(),
                 contentDescription = "Hoppende fisk",
                 modifier = Modifier
-                    .size(100.dp)
-                    .offset(y = (-20).dp) // litt opp så den ser ut som den hopper på knappen
+                    .widthIn(max = (screenWidth.value * 0.3f).dp)
+                    .padding(4.dp)
             )
 
-            // Velkomst-knapp
-            Box(
+            // Responsiv velkomstknapp - større
+            Button(
+                onClick = { onNavigateToHome() },
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.White
+                ),
                 modifier = Modifier
+                    .widthIn(max = buttonWidth.coerceAtMost(320.dp))
+                    .padding(vertical = 12.dp, horizontal = 8.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(Color.White)
-                    .clickable { onNavigateToHome() }
-                    .padding(horizontal = 24.dp, vertical = 16.dp)
             ) {
                 Text(
-                    text = "Start fisketuren!",
+                    text = stringResource(id = R.string.start_button),
                     style = TextStyle(
-                        fontSize = 24.sp,
+                        fontSize = min(screenWidth.value * 0.045f, 22f).sp,
                         fontFamily = pirateFont,
                         fontWeight = FontWeight.Medium,
                         color = Color(0xFF00334d)
-                    )
+                    ),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(36.dp))
+            // Responsive bottom spacing (smaller on small screens)
+            Spacer(modifier = Modifier.height((screenHeight.value * 0.03f).dp))
         }
     }
 }
