@@ -282,4 +282,24 @@ class GribRepository(private val context: Context) {
         }
         return null
     }
+
+    // Hjelpefunksjon: Hent hele gridet for én type
+    suspend fun getGribDataGrid(type: String, variableName: String? = null): GribData? = withContext(Dispatchers.IO) {
+        val file = downloadGribFile(type)
+        return@withContext if (file != null) GribParser.parseGribFile(file, variableName) else null
+    }
+
+    // Hent alle relevante grids for overlay
+    suspend fun getAllWeatherGrids(): Map<String, GribData?> = withContext(Dispatchers.IO) {
+        val wind = getGribDataGrid("weather", "u-component_of_wind_height_above_ground")
+        val wave = getGribDataGrid("waves", "Significant_height_of_combined_wind_waves_and_swell_height_above_ground")
+        val strom = getGribDataGrid("current", "u-component_of_current_depth_below_sea")
+        val rain = getGribDataGrid("weather", "Total_precipitation_height_above_ground")
+        mapOf(
+            "wind" to wind,
+            "wave" to wave,
+            "strom" to strom,
+            "rain" to rain
+        )
+    }
 }

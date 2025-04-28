@@ -45,7 +45,6 @@ class GribParser {
                 val height = latDims[0]
                 val width = lonDims[0]
 
-                Log.d(TAG, "Grid dimensjoner: $width x $height")
 
                 val latitudes = FloatArray(height)
                 val longitudes = FloatArray(width)
@@ -63,10 +62,7 @@ class GribParser {
                     longitudes[i] = lonArray.getFloat(idx)
                 }
 
-                val latRange = if (latitudes.isNotEmpty()) "${latitudes.minOrNull()} to ${latitudes.maxOrNull()}" else "empty"
-                val lonRange = if (longitudes.isNotEmpty()) "${longitudes.minOrNull()} to ${longitudes.maxOrNull()}" else "empty"
-                Log.d(TAG, "Latitude range: $latRange")
-                Log.d(TAG, "Longitude range: $lonRange")
+
 
                 // Finner datavariabel basert på variabelnavn eller søker etter standard variabler
                 val dataVar = if (variableName != null) {
@@ -116,9 +112,7 @@ class GribParser {
                 val varName = dataVar.shortName
                 val unit = dataVar.unitsString ?: ""
 
-                // Logger detaljer rundt variabler
-                Log.d(TAG, "Bruker data variabel: $varName (${dataVar.dataType}, ${dataVar.shape.joinToString("x")})")
-                Log.d(TAG, "Variabelenhet: $unit")
+
 
                 // Spesialhåndtering for time og reftime
                 val referenceTime = if (varName.equals("time", ignoreCase = true) || varName.equals("reftime", ignoreCase = true)) {
@@ -154,17 +148,12 @@ class GribParser {
                 var nanCount = 0
                 var validCount = 0
 
-                // Logg dimensjoner og form
-                Log.d(TAG, "Data variabel form: ${dataVar.shape.joinToString("x")}")
-                Log.d(TAG, "Data array dimensjoner: ${dataArray.shape.joinToString("x")}")
 
                 try {
                     // Bestemmer hvilken dimensjon basert på form
                     val shape = dataVar.shape
                     val dimCount = shape.size
 
-                    Log.d(TAG, "Antall dimensjoner: $dimCount")
-                    Log.d(TAG, "Shape: ${shape.joinToString(", ")}")
 
                     // Spesialhåndtering for 1D-variabler
                     if (dimCount == 1) {
@@ -198,19 +187,7 @@ class GribParser {
                             throw IllegalArgumentException("Dataarrayet har for få dimensjoner")
                         }
 
-                        // Beregner total størrelse
-                        val totalSize = dataArray.size.toInt()
-                        Log.d(TAG, "Total størrelse på dataarray: $totalSize")
 
-                        // Beregner forventet størrelse basert på bredde og høyde
-                        val expectedSize = width * height
-                        Log.d(TAG, "Forventet størrelse: $expectedSize")
-
-                        // Sjekker om vi har nok data
-                        if (totalSize < expectedSize) {
-                            Log.e(TAG, "Dataarrayet er for lite: $totalSize < $expectedSize")
-                            throw IllegalArgumentException("Dataarrayet er for lite")
-                        }
 
                         // Leser data på en sikrere måte
                         var index = 0

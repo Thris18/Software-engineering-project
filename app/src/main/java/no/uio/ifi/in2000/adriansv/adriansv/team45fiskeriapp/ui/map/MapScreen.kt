@@ -79,6 +79,8 @@ import androidx.compose.ui.graphics.ColorFilter
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.NavigationBar
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.weather.LocationWeather
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherUiState
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.GribOverlayManager
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.GribOverlayUtil
 
 private const val TAG = "MapScreen"
 private const val SHIP_LAYER_ID = "ship-layer"
@@ -183,6 +185,9 @@ fun MapScreen(
     var description by remember { mutableStateOf("") }
     var weight by remember { mutableStateOf("") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
+
+    // State for GRIB overlay loading
+    var gribOverlayLoading by remember { mutableStateOf(false) }
 
     // Helper function to reset selection states
     fun resetSelections() {
@@ -507,49 +512,49 @@ fun MapScreen(
                                         
                                         // Check for alerts (prioritert) - kun hvis alerts er aktivert
                                         if (showAlerts) {
-                                            val alertFeatures = map.queryRenderedFeatures(screenPoint, "alert-symbol-layer")
-                                            if (alertFeatures.isNotEmpty()) {
-                                                val feature = alertFeatures[0]
-                                                val properties = feature.properties()
-                                                if (properties != null) {
-                                                    val jsonObject = JSONObject(properties.toString())
-                                                    val id = properties.get("id").asString
-                                                    resetSelections()
-                                                    viewModel.setSelectedAlert(jsonObject)
-                                                    
-                                                    // Vis polygon for dette varselet
-                                                    map.getStyle { style ->
-                                                        updateAlertPolygon(style, id)
-                                                    }
+                                        val alertFeatures = map.queryRenderedFeatures(screenPoint, "alert-symbol-layer")
+                                        if (alertFeatures.isNotEmpty()) {
+                                            val feature = alertFeatures[0]
+                                            val properties = feature.properties()
+                                            if (properties != null) {
+                                                val jsonObject = JSONObject(properties.toString())
+                                                val id = properties.get("id").asString
+                                                resetSelections()
+                                                viewModel.setSelectedAlert(jsonObject)
+                                                
+                                                // Vis polygon for dette varselet
+                                                map.getStyle { style ->
+                                                    updateAlertPolygon(style, id)
                                                 }
-                                                return@addOnMapClickListener true
+                                            }
+                                            return@addOnMapClickListener true
                                             }
                                         }
                                         
                                         // Check for ships - kun hvis ships er aktivert
                                         if (showShips) {
-                                            val shipFeatures = map.queryRenderedFeatures(screenPoint, SHIP_LAYER_ID)
-                                            if (shipFeatures.isNotEmpty()) {
-                                                resetSelections()  // Nullstill alerts og grib-state først
-                                                val feature = shipFeatures[0]
-                                                val properties = feature.properties()
-                                                
-                                                if (properties != null) {
-                                                    val mmsi = properties.get("mmsi")?.asString
-                                                    if (mmsi != null) {
-                                                        selectedShip = shipUiState.ships.find { it.mmsi == mmsi }
-                                                        if (selectedShip != null) {
-                                                            selectedShipScreenPosition = mapLibreMap?.projection?.toScreenLocation(
-                                                                LatLng(selectedShip!!.latitude, selectedShip!!.longitude)
-                                                            )
-                                                        }
+                                        val shipFeatures = map.queryRenderedFeatures(screenPoint, SHIP_LAYER_ID)
+                                        if (shipFeatures.isNotEmpty()) {
+                                            resetSelections()  // Nullstill alerts og grib-state først
+                                            val feature = shipFeatures[0]
+                                            val properties = feature.properties()
+                                            
+                                            if (properties != null) {
+                                                val mmsi = properties.get("mmsi")?.asString
+                                                if (mmsi != null) {
+                                                    selectedShip = shipUiState.ships.find { it.mmsi == mmsi }
+                                                    if (selectedShip != null) {
+                                                        selectedShipScreenPosition = mapLibreMap?.projection?.toScreenLocation(
+                                                            LatLng(selectedShip!!.latitude, selectedShip!!.longitude)
+                                                        )
                                                     }
                                                 }
-                                                
-                                                // Gjem polygon når skip velges
-                                                map.getStyle { style ->
-                                                    updateAlertPolygon(style, null)
-                                                }
+                                            }
+                                            
+                                            // Gjem polygon når skip velges
+                                            map.getStyle { style ->
+                                                updateAlertPolygon(style, null)
+                                            }
                                                 return@addOnMapClickListener true
                                             }
                                         }
@@ -562,7 +567,7 @@ fun MapScreen(
                                             selectedLocation = Pair(point.latitude, point.longitude)
                                             return@addOnMapClickListener true
                                         }
-                                        
+
                                         // If no alert or ship was clicked, show GRIB data if enabled
                                         if (showGrib && uiState.selectedAlert == null && !showFishLogDialog) {
                                             scope.launch {
@@ -695,14 +700,14 @@ fun MapScreen(
 
             // Show ship info card if a ship is selected
             selectedShip?.let { ship ->
-                ShipInfoCard(
-                    ship = ship,
-                    onDismiss = {
-                        selectedShip = null
-                        selectedShipScreenPosition = null
-                    },
+                    ShipInfoCard(
+                        ship = ship,
+                        onDismiss = {
+                            selectedShip = null
+                            selectedShipScreenPosition = null
+                        },
                     shipScreenPosition = selectedShipScreenPosition
-                )
+                    )
             }
 
             // Vis farevarsel-popup hvis et farevarsel er valgt
@@ -719,13 +724,14 @@ fun MapScreen(
             }
 
             // Show GRIB popup if GRIB data is enabled
+            /*
             if (showGrib && showPopup && selectedPoint != null && uiState.selectedAlert == null) {
-                selectedPoint!!.data?.let {
-                    AlertInfoCard(
-                        alertData = it,
-                        onDismiss = {
-                            selectedPoint = null
-                            showPopup = false
+                    selectedPoint!!.data?.let {
+                        AlertInfoCard(
+                            alertData = it,
+                            onDismiss = {
+                                selectedPoint = null
+                                showPopup = false
                         },
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
@@ -733,6 +739,7 @@ fun MapScreen(
                     )
                 }
             }
+            */
 
             // Update ship positions when they change
             LaunchedEffect(shipUiState.ships) {
@@ -866,6 +873,29 @@ fun MapScreen(
                     onImageUriChange = { imageUri = it },
                     selectedLocationForFish = selectedLocationForFish?.toString()
                 )
+            }
+
+            // I MapScreen, etter at selectedPoint settes og showPopup = true, vis overlay:
+            LaunchedEffect(selectedPoint, showGrib, mapLibreMap) {
+                if (showGrib && selectedPoint != null && mapLibreMap != null) {
+                    gribOverlayLoading = true
+                    val allGrids = gribRepository.getAllWeatherGrids()
+                    val geoJson = GribOverlayUtil.mergeFeatureCollections(
+                        allGrids["wind"]?.let { GribOverlayUtil.gribDataToFeatureCollection(it, "wind", "wind") } ?: "",
+                        allGrids["wave"]?.let { GribOverlayUtil.gribDataToFeatureCollection(it, "wave", "wave") } ?: "",
+                        allGrids["strom"]?.let { GribOverlayUtil.gribDataToFeatureCollection(it, "strom", "strom") } ?: "",
+                        allGrids["rain"]?.let { GribOverlayUtil.gribDataToFeatureCollection(it, "rain", "rain") } ?: ""
+                    )
+                    mapLibreMap!!.getStyle { style ->
+                        Log.d("GRIB", "GeoJSON: $geoJson")
+                        GribOverlayManager.addOrUpdateGribOverlay(context, style, geoJson)
+                        gribOverlayLoading = false
+                    }
+                } else {
+                    mapLibreMap?.getStyle { style ->
+                        GribOverlayManager.removeGribOverlay(style)
+                    }
+                }
             }
         }
     }
