@@ -14,10 +14,10 @@ import kotlin.math.sqrt
 object GribOverlayUtil {
     // Terskler for de fire typene (økt litt)
     val thresholds = mapOf(
-        "wind" to 2.0,
-        "wave" to 0.2,
-        "strom" to 0.1,
-        "rain" to 0.2
+        "wind" to 5.0,
+        "wave" to 1.0,
+        "strom" to 0.5,
+        "rain" to 2.0
     )
 
     // Farge basert på hvor mye verdien overstiger terskelen
@@ -82,7 +82,7 @@ object GribOverlayUtil {
         gribData: GribData,
         type: String,
         icon: String,
-        minDistanceKm: Double = 10.0 // Juster radius etter behov
+        minDistanceKm: Double = 13.0 // Juster radius etter behov
     ): String {
         val features = mutableListOf<String>()
         val threshold = thresholds[type] ?: 0.0
