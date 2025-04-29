@@ -115,7 +115,8 @@ fun MapScreen(
     showShips: Boolean,
     onGribFilterChanged: (Boolean) -> Unit,
     onAlertsFilterChanged: (Boolean) -> Unit,
-    onShipsFilterChanged: (Boolean) -> Unit
+    onShipsFilterChanged: (Boolean) -> Unit,
+    onLocationSelected: ((Double, Double, String) -> Unit)? = null
 ) {
     val weatherDataSource = WeatherDataSource()
     val weatherRepository = WeatherRepository(weatherDataSource)
@@ -184,6 +185,11 @@ fun MapScreen(
     var weight by remember { mutableStateOf("") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
 
+    // Tøm fiskeloggen når man tømmer loggen i kartet
+    fun clearFishLogs() {
+        fishLogViewModel.clearFishLogs()
+    }
+
     // Helper function to reset selection states
     fun resetSelections() {
         selectedPoint = null
@@ -199,10 +205,35 @@ fun MapScreen(
     // Observer for søkeresultat
     val searchTarget by viewModel.searchTarget.collectAsStateWithLifecycle()
     
-    // Håndterer kameraflytt når søkeresultat er tilgjengelig
+    // Oppdater værvarsel når kameraet flyttes
+    LaunchedEffect(mapLibreMap) {
+        mapLibreMap?.addOnCameraIdleListener {
+            val center = mapLibreMap?.cameraPosition?.target
+            val zoom = mapLibreMap?.cameraPosition?.zoom ?: 12.0
+            if (center != null) {
+                Log.d(TAG, "Oppdaterer værvarsel med koordinater: ${center.latitude}, ${center.longitude}, zoom: $zoom")
+                weatherViewModel.updateWeather(center.latitude, center.longitude, zoom)
+            }
+        }
+    }
+
+    // Oppdater værvarsel når søkeresultat er tilgjengelig
     LaunchedEffect(searchTarget) {
         if (searchTarget != null && mapLibreMap != null) {
-            mapLibreMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(searchTarget!!, 12.0))
+            val zoom = 12.0
+            Log.d(TAG, "Oppdaterer værvarsel med søkeresultat: ${searchTarget!!.latitude}, ${searchTarget!!.longitude}, zoom: $zoom")
+            mapLibreMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(searchTarget!!, zoom))
+            weatherViewModel.updateWeather(searchTarget!!.latitude, searchTarget!!.longitude, zoom)
+        }
+    }
+
+    // Oppdater værvarsel når kartet er lastet
+    LaunchedEffect(mapLibreMap) {
+        mapLibreMap?.getStyle { style ->
+            val osloPosition = LatLng(59.9139, 10.7522)
+            val zoom = 9.0
+            Log.d(TAG, "Oppdaterer værvarsel med initial posisjon: ${osloPosition.latitude}, ${osloPosition.longitude}, zoom: $zoom")
+            weatherViewModel.updateWeather(osloPosition.latitude, osloPosition.longitude, zoom)
         }
     }
 
@@ -250,33 +281,44 @@ fun MapScreen(
                     )
                     style.addSource(source)
                     
-                    // Legg til symbol lag
-                    val layer = SymbolLayer(
-                        "fish_${fishLog.timestamp}",
-                        "fish_${fishLog.timestamp}"
-                    ).withProperties(
-                        PropertyFactory.iconImage(imageId),
-                        PropertyFactory.iconSize(0.05f),
-                        PropertyFactory.iconAllowOverlap(true),
-                        PropertyFactory.iconIgnorePlacement(true),
-                        PropertyFactory.iconAnchor(Property.ICON_ANCHOR_CENTER),
-                        PropertyFactory.iconOpacity(0.8f)
-                    )
+                    // Legg til symbol layer
+                    val layer = SymbolLayer("fish_${fishLog.timestamp}", "fish_${fishLog.timestamp}")
+                        .withProperties(
+                            iconImage(imageId),
+                            iconSize(0.05f),
+                            iconAllowOverlap(true),
+                            iconIgnorePlacement(true),
+                            iconAnchor(Property.ICON_ANCHOR_CENTER),
+                            iconOpacity(0.8f)
+                        )
                     style.addLayer(layer)
                 } catch (e: Exception) {
-                    Log.e("MapScreen", "Feil ved oppretting av kartlag: ${e.message}")
+                    Log.e(TAG, "Feil ved lasting av bilde: ${e.message}")
                     failedImageLoads = failedImageLoads + imageId
                     fishLogViewModel.addFailedImageLoad(imageId)
                 }
-            } else {
-                Log.e("MapScreen", "Kunne ikke laste bilde: $imageId")
-                failedImageLoads = failedImageLoads + imageId
-                fishLogViewModel.addFailedImageLoad(imageId)
             }
         } catch (e: Exception) {
-            Log.e("MapScreen", "Feil ved lasting av bilde: ${e.message}")
+            Log.e(TAG, "Feil ved lasting av bilde: ${e.message}")
             failedImageLoads = failedImageLoads + imageId
             fishLogViewModel.addFailedImageLoad(imageId)
+        }
+    }
+
+    // Håndterer klikk på kartet
+    fun onMapClick(latLng: LatLng) {
+        if (onLocationSelected != null && showLocationSelectionDialog) {
+            // Hvis vi er i lokasjonsvalg-modus, send valgt lokasjon tilbake
+            onLocationSelected(latLng.latitude, latLng.longitude, "Valgt lokasjon")
+            showLocationSelectionDialog = false
+            return
+        }
+
+        // Normal kartinteraksjon
+        if (!showLocationSelectionDialog) {
+            selectedPoint = null
+            showPopup = false
+            viewModel.setSelectedAlert(null)
         }
     }
 
@@ -309,6 +351,13 @@ fun MapScreen(
                     loadImage(style, fishLog)
                 }
             }
+        }
+    }
+
+    // Håndter lokasjonsvalg
+    LaunchedEffect(showLocationSelectionDialog) {
+        if (showLocationSelectionDialog) {
+            showAddFishDialog = false
         }
     }
 
@@ -480,6 +529,12 @@ fun MapScreen(
                                     map.addOnMapClickListener { point ->
                                         val screenPoint = map.projection.toScreenLocation(point)
                                         
+                                        // Håndter lokasjonsvalg først hvis vi er i lokasjonsvalg-modus
+                                        if (onLocationSelected != null) {
+                                            onLocationSelected(point.latitude, point.longitude, "Valgt lokasjon")
+                                            return@addOnMapClickListener true
+                                        }
+
                                         // Check for fish log images first
                                         val fishFeatures = map.queryRenderedFeatures(screenPoint)
                                         val fishLog = fishFeatures.find { feature ->
@@ -788,7 +843,7 @@ fun MapScreen(
                         selectedLocation = null
                     },
                     onClearLogs = { 
-                        fishLogViewModel.clearFishLogs()
+                        clearFishLogs()
                         // Fjern alle fiskelag og kilder når loggen tømmes
                         mapLibreMap?.getStyle { style ->
                             fishLogUiState.fishLogs.forEach { fishLog ->
