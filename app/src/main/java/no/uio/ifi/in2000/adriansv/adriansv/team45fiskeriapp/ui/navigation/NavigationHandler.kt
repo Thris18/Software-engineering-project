@@ -4,19 +4,27 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.fish.FishLogRepository
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.WeatherDataSource
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.WeatherRepository
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.fish.FishLog
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.NavigationBar
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.SettingsPopup
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.WelcomeScreen
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.YourInformationScreen
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish.AddFishDialog
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish.FishLogScreen
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish.FishLogViewModel
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.map.MapScreen
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.map.ProfileScreen
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.theme.Team45FiskeriAppTheme
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherViewModel
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherViewModelFactory
+import android.net.Uri
 
 @Composable
 fun NavigationHandler() {
@@ -30,17 +38,35 @@ fun NavigationHandler() {
     // Profil-tilstander
     var showSettings by remember { mutableStateOf(false) }
     var showYourInfo by remember { mutableStateOf(false) }
-    var userName by remember { mutableStateOf("") }
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
+    var profileImageUri by remember { mutableStateOf<String?>(null) }
 
     // Værdata
     val weatherViewModel: WeatherViewModel = viewModel(
         factory = WeatherViewModelFactory(WeatherRepository(WeatherDataSource()))
     )
     val weatherUiState by weatherViewModel.uiState.collectAsStateWithLifecycle()
+
+    // Fiskelog
+    val context = LocalContext.current
+    val fishLogViewModel = viewModel { FishLogViewModel(context) }
+    val fishLogUiState by fishLogViewModel.uiState.collectAsStateWithLifecycle()
+
+    // AddFishDialog tilstander
+    var showAddFishDialog by remember { mutableStateOf(false) }
+    var selectedLatitude by remember { mutableStateOf(0.0) }
+    var selectedLongitude by remember { mutableStateOf(0.0) }
+    var selectedLocation by remember { mutableStateOf<String?>(null) }
+    var previousRoute by remember { mutableStateOf<String?>(null) }
+    var fishType by remember { mutableStateOf("") }
+    var location by remember { mutableStateOf("") }
+    var area by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var weight by remember { mutableStateOf("") }
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
 
     // Tema
     Team45FiskeriAppTheme(darkTheme = isDarkMode) {
@@ -72,12 +98,28 @@ fun NavigationHandler() {
                             onShipsFilterChanged = { newValue ->
                                 showShips = newValue
                                 currentRoute = currentRoute
-                            }
+                            },
+                            onLocationSelected = if (previousRoute == "fiskelog") { lat, lon, location ->
+                                selectedLatitude = lat
+                                selectedLongitude = lon
+                                selectedLocation = location
+                                previousRoute?.let { currentRoute = it }
+                                showAddFishDialog = true
+                                previousRoute = null
+                            } else null
                         )
                         "profil" -> ProfileScreen(
-                            userName = "$firstName $lastName",
+                            firstName = firstName,
+                            lastName = lastName,
+                            phoneNumber = phoneNumber,
+                            email = email,
+                            profileImageUri = profileImageUri,
+                            onFirstNameChange = { firstName = it },
+                            onLastNameChange = { lastName = it },
+                            onPhoneNumberChange = { phoneNumber = it },
+                            onEmailChange = { email = it },
+                            onProfileImageChange = { profileImageUri = it },
                             onSettingsClick = { showSettings = true },
-                            onYourInformationClick = { showYourInfo = true },
                             isDarkMode = isDarkMode,
                             showGrib = showGrib,
                             showAlerts = showAlerts,
@@ -97,6 +139,18 @@ fun NavigationHandler() {
                             onShipsFilterChanged = { newValue ->
                                 showShips = newValue
                                 currentRoute = currentRoute
+                            },
+                            onFishLogClick = { currentRoute = "fiskelog" }
+                        )
+                        "fiskelog" -> FishLogScreen(
+                            fishLogs = fishLogUiState.fishLogs,
+                            onBackClick = { currentRoute = "profil" },
+                            onAddFish = { 
+                                showAddFishDialog = true
+                                previousRoute = currentRoute
+                            },
+                            onRemoveFish = { fishLog ->
+                                fishLogViewModel.removeFishLog(fishLog)
                             }
                         )
                     }
@@ -152,6 +206,51 @@ fun NavigationHandler() {
                     onPhoneNumberChange = { phoneNumber = it },
                     onEmailChange = { email = it },
                     onBackClick = { showYourInfo = false }
+                )
+            }
+
+            // AddFishDialog
+            if (showAddFishDialog) {
+                AddFishDialog(
+                    onDismiss = { 
+                        showAddFishDialog = false
+                        previousRoute = null
+                    },
+                    onAddFish = { fishLog ->
+                        fishLogViewModel.addFishLog(fishLog)
+                        showAddFishDialog = false
+                        // Nullstill all informasjon
+                        fishType = ""
+                        location = ""
+                        area = ""
+                        description = ""
+                        weight = ""
+                        imageUri = null
+                        selectedLatitude = 0.0
+                        selectedLongitude = 0.0
+                        selectedLocation = null
+                        previousRoute = null
+                    },
+                    latitude = selectedLatitude,
+                    longitude = selectedLongitude,
+                    onSelectLocation = {
+                        previousRoute = currentRoute
+                        currentRoute = "kart"
+                        showAddFishDialog = false
+                    },
+                    selectedLocationForFish = selectedLocation,
+                    initialFishType = fishType,
+                    initialLocation = location,
+                    initialArea = area,
+                    initialDescription = description,
+                    initialWeight = weight,
+                    initialImageUri = imageUri,
+                    onFishTypeChange = { fishType = it },
+                    onLocationChange = { location = it },
+                    onAreaChange = { area = it },
+                    onDescriptionChange = { description = it },
+                    onWeightChange = { weight = it },
+                    onImageUriChange = { imageUri = it }
                 )
             }
         }
