@@ -33,7 +33,7 @@ fun BaatvettButton(
         shape = RoundedCornerShape(16.dp)
     ) {
         Image(
-            painter = painterResource(id = R.drawable.baatvett_icon),
+            painter = painterResource(id = R.drawable.sailor_mascot),
             contentDescription = "Båtvett regler",
             modifier = Modifier.size(40.dp),
             contentScale = ContentScale.Fit

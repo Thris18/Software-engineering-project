@@ -3,6 +3,7 @@ package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -11,6 +12,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import android.content.Context
+import android.content.SharedPreferences
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun YourInformationScreen(
@@ -25,6 +29,20 @@ fun YourInformationScreen(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val sharedPreferences = remember { context.getSharedPreferences("user_info", Context.MODE_PRIVATE) }
+
+    // Lagre informasjon når den endres
+    LaunchedEffect(firstName, lastName, phoneNumber, email) {
+        sharedPreferences.edit().apply {
+            putString("firstName", firstName)
+            putString("lastName", lastName)
+            putString("phoneNumber", phoneNumber)
+            putString("email", email)
+            apply()
+        }
+    }
+
     Dialog(onDismissRequest = onBackClick) {
         Surface(
             modifier = modifier.fillMaxWidth(),
@@ -116,6 +134,21 @@ fun YourInformationScreen(
                         unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
                     )
                 )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Legg til knapp
+                TextButton(
+                    onClick = onBackClick,
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .padding(end = 8.dp),
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    Text("Legg til endringer")
+                }
             }
         }
     }

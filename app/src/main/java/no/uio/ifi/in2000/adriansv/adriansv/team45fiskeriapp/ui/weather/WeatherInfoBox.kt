@@ -42,13 +42,25 @@ fun WeatherInfoBox(
     var selectedTimeIndex by remember { mutableStateOf(0) }
     var expanded by remember { mutableStateOf(false) }
     val currentHour = isDay()
-    val weatherIcon = WeatherIcon.fromWeatherCode(weather.symbolCode.replace("_day", "").replace("_night", ""), currentHour)
-    val context = LocalContext.current
-
+    
     // Hent tidsperioder fra værvarsel-data og grupper dem etter dato
     val timeOptions = weather.timeseries.map { it.time }
     val selectedTime = timeOptions.getOrNull(selectedTimeIndex)
     val selectedWeatherData = weather.timeseries.getOrNull(selectedTimeIndex)?.data
+
+    // Værikon for valgt tidspunkt
+    val weatherIcon = WeatherIcon.fromWeatherCode(
+        selectedWeatherData?.next_1_hours?.summary?.symbol_code?.replace("_day", "")?.replace("_night", "") ?: weather.symbolCode.replace("_day", "").replace("_night", ""),
+        selectedTime?.let { time ->
+            try {
+                val formatter = java.time.format.DateTimeFormatter.ISO_DATE_TIME
+                val dateTime = java.time.ZonedDateTime.parse(time, formatter)
+                dateTime.hour
+            } catch (e: Exception) {
+                currentHour
+            }
+        } ?: currentHour
+    )
 
     // Grupper tidsperioder etter dato
     val groupedTimes = timeOptions.groupBy { time ->
@@ -82,12 +94,6 @@ fun WeatherInfoBox(
             currentHour
         }
     } ?: currentHour
-
-    // Oppdater værikon basert på valgt tidspunkt
-    val selectedWeatherIcon = WeatherIcon.fromWeatherCode(
-        selectedWeatherData?.next_1_hours?.summary?.symbol_code?.replace("_day", "")?.replace("_night", "") ?: weather.symbolCode.replace("_day", "").replace("_night", ""),
-        selectedHour
-    )
 
     // Finn nåværende tidspunkt og rund opp til neste time hvis minuttet er over 0
     val currentTime = java.time.ZonedDateTime.now()
@@ -125,7 +131,7 @@ fun WeatherInfoBox(
         ) {
             // Temperatur
             Text(
-                text = "${weather.temperature.toInt()}°C",
+                text = "${selectedWeatherData?.instant?.details?.air_temperature?.toInt() ?: weather.temperature.toInt()}°C",
                 fontSize = 16.sp,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -162,7 +168,7 @@ fun WeatherInfoBox(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // Værikon i detaljvisningen
-                        WeatherIconView(weatherIcon = selectedWeatherIcon, size = 48.dp)
+                        WeatherIconView(weatherIcon = weatherIcon, size = 48.dp)
                         
                         Spacer(modifier = Modifier.width(16.dp))
                         
