@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animation-list xmlns:android="http://schemas.android.com/apk/res/android"
+    android:oneshot="false">
+    
+    <item android:drawable="@drawable/geir_vink1"
+        android:duration="200" />
+    <item android:drawable="@drawable/geir_vink2"
+        android:duration="200" />
+    <item android:drawable="@drawable/geir_vink3"
+        android:duration="200" />
+    <item android:drawable="@drawable/geir_vink4"
+        android:duration="200" />
+    <item android:drawable="@drawable/geir_vink5"
+        android:duration="200" />
+    <item android:drawable="@drawable/geir_vink6"
+        android:duration="200" />
+    <item android:drawable="@drawable/geir_vink7"
+        android:duration="200" />
+    <item android:drawable="@drawable/geir_vink8"
+        android:duration="200" />
+    <item android:drawable="@drawable/geir_vink9"
+        android:duration="200" />
+    <item android:drawable="@drawable/geir_vink10"
+        android:duration="200" />
+</animation-list> 
