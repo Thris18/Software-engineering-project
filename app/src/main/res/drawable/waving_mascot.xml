@@ -2,24 +2,24 @@
 <animation-list xmlns:android="http://schemas.android.com/apk/res/android"
     android:oneshot="false">
     
-    <item android:drawable="@drawable/geir_vink1"
+    <item android:drawable="@drawable/wave_frame1"
         android:duration="200" />
-    <item android:drawable="@drawable/geir_vink2"
+    <item android:drawable="@drawable/wave_frame2"
         android:duration="200" />
-    <item android:drawable="@drawable/geir_vink3"
+    <item android:drawable="@drawable/wave_frame3"
         android:duration="200" />
-    <item android:drawable="@drawable/geir_vink4"
+    <item android:drawable="@drawable/wave_frame4"
         android:duration="200" />
-    <item android:drawable="@drawable/geir_vink5"
+    <item android:drawable="@drawable/wave_frame5"
         android:duration="200" />
-    <item android:drawable="@drawable/geir_vink6"
+    <item android:drawable="@drawable/wave_frame6"
         android:duration="200" />
-    <item android:drawable="@drawable/geir_vink7"
+    <item android:drawable="@drawable/wave_frame7"
         android:duration="200" />
-    <item android:drawable="@drawable/geir_vink8"
+    <item android:drawable="@drawable/wave_frame8"
         android:duration="200" />
-    <item android:drawable="@drawable/geir_vink9"
+    <item android:drawable="@drawable/wave_frame9"
         android:duration="200" />
-    <item android:drawable="@drawable/geir_vink10"
+    <item android:drawable="@drawable/wave_frame10"
         android:duration="200" />
 </animation-list> 
