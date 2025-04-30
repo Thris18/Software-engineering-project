@@ -88,20 +88,14 @@ fun WelcomeScreen(onNavigateToHome: () -> Unit) {
 
             Spacer(modifier = Modifier.height((screenHeight.value * 0.02f).dp))
 
-            // Animert maskot
-            AndroidView(
-                factory = { context ->
-                    ImageView(context).apply {
-                        setImageResource(R.drawable.waving_mascot)
-                        scaleType = ImageView.ScaleType.FIT_CENTER
-                    }
-                },
+            // Maskotbilde med responsiv størrelse
+            Image(
+                painter = painterResource(id = R.drawable.waving_mascot),
+                contentDescription = "Vinkende sjømannsmaskott",
+                contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .widthIn(max = imageSize)
-                    .padding(8.dp),
-                update = { view ->
-                    (view.drawable as? AnimationDrawable)?.start()
-                }
+                    .padding(8.dp)
             )
 
             // Flexible space that grows or shrinks based on screen size
