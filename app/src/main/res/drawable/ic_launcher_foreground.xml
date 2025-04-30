@@ -1,30 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path android:pathData="M31,63.928c0,0 6.4,-11 12.1,-13.1c7.2,-2.6 26,-1.4 26,-1.4l38.1,38.1L107,108.928l-32,-1L31,63.928z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:endX="85.84757"
-                android:endY="92.4963"
-                android:startX="42.9492"
-                android:startY="49.59793"
-                android:type="linear">
-                <item
-                    android:color="#44000000"
-                    android:offset="0.0" />
-                <item
-                    android:color="#00000000"
-                    android:offset="1.0" />
-            </gradient>
-        </aapt:attr>
-    </path>
-    <path
-        android:fillColor="#FFFFFF"
-        android:fillType="nonZero"
-        android:pathData="M65.3,45.828l3.8,-6.6c0.2,-0.4 0.1,-0.9 -0.3,-1.1c-0.4,-0.2 -0.9,-0.1 -1.1,0.3l-3.9,6.7c-6.3,-2.8 -13.4,-2.8 -19.7,0l-3.9,-6.7c-0.2,-0.4 -0.7,-0.5 -1.1,-0.3C38.8,38.328 38.7,38.828 38.9,39.228l3.8,6.6C36.2,49.428 31.7,56.028 31,63.928h46C76.3,56.028 71.8,49.428 65.3,45.828zM43.4,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2c-0.3,-0.7 -0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C45.3,56.528 44.5,57.328 43.4,57.328L43.4,57.328zM64.6,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2s-0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C66.5,56.528 65.6,57.328 64.6,57.328L64.6,57.328z"
-        android:strokeWidth="1"
-        android:strokeColor="#00000000" />
+    
+    <group
+        android:scaleX="0.6"
+        android:scaleY="0.6"
+        android:translateX="21.6"
+        android:translateY="21.6">
+        
+        <!-- Kropp -->
+        <path
+            android:fillColor="#1B3F8B"
+            android:pathData="M54,65 C54,85 75,95 54,95 C33,95 25,85 25,65 C25,45 33,35 54,35 C75,35 54,45 54,65"/>
+            
+        <!-- Hode -->
+        <path
+            android:fillColor="#FFE0B2"
+            android:pathData="M54,30 C65,30 74,39 74,50 C74,61 65,70 54,70 C43,70 34,61 34,50 C34,39 43,30 54,30"/>
+            
+        <!-- Lue -->
+        <path
+            android:fillColor="#1B3F8B"
+            android:pathData="M74,45 C74,35 65,27 54,27 C43,27 34,35 34,45 L74,45"/>
+            
+        <!-- Lue-anker -->
+        <path
+            android:fillColor="#FFA000"
+            android:pathData="M51,32 L57,32 L54,42 Z"/>
+            
+        <!-- Ansikt -->
+        <path
+            android:fillColor="#000000"
+            android:pathData="M48,50 C48,52 46,52 46,50 C46,48 48,48 48,50 M62,50 C62,52 60,52 60,50 C60,48 62,48 62,50 M54,55 C58,55 58,58 54,58 C50,58 50,55 54,55"/>
+    </group>
 </vector>
