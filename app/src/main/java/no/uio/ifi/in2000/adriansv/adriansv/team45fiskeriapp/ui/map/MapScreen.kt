@@ -64,7 +64,18 @@ import androidx.compose.material.icons.filled.Add
 import com.google.android.gms.common.Feature
 import org.maplibre.android.style.layers.PropertyFactory.*
 import android.net.Uri
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.R
+import androidx.compose.ui.graphics.ColorFilter
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.NavigationBar
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.weather.LocationWeather
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTripDialog
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherUiState
+import java.time.LocalDateTime
+import java.util.*
+import android.location.Location
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish.FishLogViewModel
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish.FishLogDialog
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish.AddFishDialog
@@ -74,11 +85,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.R
-import androidx.compose.ui.graphics.ColorFilter
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.NavigationBar
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.weather.LocationWeather
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherUiState
 
 private const val TAG = "MapScreen"
 private const val SHIP_LAYER_ID = "ship-layer"
@@ -104,6 +110,7 @@ private fun updateAlertPolygon(style: Style, alertId: String?) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MapScreen(
     onNavigateToProfile: () -> Unit,
@@ -177,6 +184,13 @@ fun MapScreen(
     var showLocationSelectionDialog by remember { mutableStateOf(false) }
     var selectedLocationForFish by remember { mutableStateOf<Pair<Double, Double>?>(null) }
     
+    // Fisketur states
+    var showFishingTripDialog by remember { mutableStateOf(false) }
+    var fishingTripName by remember { mutableStateOf("") }
+    var isFishingTripActive by remember { mutableStateOf(false) }
+    var fishingTripStartTime by remember { mutableStateOf<LocalDateTime?>(null) }
+    var fishingTripStartLocation by remember { mutableStateOf<LatLng?>(null) }
+    
     // State for AddFishDialog
     var fishType by remember { mutableStateOf("") }
     var location by remember { mutableStateOf("") }
@@ -184,6 +198,32 @@ fun MapScreen(
     var description by remember { mutableStateOf("") }
     var weight by remember { mutableStateOf("") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
+
+    // Gjenopprett fisketur-tilstand når appen starter
+    LaunchedEffect(Unit) {
+        val savedTripName = context.getSharedPreferences("fishing_trip", Context.MODE_PRIVATE)
+            .getString("trip_name", "")
+        val savedStartTime = context.getSharedPreferences("fishing_trip", Context.MODE_PRIVATE)
+            .getLong("start_time", 0)
+        val savedIsActive = context.getSharedPreferences("fishing_trip", Context.MODE_PRIVATE)
+            .getBoolean("is_active", false)
+            
+        if (savedIsActive && savedStartTime > 0) {
+            fishingTripName = savedTripName ?: ""
+            isFishingTripActive = true
+            fishingTripStartTime = LocalDateTime.ofEpochSecond(savedStartTime, 0, java.time.ZoneOffset.UTC)
+        }
+    }
+    
+    // Lagre fisketur-tilstand når den endres
+    LaunchedEffect(isFishingTripActive, fishingTripStartTime, fishingTripName) {
+        context.getSharedPreferences("fishing_trip", Context.MODE_PRIVATE).edit().apply {
+            putString("trip_name", fishingTripName)
+            putLong("start_time", fishingTripStartTime?.toEpochSecond(java.time.ZoneOffset.UTC) ?: 0)
+            putBoolean("is_active", isFishingTripActive)
+            apply()
+        }
+    }
 
     // Tøm fiskeloggen når man tømmer loggen i kartet
     fun clearFishLogs() {
@@ -664,12 +704,32 @@ fun MapScreen(
             }
 
             // UI Elements
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp)
             ) {
-                Spacer(modifier = Modifier.weight(1f))
+                // Fisketur-knapp
+                FloatingActionButton(
+                    onClick = { showFishingTripDialog = true },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(bottom = 152.dp),
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Image(
+                        painter = rememberAsyncImagePainter(
+                            model = "file:///android_asset/png/fisketur.png"
+                        ),
+                        contentDescription = "Start fisketur",
+                        modifier = Modifier
+                            .size(48.dp)
+                            .padding(4.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                }
 
                 // Fiskelogg button
                 FloatingActionButton(
@@ -683,8 +743,8 @@ fun MapScreen(
                         selectedLocationForFish = null
                     },
                     modifier = Modifier
-                        .padding(bottom = 8.dp)
-                        .align(Alignment.End),
+                        .align(Alignment.BottomEnd)
+                        .padding(bottom = 80.dp),
                     containerColor = MaterialTheme.colorScheme.surface,
                     contentColor = MaterialTheme.colorScheme.onSurface,
                     shape = MaterialTheme.shapes.medium
@@ -703,8 +763,8 @@ fun MapScreen(
                 BaatvettButton(
                     onClick = { showBaatvettRules = true },
                     modifier = Modifier
+                        .align(Alignment.BottomEnd)
                         .padding(bottom = 16.dp)
-                        .align(Alignment.End)
                 )
             }
             
@@ -806,34 +866,6 @@ fun MapScreen(
                 }
             }
 
-            // Add Settings button
-            Column(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = 24.dp, end = 16.dp),
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // Settings button
-                Surface(
-                    shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-                    tonalElevation = 2.dp
-                ) {
-                    IconButton(
-                        onClick = { showFilterMenu = !showFilterMenu },
-                        modifier = Modifier.size(48.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "Innstillinger",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(28.dp)
-                        )
-                    }
-                }
-            }
-
             // Show fish log dialog
             if (showFishLogDialog) {
                 FishLogDialog(
@@ -920,6 +952,82 @@ fun MapScreen(
                     onWeightChange = { weight = it },
                     onImageUriChange = { imageUri = it },
                     selectedLocationForFish = selectedLocationForFish?.toString()
+                )
+            }
+
+            // Show fishing trip dialog
+            if (showFishingTripDialog) {
+                FishingTripDialog(
+                    onDismiss = { showFishingTripDialog = false },
+                    tripName = fishingTripName,
+                    onTripNameChange = { fishingTripName = it },
+                    isTripActive = isFishingTripActive,
+                    onStartTrip = { location ->
+                        isFishingTripActive = true
+                        fishingTripStartTime = LocalDateTime.now()
+                        fishingTripStartLocation = LatLng(location.latitude, location.longitude)
+                    },
+                    onEndTrip = {
+                        isFishingTripActive = false
+                        fishingTripStartTime = null
+                        fishingTripStartLocation = null
+                    },
+                    startTime = fishingTripStartTime,
+                    onClose = { showFishingTripDialog = false },
+                    onAddCatch = { fishType: String, weight: Double, imageUri: Uri?, location: Location ->
+                        // Konverter Location til LatLng
+                        val latLng = LatLng(location.latitude, location.longitude)
+                        
+                        // Opprett FishLog med riktig posisjon
+                        val fishLog = FishLog(
+                            fishType = fishType,
+                            area = fishingTripName,
+                            weight = weight.toFloat(),
+                            imageUri = imageUri?.toString(),
+                            latitude = location.latitude,
+                            longitude = location.longitude,
+                            timestamp = Date()
+                        )
+                        
+                        // Legg til fangsten i repository
+                        fishLogViewModel.addFishLog(fishLog)
+                        
+                        // Oppdater kartet med den nye fangsten
+                        mapLibreMap?.getStyle { style ->
+                            // Legg til GeoJSON kilde
+                            val source = GeoJsonSource(
+                                "fish_${fishLog.timestamp}",
+                                "{\"type\":\"Feature\",\"geometry\":{\"type\":\"Point\",\"coordinates\":[${fishLog.longitude},${fishLog.latitude}]},\"properties\":{\"timestamp\":\"${fishLog.timestamp}\"}}"
+                            )
+                            style.addSource(source)
+                            
+                            // Legg til symbol layer
+                            val layer = SymbolLayer("fish_${fishLog.timestamp}", "fish_${fishLog.timestamp}")
+                                .withProperties(
+                                    iconImage("fish_icon"),
+                                    iconSize(0.05f),
+                                    iconAllowOverlap(true),
+                                    iconIgnorePlacement(true),
+                                    iconAnchor(Property.ICON_ANCHOR_CENTER),
+                                    iconOpacity(0.8f)
+                                )
+                            style.addLayer(layer)
+                            
+                            // Hvis det er et bilde, last det inn
+                            if (imageUri != null) {
+                                // Last inn bildet
+                                val imageId = "fish_image_${fishLog.timestamp}"
+                                val image = BitmapFactory.decodeStream(context.contentResolver.openInputStream(imageUri))
+                                style.addImage(imageId, image)
+                                
+                                // Oppdater symbol layer med det nye bildet
+                                layer.setProperties(
+                                    iconImage(imageId),
+                                    iconSize(0.05f)  // Bruk samme størrelse som standard fisk-ikon
+                                )
+                            }
+                        }
+                    }
                 )
             }
         }

@@ -54,7 +54,6 @@ fun AddFishDialog(
     selectedLocationForFish: String? = null
 ) {
     var fishType by remember { mutableStateOf(initialFishType) }
-    var location by remember { mutableStateOf(initialLocation) }
     var area by remember { mutableStateOf(initialArea) }
     var description by remember { mutableStateOf(initialDescription) }
     var weight by remember { mutableStateOf(initialWeight) }
@@ -206,16 +205,6 @@ fun AddFishDialog(
                 )
 
                 OutlinedTextField(
-                    value = location,
-                    onValueChange = { 
-                        location = it
-                        onLocationChange(it)
-                    },
-                    label = { Text("Sted") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                OutlinedTextField(
                     value = area,
                     onValueChange = { 
                         area = it
@@ -268,7 +257,7 @@ fun AddFishDialog(
                 }
 
                 // Vis koordinater kun hvis brukeren har valgt et punkt gjennom kartet
-                if (latitude != 0.0 && longitude != 0.0 && location.isNotBlank() && selectedLocationForFish != null) {
+                if (latitude != 0.0 && longitude != 0.0 && selectedLocationForFish != null) {
                     Text(
                         text = "Valgt posisjon: ${String.format("%.4f", latitude)}, ${String.format("%.4f", longitude)}",
                         style = MaterialTheme.typography.bodySmall,
@@ -304,17 +293,17 @@ fun AddFishDialog(
         confirmButton = {
             TextButton(
                 onClick = {
-                    if (fishType.isNotBlank() && location.isNotBlank() && area.isNotBlank()) {
+                    if (fishType.isNotBlank() && area.isNotBlank()) {
                         onAddFish(
                             FishLog(
                                 fishType = fishType,
-                                location = location,
                                 area = area,
                                 description = description,
-                                weight = weight.toFloatOrNull(),
+                                weight = weight.toFloatOrNull() ?: 0.0f,
                                 imageUri = imageUri?.toString(),
                                 latitude = latitude,
-                                longitude = longitude
+                                longitude = longitude,
+                                timestamp = Date(System.currentTimeMillis())
                             )
                         )
                         onDismiss()
