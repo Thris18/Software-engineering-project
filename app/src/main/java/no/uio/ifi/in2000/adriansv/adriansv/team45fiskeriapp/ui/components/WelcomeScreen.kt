@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -89,12 +90,18 @@ fun WelcomeScreen(onNavigateToHome: () -> Unit) {
             Spacer(modifier = Modifier.height((screenHeight.value * 0.02f).dp))
 
             // Maskotbilde med responsiv størrelse
-            Image(
-                painter = painterResource(id = R.drawable.waving_mascot),
-                contentDescription = "Vinkende sjømannsmaskott",
-                contentScale = ContentScale.Fit,
+            AndroidView(
+                factory = { context ->
+                    ImageView(context).apply {
+                        setBackgroundResource(R.drawable.waving_mascot)
+                        scaleType = ImageView.ScaleType.FIT_CENTER
+                        adjustViewBounds = true
+                        (background as? AnimationDrawable)?.start()
+                    }
+                },
                 modifier = Modifier
                     .widthIn(max = imageSize)
+                    .height(imageSize)
                     .padding(8.dp)
             )
 

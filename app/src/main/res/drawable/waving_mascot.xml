@@ -18,8 +18,6 @@
         android:duration="200" />
     <item android:drawable="@drawable/wave_frame8"
         android:duration="200" />
-    <item android:drawable="@drawable/wave_frame9"
-        android:duration="200" />
     <item android:drawable="@drawable/wave_frame10"
         android:duration="200" />
 </animation-list> 
