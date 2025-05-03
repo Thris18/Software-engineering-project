@@ -1196,6 +1196,12 @@ fun MapScreen(
                     onEndTrip = {
                         isFishingTripActive = false
                         fishingTripEndTime = LocalDateTime.now()
+                        
+                        // Ta skjermbilde av kartet
+                        mapLibreMap?.snapshot { bitmap ->
+                            mapScreenshot = saveMapScreenshot(context, bitmap)
+                        }
+                        
                         showFishingTripDialog = false
                         showFishingTripSummary = true
                     },
@@ -1204,9 +1210,9 @@ fun MapScreen(
                     onAddCatch = { fishType, weight, uri, location ->
                         // Legg til fangst i fiskeloggen
                         val fishLog = FishLog(
-                            type = fishType,
-                            weight = weight.toString(),
-                            timestamp = System.currentTimeMillis(),
+                            fishType = fishType,
+                            weight = try { weight.toFloat() } catch (e: Exception) { null },
+                            timestamp = Date(),
                             latitude = location.latitude,
                             longitude = location.longitude,
                             area = "",
@@ -1226,10 +1232,14 @@ fun MapScreen(
                     tripName = fishingTripName,
                     startTime = fishingTripStartTime!!,
                     endTime = fishingTripEndTime!!,
-                    fishLogs = fishLogUiState.fishLogs.filter { 
-                        it.timestamp >= fishingTripStartTime!!.toEpochSecond(java.time.ZoneOffset.UTC) * 1000 && 
-                        it.timestamp <= fishingTripEndTime!!.toEpochSecond(java.time.ZoneOffset.UTC) * 1000 
+                    route = fishingTripRoute,
+                    catches = fishLogUiState.fishLogs.filter { 
+                        val logDate = it.timestamp
+                        val startDate = Date.from(fishingTripStartTime!!.atZone(java.time.ZoneId.systemDefault()).toInstant())
+                        val endDate = Date.from(fishingTripEndTime!!.atZone(java.time.ZoneId.systemDefault()).toInstant())
+                        logDate.after(startDate) && logDate.before(endDate)
                     },
+                    mapView = mapView,
                     mapScreenshot = mapScreenshot
                 )
             }
@@ -1322,4 +1332,21 @@ private fun loadWarningIcons(context: Context, style: Style) {
     }
 
     Log.d(TAG, "Icon loading summary - Loaded: $loadedIcons, Failed: $failedIcons")
+}
+
+// Funksjon for å lagre kartskjermbilde
+private fun saveMapScreenshot(context: Context, bitmap: Bitmap): Uri? {
+    return try {
+        val fileName = "fishing_trip_${System.currentTimeMillis()}.jpg"
+        val file = File(context.getExternalFilesDir(null), fileName)
+        
+        FileOutputStream(file).use { out ->
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
+        }
+        
+        Uri.fromFile(file)
+    } catch (e: Exception) {
+        Log.e(TAG, "Failed to save map screenshot: ${e.message}")
+        null
+    }
 } 
