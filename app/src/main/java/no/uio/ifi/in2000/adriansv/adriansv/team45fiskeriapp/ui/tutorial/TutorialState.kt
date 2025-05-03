@@ -28,7 +28,8 @@ data class TutorialStep(
     val targetTag: String,
     val mascotResourceId: Int? = null,
     val mascotPosition: MascotPosition = MascotPosition.RIGHT,
-    val mascotOffset: androidx.compose.ui.unit.DpOffset = androidx.compose.ui.unit.DpOffset(0.dp, 0.dp)
+    val mascotOffset: androidx.compose.ui.unit.DpOffset = androidx.compose.ui.unit.DpOffset(0.dp, 0.dp),
+    val isLastStep: Boolean = false
 )
 
 enum class MascotPosition {

@@ -93,12 +93,25 @@ fun TutorialOverlay(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            TextButton(onClick = onSkip) {
-                                Text("Hopp over")
-                            }
-                            
-                            TextButton(onClick = onNext) {
-                                Text("Neste")
+                            if (currentStep.isLastStep) {
+                                // For det siste steget viser vi bare én enkelt "Kom i gang"-knapp i midten
+                                Spacer(Modifier.weight(1f))
+                                Button(
+                                    onClick = onNext,
+                                    modifier = Modifier.padding(horizontal = 8.dp)
+                                ) {
+                                    Text("Kom i gang!")
+                                }
+                                Spacer(Modifier.weight(1f))
+                            } else {
+                                // For alle andre steg viser vi "Hopp over" og "Neste"
+                                TextButton(onClick = onSkip) {
+                                    Text("Hopp over")
+                                }
+                                
+                                TextButton(onClick = onNext) {
+                                    Text("Neste")
+                                }
                             }
                         }
                     }
@@ -115,6 +128,18 @@ fun TutorialOverlay(
                                     .size(175.dp)  // Mindre størrelse for profilsiden
                                     .align(Alignment.BottomCenter)
                                     .offset(y = 210.dp, x = 50.dp),  // Plassert under dialogen
+                                contentScale = ContentScale.Fit
+                            )
+                        }
+                        "Gratulerer!" -> {
+                            // For gratulerer-steget: Plasser maskotten under dialogen, litt større
+                            Image(
+                                painter = painterResource(id = currentStep.mascotResourceId),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(220.dp)
+                                    .align(Alignment.Center)
+                                    .offset(y = 230.dp),
                                 contentScale = ContentScale.Fit
                             )
                         }
@@ -163,6 +188,18 @@ fun TutorialOverlay(
                                     .size(180.dp)
                                     .align(Alignment.BottomCenter)
                                     .offset(y = 180.dp, x = 40.dp),
+                                contentScale = ContentScale.Fit
+                            )
+                        }
+                        "Fisketuren" -> {
+                            // For fisketuren: Plassert til høyre for å peke på fisketurknappen
+                            Image(
+                                painter = painterResource(id = currentStep.mascotResourceId),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(180.dp)
+                                    .align(Alignment.BottomCenter)
+                                    .offset(y = 150.dp, x = 40.dp),
                                 contentScale = ContentScale.Fit
                             )
                         }
@@ -248,7 +285,20 @@ fun TutorialOverlay(
                         modifier = Modifier
                             .size(70.dp)
                             .align(Alignment.Center)
-                            .offset(y = 190.dp, x = 147.dp)
+                            .offset(y = 197.dp, x = 147.dp)
+                            .clip(CircleShape)
+                            .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f))
+                    )
+                }
+                
+                // Circular highlight for Fisketuren
+                if (currentStep.title == "Fisketuren") {
+                    Box(
+                        modifier = Modifier
+                            .size(70.dp)
+                            .align(Alignment.Center)
+                            .offset(y = 127.dp, x = 147.dp)
                             .clip(CircleShape)
                             .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
                             .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f))

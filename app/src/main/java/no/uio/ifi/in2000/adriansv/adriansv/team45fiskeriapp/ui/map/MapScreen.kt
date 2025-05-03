@@ -453,22 +453,35 @@ fun MapScreen(
                 mascotResourceId = R.drawable.nedhoyre
             ),
             TutorialStep(
-                title = "Båtvettregler",
-                description = "Før du ferder på sjøen, er det viktig å vite om reglene!",
-                targetTag = "",
-                mascotResourceId = R.drawable.tilhoyre
-            ),
-            TutorialStep(
                 title = "Søkefunksjonen",
                 description = "Lyst til å planlegge området først? Søkefunksjonen hjelper deg å finne fram til der du ønsker å dra!",
                 targetTag = "search_button",
                 mascotResourceId = R.drawable.pekopp
             ),
             TutorialStep(
+                title = "Båtvettregler",
+                description = "Før du ferder på sjøen, er det viktig å vite om reglene!",
+                targetTag = "",
+                mascotResourceId = R.drawable.tilhoyre
+            ),
+            TutorialStep(
                 title = "Fiskeloggen",
                 description = "I Fiskeloggen kan du lagre dine fisker og plassere de på kartet der du fikk de!",
                 targetTag = "fish_log_button",
                 mascotResourceId = R.drawable.tilhoyre
+            ),
+            TutorialStep(
+                title = "Fisketuren",
+                description = "Trykk her for å starte en fisketur. Appen holder styr på tiden og fangstene dine, som du kan finne igjen i Min Profil!",
+                targetTag = "fishing_trip_button",
+                mascotResourceId = R.drawable.tilhoyre
+            ),
+            TutorialStep(
+                title = "Gratulerer!",
+                description = "Nå har du lært det grunnleggende i appen, og du er klar til å utforske norske farvann. God fisketur!",
+                targetTag = "",
+                mascotResourceId = R.drawable.presenting,
+                isLastStep = true
             )
         )
     }
@@ -913,7 +926,8 @@ fun MapScreen(
                     onClick = { showFishingTripDialog = true },
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .padding(bottom = 152.dp),
+                        .padding(bottom = 152.dp)
+                        .tutorialTarget("fishing_trip_button", tutorialManager),
                     containerColor = MaterialTheme.colorScheme.surface,
                     contentColor = MaterialTheme.colorScheme.onSurface,
                     shape = MaterialTheme.shapes.medium
