@@ -828,7 +828,6 @@ fun MapScreen(
             ) {
                 Spacer(modifier = Modifier.weight(1f))
 
-                // Fiskelogg button
                 FloatingActionButton(
                     onClick = { 
                         showFishLogDialog = true
@@ -848,16 +847,15 @@ fun MapScreen(
                     shape = MaterialTheme.shapes.medium
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.fiskelogg),
+                        painter = painterResource(id = R.drawable.flk),
                         contentDescription = "Fiskelogg",
                         modifier = Modifier
-                            .size(48.dp)
+                            .size(60.dp)
                             .padding(4.dp),
                         contentScale = ContentScale.Fit
                     )
                 }
 
-                // Båtvett button
                 BaatvettButton(
                     onClick = { showBaatvettRules = true },
                     modifier = Modifier
@@ -867,7 +865,6 @@ fun MapScreen(
             }
             
 
-            // Popups and overlays
             if (showBaatvettRules) {
                 BaatvettOverlay(
                     onDismiss = { showBaatvettRules = false }
