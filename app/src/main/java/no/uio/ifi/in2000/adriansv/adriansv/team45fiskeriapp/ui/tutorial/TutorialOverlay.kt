@@ -248,7 +248,7 @@ fun TutorialOverlay(
                         modifier = Modifier
                             .size(70.dp)
                             .align(Alignment.Center)
-                            .offset(y = 210.dp, x = 147.dp)
+                            .offset(y = 190.dp, x = 147.dp)
                             .clip(CircleShape)
                             .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
                             .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f))

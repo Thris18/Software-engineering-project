@@ -56,7 +56,7 @@ fun WelcomeScreen(onNavigateToHome: () -> Unit) {
     
     // Calculate appropriate sizes based on screen dimensions
     val titleSize = min(screenWidth.value * 0.15f, 72f).sp
-    val imageSize = min(screenWidth.value * 0.8f, 350f).dp
+    val imageSize = min(screenWidth.value * 0.9f, 400f).dp
     val buttonWidth = min(screenWidth.value * 0.8f, 350f).dp
 
     Box(
@@ -71,8 +71,8 @@ fun WelcomeScreen(onNavigateToHome: () -> Unit) {
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Responsive spacing at top (smaller on small screens)
-            Spacer(modifier = Modifier.height((screenHeight.value * 0.05f).dp))
+            // Øk avstanden fra toppen for å senke alt innhold
+            Spacer(modifier = Modifier.height((screenHeight.value * 0.07f).dp))
 
             // Appnavn med responsiv fontstørrelse
             Text(
@@ -87,9 +87,9 @@ fun WelcomeScreen(onNavigateToHome: () -> Unit) {
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height((screenHeight.value * 0.02f).dp))
+            // Beholdt samme mellomrom mellom tittel og maskott
+            Spacer(modifier = Modifier.height((screenHeight.value * 0.01f).dp))
 
-            // Maskotbilde med responsiv størrelse
             AndroidView(
                 factory = { context ->
                     ImageView(context).apply {
@@ -105,8 +105,8 @@ fun WelcomeScreen(onNavigateToHome: () -> Unit) {
                     .padding(8.dp)
             )
 
-            // Flexible space that grows or shrinks based on screen size
-            Spacer(modifier = Modifier.weight(1f))
+            // Redusert mellomrom ytterligere for å flytte maskotten nærmere midten
+            Spacer(modifier = Modifier.weight(0.4f))
 
             // Fiskeanimasjon - større størrelse
             AsyncImage(

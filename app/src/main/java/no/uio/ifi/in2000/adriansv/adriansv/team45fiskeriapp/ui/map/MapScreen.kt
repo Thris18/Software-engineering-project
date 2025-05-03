@@ -850,7 +850,7 @@ fun MapScreen(
                         painter = painterResource(id = R.drawable.flk),
                         contentDescription = "Fiskelogg",
                         modifier = Modifier
-                            .size(60.dp)
+                            .size(59.dp)
                             .padding(4.dp),
                         contentScale = ContentScale.Fit
                     )
