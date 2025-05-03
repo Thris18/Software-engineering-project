@@ -1,7 +1,5 @@
 package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.weather
 
-import java.util.*
-
 enum class WeatherIcon(private val iconName: String) {
     // Klart vær (01)
     CLEAR_DAY("01d.svg"),
@@ -176,15 +174,8 @@ enum class WeatherIcon(private val iconName: String) {
                 "snowandthunder" -> SNOW_THUNDER_DAY
                 "snowshowers" -> SNOW_SHOWERS_DAY
                 "snowshowersandthunder" -> SNOW_SHOWERS_THUNDER_DAY
-                else -> CLEAR_DAY // Default to clear sky if code not recognized
+                else -> CLEAR_DAY
             }
         }
     }
 }
-
-// Data class for å holde vær og temperatur sammen
-data class WeatherInfo(
-    val temperature: Double,
-    val weatherIcon: WeatherIcon,
-    val description: String
-) 

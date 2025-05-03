@@ -1,6 +1,5 @@
 package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.weather
 
-// Data classes for å representere værdata
 data class WeatherResponse(
     val type: String,
     val geometry: Geometry,

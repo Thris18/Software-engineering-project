@@ -82,6 +82,23 @@ import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherUi
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.tutorial.*
 import androidx.compose.ui.unit.DpOffset
 import kotlinx.coroutines.delay
+import android.Manifest
+import android.content.pm.PackageManager
+import android.location.LocationManager
+import android.graphics.Bitmap
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import java.time.LocalDateTime
+import java.util.*
+import android.location.Location
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTrip
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTripStorage
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTripDialog
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTripSummaryDialog
+import org.maplibre.android.style.layers.CircleLayer
+import org.maplibre.android.style.layers.LineLayer
+import java.io.File
+import java.io.FileOutputStream
 
 private const val TAG = "MapScreen"
 private const val SHIP_LAYER_ID = "ship-layer"
@@ -182,6 +199,17 @@ fun MapScreen(
     var showLocationSelectionDialog by remember { mutableStateOf(false) }
     var selectedLocationForFish by remember { mutableStateOf<Pair<Double, Double>?>(null) }
     
+    // Fisketur states
+    var showFishingTripDialog by remember { mutableStateOf(false) }
+    var showFishingTripSummary by remember { mutableStateOf(false) }
+    var fishingTripName by remember { mutableStateOf("") }
+    var isFishingTripActive by remember { mutableStateOf(false) }
+    var fishingTripStartTime by remember { mutableStateOf<LocalDateTime?>(null) }
+    var fishingTripEndTime by remember { mutableStateOf<LocalDateTime?>(null) }
+    var fishingTripStartLocation by remember { mutableStateOf<LatLng?>(null) }
+    var fishingTripRoute by remember { mutableStateOf<List<LatLng>>(emptyList()) }
+    var mapScreenshot by remember { mutableStateOf<Uri?>(null) }
+    
     // State for AddFishDialog
     var fishType by remember { mutableStateOf("") }
     var location by remember { mutableStateOf("") }
@@ -194,6 +222,20 @@ fun MapScreen(
     var mapLoadTimeout by remember { mutableStateOf(false) }
     val mapLoadTimeoutDuration = 10000L // 10 sekunder
     
+    // Legg til states for brukerens posisjon
+    var userLocation by remember { mutableStateOf<LatLng?>(null) }
+    var isTrackingUser by remember { mutableStateOf(false) }
+
+    // Sjekk lokasjonstillatelser
+    val locationPermissionState = remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+
     LaunchedEffect(uiState.geoJsonData) {
         // Reset timeout når geoJsonData oppdateres
         mapLoadTimeout = false
@@ -433,6 +475,43 @@ fun MapScreen(
         if (tutorialManager.state.isCompleted) {
             // Varsle når tutorial er fullført
             onTutorialComplete()
+        }
+    }
+    
+    // Be om lokasjonstillatelse hvis nødvendig
+    LaunchedEffect(Unit) {
+        if (!locationPermissionState.value) {
+            ActivityCompat.requestPermissions(
+                context as android.app.Activity,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                1
+            )
+        }
+    }
+
+    // Gjenopprett fisketur-tilstand når appen starter
+    LaunchedEffect(Unit) {
+        val savedTripName = context.getSharedPreferences("fishing_trip", Context.MODE_PRIVATE)
+            .getString("trip_name", "")
+        val savedStartTime = context.getSharedPreferences("fishing_trip", Context.MODE_PRIVATE)
+            .getLong("start_time", 0)
+        val savedIsActive = context.getSharedPreferences("fishing_trip", Context.MODE_PRIVATE)
+            .getBoolean("is_active", false)
+
+        if (savedIsActive && savedStartTime > 0) {
+            fishingTripName = savedTripName ?: ""
+            isFishingTripActive = true
+            fishingTripStartTime = LocalDateTime.ofEpochSecond(savedStartTime, 0, java.time.ZoneOffset.UTC)
+        }
+    }
+
+    // Lagre fisketur-tilstand når den endres
+    LaunchedEffect(isFishingTripActive, fishingTripStartTime, fishingTripName) {
+        context.getSharedPreferences("fishing_trip", Context.MODE_PRIVATE).edit().apply {
+            putString("trip_name", fishingTripName)
+            putLong("start_time", fishingTripStartTime?.toEpochSecond(java.time.ZoneOffset.UTC) ?: 0)
+            putBoolean("is_active", isFishingTripActive)
+            apply()
         }
     }
     
@@ -821,12 +900,31 @@ fun MapScreen(
             }
 
             // UI Elements
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp)
             ) {
-                Spacer(modifier = Modifier.weight(1f))
+                // Fisketur-knapp
+                FloatingActionButton(
+                    onClick = { showFishingTripDialog = true },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(bottom = 152.dp),
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Image(
+                        painter = rememberAsyncImagePainter(
+                            model = "file:///android_asset/png/fisketur.png"
+                        ),
+                        contentDescription = "Start fisketur",
+                        modifier = Modifier
+                            .size(56.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                }
 
                 FloatingActionButton(
                     onClick = { 
@@ -839,8 +937,8 @@ fun MapScreen(
                         selectedLocationForFish = null
                     },
                     modifier = Modifier
-                        .padding(bottom = 8.dp)
-                        .align(Alignment.End)
+                        .align(Alignment.BottomEnd)
+                        .padding(bottom = 80.dp)
                         .tutorialTarget("fish_log_button", tutorialManager),
                     containerColor = MaterialTheme.colorScheme.surface,
                     contentColor = MaterialTheme.colorScheme.onSurface,
@@ -859,8 +957,8 @@ fun MapScreen(
                 BaatvettButton(
                     onClick = { showBaatvettRules = true },
                     modifier = Modifier
+                        .align(Alignment.BottomEnd)
                         .padding(bottom = 16.dp)
-                        .align(Alignment.End)
                 )
             }
             
