@@ -45,18 +45,4 @@ class WeatherRepository(private val weatherDataSource: WeatherDataSource) {
             Result.failure(e)
         }
     }
-    
-    companion object {
-        fun shouldShowWeather(zoomLevel: Double): Boolean {
-            val should = WeatherDataSource.getWeatherZoomLevel(zoomLevel) != null
-            Log.d(TAG, "Should show weather for zoom $zoomLevel: $should")
-            return should
-        }
-        
-        fun getWeatherZoomLevel(zoomLevel: Double): no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.WeatherZoomLevel? {
-            val level = WeatherDataSource.getWeatherZoomLevel(zoomLevel)
-            Log.d(TAG, "Weather zoom level for $zoomLevel: $level")
-            return level
-        }
-    }
 } 
