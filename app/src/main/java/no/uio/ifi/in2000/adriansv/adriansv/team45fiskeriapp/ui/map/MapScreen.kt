@@ -79,6 +79,8 @@ import androidx.compose.ui.graphics.ColorFilter
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.NavigationBar
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.weather.LocationWeather
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherUiState
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.tutorial.*
+import androidx.compose.ui.unit.DpOffset
 
 private const val TAG = "MapScreen"
 private const val SHIP_LAYER_ID = "ship-layer"
@@ -358,6 +360,29 @@ fun MapScreen(
     LaunchedEffect(showLocationSelectionDialog) {
         if (showLocationSelectionDialog) {
             showAddFishDialog = false
+        }
+    }
+
+    // --- Tutorial ---
+    val tutorialManager = rememberTutorialManager()
+    val tutorialSteps = remember {
+        listOf(
+            TutorialStep(
+                title = "Velkommen til appen!",
+                description = "Dette er en rask introduksjon til de viktigste funksjonene.",
+                targetTag = "", // Ingen highlight på første popup
+                mascotResourceId = R.drawable.mascot_info,
+                mascotPosition = MascotPosition.LEFT,
+                mascotOffset = DpOffset((-40).dp, 0.dp)
+            )
+            // Legg til flere steg her etter behov
+        )
+    }
+    var tutorialStarted by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        if (!tutorialStarted) {
+            tutorialManager.startTutorial(tutorialSteps)
+            tutorialStarted = true
         }
     }
 
@@ -922,6 +947,13 @@ fun MapScreen(
                     selectedLocationForFish = selectedLocationForFish?.toString()
                 )
             }
+
+            // Legg til tutorial overlay på toppen av alt
+            TutorialOverlay(
+                state = tutorialManager.state,
+                onNext = { tutorialManager.nextStep() },
+                onSkip = { tutorialManager.skipTutorial() }
+            )
         }
     }
 
