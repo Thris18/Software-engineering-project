@@ -95,15 +95,6 @@ fun FishLogDialog(
                             Divider(modifier = Modifier.padding(vertical = 4.dp))
 
                             InfoSection(
-                                title = "Sted",
-                                value = selectedFishLog.location,
-                                titleStyle = MaterialTheme.typography.bodyMedium,
-                                valueStyle = MaterialTheme.typography.bodySmall
-                            )
-
-                            Divider(modifier = Modifier.padding(vertical = 4.dp))
-
-                            InfoSection(
                                 title = "Område",
                                 value = selectedFishLog.area,
                                 titleStyle = MaterialTheme.typography.bodyMedium,
@@ -129,15 +120,6 @@ fun FishLogDialog(
                                     valueStyle = MaterialTheme.typography.bodySmall
                                 )
                             }
-
-                            Divider(modifier = Modifier.padding(vertical = 4.dp))
-
-                            InfoSection(
-                                title = "Posisjon",
-                                value = String.format("%.4f°N, %.4f°Ø", selectedFishLog.latitude, selectedFishLog.longitude),
-                                titleStyle = MaterialTheme.typography.bodyMedium,
-                                valueStyle = MaterialTheme.typography.bodySmall
-                            )
 
                             Divider(modifier = Modifier.padding(vertical = 4.dp))
 
@@ -220,7 +202,6 @@ fun FishLogDialog(
 
                                         if (showDetails) {
                                             Spacer(modifier = Modifier.height(8.dp))
-                                            Text("Sted: ${fishLog.location}")
                                             Text("Område: ${fishLog.area}")
                                             if (fishLog.description.isNotBlank()) {
                                                 Text("Beskrivelse: ${fishLog.description}")

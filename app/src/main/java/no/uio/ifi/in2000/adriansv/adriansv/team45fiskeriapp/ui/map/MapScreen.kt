@@ -64,7 +64,18 @@ import androidx.compose.material.icons.filled.Add
 import com.google.android.gms.common.Feature
 import org.maplibre.android.style.layers.PropertyFactory.*
 import android.net.Uri
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.R
+import androidx.compose.ui.graphics.ColorFilter
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.NavigationBar
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.weather.LocationWeather
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTripDialog
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherUiState
+import java.time.LocalDateTime
+import java.util.*
+import android.location.Location
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish.FishLogViewModel
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish.FishLogDialog
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish.AddFishDialog
@@ -74,11 +85,20 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.R
-import androidx.compose.ui.graphics.ColorFilter
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.NavigationBar
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.weather.LocationWeather
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherUiState
+import android.Manifest
+import android.content.pm.PackageManager
+import android.location.LocationManager
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTripSummaryDialog
+import org.maplibre.android.style.layers.CircleLayer
+import org.maplibre.android.style.layers.PropertyFactory.*
+import org.maplibre.android.style.layers.LineLayer
+import android.graphics.Bitmap
+import java.io.File
+import java.io.FileOutputStream
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTrip
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTripStorage
 
 private const val TAG = "MapScreen"
 private const val SHIP_LAYER_ID = "ship-layer"
@@ -104,6 +124,7 @@ private fun updateAlertPolygon(style: Style, alertId: String?) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MapScreen(
     onNavigateToProfile: () -> Unit,
@@ -177,6 +198,17 @@ fun MapScreen(
     var showLocationSelectionDialog by remember { mutableStateOf(false) }
     var selectedLocationForFish by remember { mutableStateOf<Pair<Double, Double>?>(null) }
     
+    // Fisketur states
+    var showFishingTripDialog by remember { mutableStateOf(false) }
+    var showFishingTripSummary by remember { mutableStateOf(false) }
+    var fishingTripName by remember { mutableStateOf("") }
+    var isFishingTripActive by remember { mutableStateOf(false) }
+    var fishingTripStartTime by remember { mutableStateOf<LocalDateTime?>(null) }
+    var fishingTripEndTime by remember { mutableStateOf<LocalDateTime?>(null) }
+    var fishingTripStartLocation by remember { mutableStateOf<LatLng?>(null) }
+    var fishingTripRoute by remember { mutableStateOf<List<LatLng>>(emptyList()) }
+    var mapScreenshot by remember { mutableStateOf<Uri?>(null) }
+    
     // State for AddFishDialog
     var fishType by remember { mutableStateOf("") }
     var location by remember { mutableStateOf("") }
@@ -184,6 +216,57 @@ fun MapScreen(
     var description by remember { mutableStateOf("") }
     var weight by remember { mutableStateOf("") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
+
+    // Legg til states for brukerens posisjon
+    var userLocation by remember { mutableStateOf<LatLng?>(null) }
+    var isTrackingUser by remember { mutableStateOf(false) }
+    
+    // Sjekk lokasjonstillatelser
+    val locationPermissionState = remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+    
+    // Be om lokasjonstillatelse hvis nødvendig
+    LaunchedEffect(Unit) {
+        if (!locationPermissionState.value) {
+            ActivityCompat.requestPermissions(
+                context as android.app.Activity,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                1
+            )
+        }
+    }
+    
+    // Gjenopprett fisketur-tilstand når appen starter
+    LaunchedEffect(Unit) {
+        val savedTripName = context.getSharedPreferences("fishing_trip", Context.MODE_PRIVATE)
+            .getString("trip_name", "")
+        val savedStartTime = context.getSharedPreferences("fishing_trip", Context.MODE_PRIVATE)
+            .getLong("start_time", 0)
+        val savedIsActive = context.getSharedPreferences("fishing_trip", Context.MODE_PRIVATE)
+            .getBoolean("is_active", false)
+            
+        if (savedIsActive && savedStartTime > 0) {
+            fishingTripName = savedTripName ?: ""
+            isFishingTripActive = true
+            fishingTripStartTime = LocalDateTime.ofEpochSecond(savedStartTime, 0, java.time.ZoneOffset.UTC)
+        }
+    }
+    
+    // Lagre fisketur-tilstand når den endres
+    LaunchedEffect(isFishingTripActive, fishingTripStartTime, fishingTripName) {
+        context.getSharedPreferences("fishing_trip", Context.MODE_PRIVATE).edit().apply {
+            putString("trip_name", fishingTripName)
+            putLong("start_time", fishingTripStartTime?.toEpochSecond(java.time.ZoneOffset.UTC) ?: 0)
+            putBoolean("is_active", isFishingTripActive)
+            apply()
+        }
+    }
 
     // Tøm fiskeloggen når man tømmer loggen i kartet
     fun clearFishLogs() {
@@ -248,63 +331,6 @@ fun MapScreen(
         selectedLocationForFish = null
     }
 
-    // Helper function to load image
-    fun loadImage(style: Style, fishLog: FishLog) {
-        val imageId = "fish_${fishLog.timestamp}"
-        
-        // Skip if already loaded or failed
-        if (imageId in loadedImages || imageId in failedImageLoads) {
-            return
-        }
-
-        try {
-            val uri = Uri.parse(fishLog.imageUri)
-            val image = if (uri.scheme == "file") {
-                BitmapFactory.decodeFile(uri.path)
-            } else {
-                context.contentResolver.openInputStream(uri)?.use { stream ->
-                    BitmapFactory.decodeStream(stream)
-                }
-            }
-            
-            if (image != null) {
-                try {
-                    // Legg til bildet
-                    style.addImage(imageId, image)
-                    loadedImages = loadedImages + imageId
-                    fishLogViewModel.addLoadedImage(imageId)
-                    
-                    // Legg til GeoJSON kilde
-                    val source = GeoJsonSource(
-                        "fish_${fishLog.timestamp}",
-                        "{\"type\":\"Feature\",\"geometry\":{\"type\":\"Point\",\"coordinates\":[${fishLog.longitude},${fishLog.latitude}]},\"properties\":{\"timestamp\":\"${fishLog.timestamp}\"}}"
-                    )
-                    style.addSource(source)
-                    
-                    // Legg til symbol layer
-                    val layer = SymbolLayer("fish_${fishLog.timestamp}", "fish_${fishLog.timestamp}")
-                        .withProperties(
-                            iconImage(imageId),
-                            iconSize(0.05f),
-                            iconAllowOverlap(true),
-                            iconIgnorePlacement(true),
-                            iconAnchor(Property.ICON_ANCHOR_CENTER),
-                            iconOpacity(0.8f)
-                        )
-                    style.addLayer(layer)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Feil ved lasting av bilde: ${e.message}")
-                    failedImageLoads = failedImageLoads + imageId
-                    fishLogViewModel.addFailedImageLoad(imageId)
-                }
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Feil ved lasting av bilde: ${e.message}")
-            failedImageLoads = failedImageLoads + imageId
-            fishLogViewModel.addFailedImageLoad(imageId)
-        }
-    }
-
     // Håndterer klikk på kartet
     fun onMapClick(latLng: LatLng) {
         if (onLocationSelected != null && showLocationSelectionDialog) {
@@ -322,34 +348,83 @@ fun MapScreen(
         }
     }
 
-    // Oppdater fiskelogg-bilder på kartet
+    // Oppdater fiskelogg-bilder på kartet når fiskeloggen endres
     LaunchedEffect(fishLogUiState.fishLogs) {
         mapLibreMap?.getStyle { style ->
-            // Fjern gamle lag og kilder som ikke lenger er i bruk
-            val currentImageIds = fishLogUiState.fishLogs.map { "fish_${it.timestamp}" }.toSet()
-            loadedImages.filter { it !in currentImageIds }.forEach { oldImageId ->
-                style.getLayer(oldImageId)?.let { style.removeLayer(it) }
-                style.getSource(oldImageId)?.let { style.removeSource(it) }
-                style.removeImage(oldImageId)
-            }
-            loadedImages = loadedImages.filter { it in currentImageIds }.toSet()
-            
-            // Legg til nye fiskelag
+            try {
+                // Fjern eksisterende fiskelag og kilde
+                style.getLayer("fish-layer")?.let { style.removeLayer(it) }
+                style.getSource("fish-source")?.let { style.removeSource(it) }
+                
+                // Last inn alle fiskebilder med en gang
             fishLogUiState.fishLogs.forEach { fishLog ->
                 if (fishLog.imageUri != null) {
-                    loadImage(style, fishLog)
+                        try {
+                            val imageId = "fish_${fishLog.timestamp}"
+                            context.contentResolver.openInputStream(Uri.parse(fishLog.imageUri))?.use { inputStream ->
+                                val image = BitmapFactory.decodeStream(inputStream)
+                                if (image != null) {
+                                    // Skaler bildet til en fast høyde mens vi beholder bildets form
+                                    val targetHeight = 200
+                                    val aspectRatio = image.width.toFloat() / image.height.toFloat()
+                                    val targetWidth = (targetHeight * aspectRatio).toInt()
+                                    val scaledImage = android.graphics.Bitmap.createScaledBitmap(image, targetWidth, targetHeight, true)
+                                    style.addImage(imageId, scaledImage)
+                                    loadedImages = loadedImages + imageId
+                                }
+                            }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Feil ved lasting av bilde: ${e.message}")
+                            failedImageLoads = failedImageLoads + fishLog.imageUri
+                        }
+                    }
                 }
-            }
-        }
-    }
-
-    // Oppdater fiskelogg-bilder når kartet er lastet
-    LaunchedEffect(mapLibreMap) {
-        mapLibreMap?.getStyle { style ->
-            fishLogUiState.fishLogs.forEach { fishLog ->
-                if (fishLog.imageUri != null) {
-                    loadImage(style, fishLog)
+                
+                // Opprett GeoJSON for alle fisker
+                val features = fishLogUiState.fishLogs.map { fishLog ->
+                    """
+                    {
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [${fishLog.longitude}, ${fishLog.latitude}]
+                        },
+                        "properties": {
+                            "timestamp": "${fishLog.timestamp}",
+                            "imageUri": "fish_${fishLog.timestamp}"
+                        }
+                    }
+                    """
+                }.joinToString(",")
+                
+                val geoJson = """
+                {
+                    "type": "FeatureCollection",
+                    "features": [$features]
                 }
+                """
+                
+                // Legg til kilde og lag for fisker
+                val fishSource = GeoJsonSource("fish-source", geoJson)
+                style.addSource(fishSource)
+                
+                val layer = SymbolLayer("fish-layer", "fish-source")
+                    .withProperties(
+                        iconImage(
+                            Expression.coalesce(
+                                Expression.get("imageUri"),
+                                Expression.literal("fish_icon")
+                            )
+                        ),
+                        iconSize(0.3f),
+                        iconAllowOverlap(true),
+                        iconIgnorePlacement(true),
+                        iconAnchor(Property.ICON_ANCHOR_CENTER),
+                        iconOpacity(1.0f)
+                    )
+                style.addLayer(layer)
+            } catch (e: Exception) {
+                Log.e(TAG, "Feil ved oppdatering av fiskelag: ${e.message}")
             }
         }
     }
@@ -407,6 +482,74 @@ fun MapScreen(
                                         .build()
                                     map.moveCamera(CameraUpdateFactory.newCameraPosition(position))
 
+                                    // Last inn alle fiskebilder med en gang
+                                    fishLogUiState.fishLogs.forEach { fishLog ->
+                                        if (fishLog.imageUri != null) {
+                                            try {
+                                                val imageId = "fish_${fishLog.timestamp}"
+                                                context.contentResolver.openInputStream(Uri.parse(fishLog.imageUri))?.use { inputStream ->
+                                                    val image = BitmapFactory.decodeStream(inputStream)
+                                                    if (image != null) {
+                                                        // Skaler bildet til en fast høyde mens vi beholder bildets form
+                                                        val targetHeight = 200
+                                                        val aspectRatio = image.width.toFloat() / image.height.toFloat()
+                                                        val targetWidth = (targetHeight * aspectRatio).toInt()
+                                                        val scaledImage = android.graphics.Bitmap.createScaledBitmap(image, targetWidth, targetHeight, true)
+                                                        style.addImage(imageId, scaledImage)
+                                                        loadedImages = loadedImages + imageId
+                                                    }
+                                                }
+                                            } catch (e: Exception) {
+                                                Log.e(TAG, "Feil ved lasting av bilde: ${e.message}")
+                                                failedImageLoads = failedImageLoads + fishLog.imageUri
+                                            }
+                                        }
+                                    }
+
+                                    // Opprett GeoJSON for alle fisker
+                                    val features = fishLogUiState.fishLogs.map { fishLog ->
+                                        """
+                                        {
+                                            "type": "Feature",
+                                            "geometry": {
+                                                "type": "Point",
+                                                "coordinates": [${fishLog.longitude}, ${fishLog.latitude}]
+                                            },
+                                            "properties": {
+                                                "timestamp": "${fishLog.timestamp}",
+                                                "imageUri": "fish_${fishLog.timestamp}"
+                                            }
+                                        }
+                                        """
+                                    }.joinToString(",")
+                                    
+                                    val geoJson = """
+                                    {
+                                        "type": "FeatureCollection",
+                                        "features": [$features]
+                                    }
+                                    """
+                                    
+                                    // Legg til kilde og lag for fisker
+                                    val fishSource = GeoJsonSource("fish-source", geoJson)
+                                    style.addSource(fishSource)
+                                    
+                                    val layer = SymbolLayer("fish-layer", "fish-source")
+                                        .withProperties(
+                                            iconImage(
+                                                Expression.coalesce(
+                                                    Expression.get("imageUri"),
+                                                    Expression.literal("fish_icon")
+                                                )
+                                            ),
+                                            iconSize(0.3f),
+                                            iconAllowOverlap(true),
+                                            iconIgnorePlacement(true),
+                                            iconAnchor(Property.ICON_ANCHOR_CENTER),
+                                            iconOpacity(1.0f)
+                                        )
+                                    style.addLayer(layer)
+
                                     // Add camera movement listener for weather updates
                                     map.addOnCameraIdleListener {
                                         val center = map.cameraPosition.target
@@ -432,8 +575,8 @@ fun MapScreen(
                                     setupShipLayer(context, style)
 
                                     // Add GeoJSON source and layer for alerts
-                                    val source = GeoJsonSource("alerts-source", uiState.geoJsonData)
-                                    style.addSource(source)
+                                    val alertSource = GeoJsonSource("alerts-source", uiState.geoJsonData)
+                                    style.addSource(alertSource)
 
                                     val symbolLayer = SymbolLayer("alert-symbol-layer", "alerts-source")
                                         .withProperties(
@@ -664,12 +807,31 @@ fun MapScreen(
             }
 
             // UI Elements
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp)
             ) {
-                Spacer(modifier = Modifier.weight(1f))
+                // Fisketur-knapp
+                FloatingActionButton(
+                    onClick = { showFishingTripDialog = true },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(bottom = 152.dp),
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Image(
+                        painter = rememberAsyncImagePainter(
+                            model = "file:///android_asset/png/fisketur.png"
+                        ),
+                        contentDescription = "Start fisketur",
+                        modifier = Modifier
+                            .size(56.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                }
 
                 // Fiskelogg button
                 FloatingActionButton(
@@ -683,8 +845,8 @@ fun MapScreen(
                         selectedLocationForFish = null
                     },
                     modifier = Modifier
-                        .padding(bottom = 8.dp)
-                        .align(Alignment.End),
+                        .align(Alignment.BottomEnd)
+                        .padding(bottom = 80.dp),
                     containerColor = MaterialTheme.colorScheme.surface,
                     contentColor = MaterialTheme.colorScheme.onSurface,
                     shape = MaterialTheme.shapes.medium
@@ -703,8 +865,8 @@ fun MapScreen(
                 BaatvettButton(
                     onClick = { showBaatvettRules = true },
                     modifier = Modifier
+                        .align(Alignment.BottomEnd)
                         .padding(bottom = 16.dp)
-                        .align(Alignment.End)
                 )
             }
             
@@ -806,34 +968,6 @@ fun MapScreen(
                 }
             }
 
-            // Add Settings button
-            Column(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = 24.dp, end = 16.dp),
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // Settings button
-                Surface(
-                    shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-                    tonalElevation = 2.dp
-                ) {
-                    IconButton(
-                        onClick = { showFilterMenu = !showFilterMenu },
-                        modifier = Modifier.size(48.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "Innstillinger",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(28.dp)
-                        )
-                    }
-                }
-            }
-
             // Show fish log dialog
             if (showFishLogDialog) {
                 FishLogDialog(
@@ -922,12 +1056,242 @@ fun MapScreen(
                     selectedLocationForFish = selectedLocationForFish?.toString()
                 )
             }
+
+            // Show fishing trip dialog
+            if (showFishingTripDialog) {
+                FishingTripDialog(
+                    onDismiss = { showFishingTripDialog = false },
+                    tripName = fishingTripName,
+                    onTripNameChange = { fishingTripName = it },
+                    isTripActive = isFishingTripActive,
+                    onStartTrip = { location ->
+                        isFishingTripActive = true
+                        fishingTripStartTime = LocalDateTime.now()
+                        fishingTripStartLocation = LatLng(location.latitude, location.longitude)
+                        // Start tracking brukerens posisjon og initialiser ruten
+                        isTrackingUser = true
+                        fishingTripRoute = listOf(LatLng(location.latitude, location.longitude))
+                        userLocation?.let { userLoc ->
+                            mapLibreMap?.moveCamera(
+                                CameraUpdateFactory.newLatLngZoom(userLoc, 18.0)
+                            )
+                        }
+                    },
+                    onEndTrip = {
+                        isFishingTripActive = false
+                        fishingTripEndTime = LocalDateTime.now()
+                        fishingTripStartLocation = null
+                        isTrackingUser = false
+                        
+                        // Ta snapshot av kartet slik det ser ut nå, uten å flytte kameraet
+                        mapView?.let { view ->
+                            try {
+                                if (fishingTripRoute.isNotEmpty() && fishingTripRoute.any { 
+                                    !it.latitude.isNaN() && !it.longitude.isNaN() 
+                                }) {
+                                    mapLibreMap?.snapshot { bitmap ->
+                                        if (bitmap != null) {
+                                            // Lagre nytt screenshot
+                                            val filename = "fishing_trip_${System.currentTimeMillis()}.jpg"
+                                            val file = File(context.filesDir, filename)
+                                            FileOutputStream(file).use { out ->
+                                                bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
+                                            }
+                                            mapScreenshot = Uri.fromFile(file)
+                                            Log.d(TAG, "Screenshot lagret til: ${file.absolutePath}")
+
+                                            // LAGRE FISKETUR
+                                            val tripName = fishingTripName
+                                            val screenshotUri = mapScreenshot?.toString() ?: ""
+                                            val startMillis = fishingTripStartTime?.atZone(java.time.ZoneId.systemDefault())?.toInstant()?.toEpochMilli() ?: 0L
+                                            val endMillis = fishingTripEndTime?.atZone(java.time.ZoneId.systemDefault())?.toInstant()?.toEpochMilli() ?: 0L
+                                            val catchCount = fishLogUiState.fishLogs.count { it.area == tripName }
+                                            FishingTripStorage.saveTrip(
+                                                context,
+                                                FishingTrip(
+                                                    name = tripName,
+                                                    screenshotUri = screenshotUri,
+                                                    startTime = startMillis,
+                                                    endTime = endMillis,
+                                                    catchCount = catchCount
+                                                )
+                                            )
+                                        } else {
+                                            Log.e(TAG, "Kunne ikke ta screenshot av kartet")
+                                        }
+                                        showFishingTripSummary = true
+                                    }
+                                } else {
+                                    Log.d(TAG, "Ingen gyldig rute å vise")
+                                    showFishingTripSummary = true
+                                }
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Feil ved snapshot av kartet: ${e.message}")
+                                showFishingTripSummary = true
+                            }
+                        } ?: run {
+                            Log.d(TAG, "mapView er null")
+                            showFishingTripSummary = true
+                        }
+                    },
+                    startTime = fishingTripStartTime,
+                    onClose = { showFishingTripDialog = false },
+                    onAddCatch = { fishType: String, weight: Double, imageUri: Uri?, location: Location ->
+                        try {
+                            // Opprett FishLog med riktig posisjon
+                            val fishLog = FishLog(
+                                fishType = fishType,
+                                area = fishingTripName,
+                                weight = weight.toFloat(),
+                                imageUri = imageUri?.toString(),
+                                latitude = location.latitude,
+                                longitude = location.longitude,
+                                timestamp = Date()
+                            )
+                            
+                            // Legg til fangsten i repository
+                            fishLogViewModel.addFishLog(fishLog)
+                            
+                            // Kartet vil automatisk oppdateres gjennom LaunchedEffect
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Feil ved lagring av fangst: ${e.message}")
+                        }
+                    },
+                    fishLogViewModel = fishLogViewModel
+                )
+            }
+
+            // Vis oppsummeringsdialog når fisketuren er avsluttet
+            if (showFishingTripSummary && fishingTripStartTime != null && fishingTripEndTime != null) {
+                FishingTripSummaryDialog(
+                    onDismiss = { 
+                        showFishingTripSummary = false
+                        fishingTripRoute = emptyList()
+                        fishingTripStartTime = null
+                        fishingTripEndTime = null
+                        mapScreenshot = null
+                    },
+                    tripName = fishingTripName,
+                    startTime = fishingTripStartTime!!,
+                    endTime = fishingTripEndTime!!,
+                    route = fishingTripRoute,
+                    catches = fishLogUiState.fishLogs.filter { it.area == fishingTripName },
+                    mapView = mapView,
+                    mapScreenshot = mapScreenshot
+                )
+            }
         }
     }
 
     DisposableEffect(Unit) {
         onDispose {
             mapView?.onDestroy()
+        }
+    }
+
+    // Oppdater brukerens posisjon
+    LaunchedEffect(mapLibreMap) {
+        mapLibreMap?.getStyle { style ->
+            // Legg til kilde for brukerens posisjon
+            val userLocationSource = GeoJsonSource("user-location-source")
+            style.addSource(userLocationSource)
+            
+            // Legg til kilde for fisketur-ruten
+            val routeSource = GeoJsonSource("fishing-trip-route-source")
+            style.addSource(routeSource)
+            
+            // Legg til lag for fisketur-ruten (gul linje)
+            val routeLayer = LineLayer("fishing-trip-route-layer", "fishing-trip-route-source")
+                .withProperties(
+                    lineColor(Color.YELLOW),
+                    lineWidth(4f),
+                    lineOpacity(0.8f)
+                )
+            style.addLayer(routeLayer)
+            
+            // Legg til lag for brukerens posisjon (blå sirkel)
+            val userLocationLayer = CircleLayer("user-location-layer", "user-location-source")
+                .withProperties(
+                    circleRadius(8f),
+                    circleColor(Color.BLUE),
+                    circleOpacity(0.9f),
+                    circleStrokeWidth(2f),
+                    circleStrokeColor(Color.WHITE)
+                )
+            style.addLayer(userLocationLayer)
+            
+            // Start oppdatering av brukerens posisjon
+            val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            if (locationPermissionState.value) {
+                try {
+                    locationManager.requestLocationUpdates(
+                        LocationManager.GPS_PROVIDER,
+                        1000L, // Oppdater hvert sekund
+                        1f // Oppdater hvis brukeren beveger seg mer enn 1 meter
+                    ) { location ->
+                        userLocation = LatLng(location.latitude, location.longitude)
+                        // Oppdater GeoJSON-kilden med brukerens posisjon
+                        val geoJson = """
+                        {
+                            "type": "Feature",
+                            "geometry": {
+                                "type": "Point",
+                                "coordinates": [${location.longitude}, ${location.latitude}]
+                            }
+                        }
+                        """
+                        userLocationSource.setGeoJson(geoJson)
+                        
+                        // Hvis fisketuren er aktiv, legg til posisjonen i ruten
+                        if (isFishingTripActive) {
+                            // Sjekk om den nye posisjonen er forskjellig fra den siste i ruten
+                            val lastPosition = fishingTripRoute.lastOrNull()
+                            val newPosition = LatLng(location.latitude, location.longitude)
+                            
+                            if (lastPosition == null || 
+                                (lastPosition.latitude != newPosition.latitude || 
+                                 lastPosition.longitude != newPosition.longitude)) {
+                                fishingTripRoute = fishingTripRoute + newPosition
+                                
+                                // Oppdater ruten på kartet
+                                val routeGeoJson = """
+                                {
+                                    "type": "Feature",
+                                    "geometry": {
+                                        "type": "LineString",
+                                        "coordinates": [${fishingTripRoute.joinToString(",") { "[${it.longitude}, ${it.latitude}]" }}]
+                                    }
+                                }
+                                """
+                                routeSource.setGeoJson(routeGeoJson)
+                            }
+                        }
+                        
+                        // Hvis vi følger brukeren, oppdater kameraet
+                        if (isTrackingUser) {
+                            mapLibreMap?.moveCamera(
+                                CameraUpdateFactory.newLatLngZoom(userLocation!!, 18.0)
+                            )
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Feil ved oppdatering av brukerens posisjon: ${e.message}")
+                }
+            }
+        }
+    }
+    
+    // Oppdater isTrackingUser når fisketur starter
+    LaunchedEffect(isFishingTripActive) {
+        if (isFishingTripActive) {
+            isTrackingUser = true
+            userLocation?.let { location ->
+                mapLibreMap?.moveCamera(
+                    CameraUpdateFactory.newLatLngZoom(location, 18.0)
+                )
+            }
+        } else {
+            isTrackingUser = false
         }
     }
 }
