@@ -477,7 +477,7 @@ fun MapScreen(
                 mascotResourceId = R.drawable.tilhoyre
             ),
             TutorialStep(
-                title = "Gratulerer!",
+                title = "Da er du klar !",
                 description = "Nå har du lært det grunnleggende i appen, og du er klar til å utforske norske farvann. God fisketur!",
                 targetTag = "",
                 mascotResourceId = R.drawable.presenting,

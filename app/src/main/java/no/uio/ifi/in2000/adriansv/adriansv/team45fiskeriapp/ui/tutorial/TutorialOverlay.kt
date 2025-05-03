@@ -1,5 +1,7 @@
 package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.tutorial
 
+import android.graphics.drawable.AnimationDrawable
+import android.widget.ImageView
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,9 +23,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.R
+import androidx.compose.animation.graphics.res.animatedVectorResource
+import androidx.compose.animation.graphics.vector.AnimatedImageVector
+import kotlinx.coroutines.delay
 
 
 @Composable
@@ -131,16 +137,21 @@ fun TutorialOverlay(
                                 contentScale = ContentScale.Fit
                             )
                         }
-                        "Gratulerer!" -> {
-                            // For gratulerer-steget: Plasser maskotten under dialogen, litt større
-                            Image(
-                                painter = painterResource(id = currentStep.mascotResourceId),
-                                contentDescription = null,
+                        "Da er du klar !" -> {
+                            // For det avsluttende steget: Bruk AnimationDrawable for vinkende maskott
+                            AndroidView(
+                                factory = { context ->
+                                    ImageView(context).apply {
+                                        setBackgroundResource(R.drawable.waving_mascot)
+                                        scaleType = ImageView.ScaleType.FIT_CENTER
+                                        adjustViewBounds = true
+                                        (background as? AnimationDrawable)?.start()
+                                    }
+                                },
                                 modifier = Modifier
-                                    .size(220.dp)
-                                    .align(Alignment.Center)
-                                    .offset(y = 230.dp),
-                                contentScale = ContentScale.Fit
+                                    .size(200.dp)
+                                    .align(Alignment.CenterEnd)
+                                    .offset(x = 100.dp, y = 25.dp)
                             )
                         }
                         "Kartvisning" -> {
@@ -199,7 +210,7 @@ fun TutorialOverlay(
                                 modifier = Modifier
                                     .size(180.dp)
                                     .align(Alignment.BottomCenter)
-                                    .offset(y = 150.dp, x = 40.dp),
+                                    .offset(y = 130.dp, x = 40.dp),
                                 contentScale = ContentScale.Fit
                             )
                         }
