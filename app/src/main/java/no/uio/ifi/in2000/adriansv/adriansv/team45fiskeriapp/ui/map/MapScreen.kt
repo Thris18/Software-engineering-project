@@ -1227,18 +1227,39 @@ fun MapScreen(
 
             // Show fishing trip summary dialog
             if (showFishingTripSummary && fishingTripStartTime != null && fishingTripEndTime != null) {
+                val catchesForTrip = fishLogUiState.fishLogs.filter { 
+                    val logDate = it.timestamp
+                    val startDate = Date.from(fishingTripStartTime!!.atZone(java.time.ZoneId.systemDefault()).toInstant())
+                    val endDate = Date.from(fishingTripEndTime!!.atZone(java.time.ZoneId.systemDefault()).toInstant())
+                    logDate.after(startDate) && logDate.before(endDate)
+                }
+                
                 FishingTripSummaryDialog(
-                    onDismiss = { showFishingTripSummary = false },
+                    onDismiss = { 
+                        // Lagre fisketuren i lagring når dialogen lukkes
+                        val startTimeMillis = fishingTripStartTime!!.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+                        val endTimeMillis = fishingTripEndTime!!.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+                        
+                        if (mapScreenshot != null) {
+                            val fishingTrip = FishingTrip(
+                                name = fishingTripName,
+                                screenshotUri = mapScreenshot.toString(),
+                                startTime = startTimeMillis,
+                                endTime = endTimeMillis,
+                                catchCount = catchesForTrip.size
+                            )
+                            
+                            // Lagre turen i storage
+                            FishingTripStorage.saveTrip(context, fishingTrip)
+                        }
+                        
+                        showFishingTripSummary = false 
+                    },
                     tripName = fishingTripName,
                     startTime = fishingTripStartTime!!,
                     endTime = fishingTripEndTime!!,
                     route = fishingTripRoute,
-                    catches = fishLogUiState.fishLogs.filter { 
-                        val logDate = it.timestamp
-                        val startDate = Date.from(fishingTripStartTime!!.atZone(java.time.ZoneId.systemDefault()).toInstant())
-                        val endDate = Date.from(fishingTripEndTime!!.atZone(java.time.ZoneId.systemDefault()).toInstant())
-                        logDate.after(startDate) && logDate.before(endDate)
-                    },
+                    catches = catchesForTrip,
                     mapView = mapView,
                     mapScreenshot = mapScreenshot
                 )
