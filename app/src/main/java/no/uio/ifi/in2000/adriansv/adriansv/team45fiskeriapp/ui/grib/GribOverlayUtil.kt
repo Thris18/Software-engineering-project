@@ -14,10 +14,10 @@ import kotlin.math.sqrt
 object GribOverlayUtil {
     // Terskler for de fire typene (økt litt)
     val thresholds = mapOf(
-        "wind" to 5.0,
+        "wind" to 2.0,
         "wave" to 1.0,
-        "strom" to 0.5,
-        "rain" to 2.0
+        "strom" to 0.1,
+        "rain" to 0.5
     )
 
     // Farge basert på hvor mye verdien overstiger terskelen
@@ -78,31 +78,84 @@ object GribOverlayUtil {
         return R * c
     }
 
+    // Hjelpefunksjon for å beregne retning fra u og v komponenter
+    private fun calculateDirection(u: Double, v: Double): Double {
+        // Beregn retning i grader (0-360)
+        val direction = Math.toDegrees(atan2(v, u))
+        // Konverter til meteorologisk retning (hvor vinden kommer fra)
+        return (direction + 180) % 360
+    }
+
     fun gribDataToFeatureCollection(
         gribData: GribData,
         type: String,
         icon: String,
         minDistanceKm: Double = 13.0 // Juster radius etter behov
     ): String {
+        // Logg alle tilgjengelige variabler
+        Log.d("GRIB", """
+            GRIB Data for type: $type
+            Wind Speed: ${gribData.windSpeed}
+            Wind Direction: ${gribData.windDirection}
+            Wave Height: ${gribData.waveHeight}
+            Wave Direction: ${gribData.waveDirection}
+            Current Speed: ${gribData.currentSpeed}
+            Current Direction: ${gribData.currentDirection}
+            Precipitation: ${gribData.precipitation}
+            Pressure: ${gribData.pressure}
+            Temperature: ${gribData.temperature}
+            Variable Name: ${gribData.variableName}
+            Unit: ${gribData.unit}
+            Values array size: ${gribData.values.size}
+            Min value: ${gribData.minValue}
+            Max value: ${gribData.maxValue}
+        """.trimIndent())
+
         val features = mutableListOf<String>()
         val threshold = thresholds[type] ?: 0.0
         val width = gribData.width
         val height = gribData.height
         var lastLat = Double.NaN
         var lastLon = Double.NaN
+
+        // Hent u- og v-komponenter basert på type
+        val uComponent = when (type) {
+            "wind" -> "u-component_of_wind_height_above_ground"
+            "strom" -> "u-component_of_current_depth_below_sea"
+            else -> null
+        }
+        val vComponent = when (type) {
+            "wind" -> "v-component_of_wind_height_above_ground"
+            "strom" -> "v-component_of_current_depth_below_sea"
+            else -> null
+        }
+
         for (y in 0 until height) {
             for (x in 0 until width) {
                 val index = y * width + x
                 val value = gribData.values[index].toDouble()
                 val lat = gribData.latitudes[y].toDouble()
                 val lon = gribData.longitudes[x].toDouble()
+
                 if (!value.isNaN() && value > threshold) {
                     // Sjekk avstand til forrige ikon av samme type
                     if (lastLat.isNaN() || haversine(lat, lon, lastLat, lastLon) > minDistanceKm) {
                         val color = getColor(type, value)
                         val radius = getRadius(type, value)
+
+                        // For vind og strøm, inkluder u- og v-komponenter
+                        val properties = if (type in listOf("wind", "strom")) {
+                            val u = gribData.uValues?.get(index)?.toDouble() ?: 0.0
+                            val v = gribData.vValues?.get(index)?.toDouble() ?: 0.0
+                            val speed = GribDirectionUtil.calculateSpeedFromUV(u, v)
+                            val direction = GribDirectionUtil.calculateDirectionFromUV(u, v)
+                            """{"type": "$type", "value": $speed, "icon": "$icon", "color": "$color", "radius": $radius, "u": $u, "v": $v, "direction": $direction}"""
+                        } else {
+                            """{"type": "$type", "value": $value, "icon": "$icon", "color": "$color", "radius": $radius}"""
+                        }
+
                         features.add(
-                            """{"type": "Feature", "geometry": {"type": "Point", "coordinates": [$lon, $lat]}, "properties": {"type": "$type", "value": $value, "icon": "$icon", "color": "$color", "radius": $radius}}"""
+                            """{"type": "Feature", "geometry": {"type": "Point", "coordinates": [$lon, $lat]}, "properties": $properties}"""
                         )
                         lastLat = lat
                         lastLon = lon

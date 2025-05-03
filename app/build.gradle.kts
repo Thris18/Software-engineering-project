@@ -96,7 +96,8 @@ dependencies {
     implementation("edu.ucar:cdm-core:5.3.3")
     implementation("edu.ucar:grib:5.3.3")
     implementation("com.google.guava:guava:32.1.2-android")
-    implementation(libs.play.services.maps) // Required by NetCDF
+    implementation(libs.play.services.maps)
+    implementation(libs.androidx.appcompat.resources) // Required by NetCDF
 
     // Testing
     testImplementation("junit:junit:4.13.2")

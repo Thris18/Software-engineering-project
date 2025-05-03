@@ -940,24 +940,6 @@ fun MapScreen(
                 )
             }
 
-            // Show GRIB popup if GRIB data is enabled
-            /*
-            if (showGrib && showPopup && selectedPoint != null && uiState.selectedAlert == null) {
-                    selectedPoint!!.data?.let {
-                        AlertInfoCard(
-                            alertData = it,
-                            onDismiss = {
-                                selectedPoint = null
-                                showPopup = false
-                        },
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(16.dp)
-                    )
-                }
-            }
-            */
-
             // Update ship positions when they change
             LaunchedEffect(shipUiState.ships) {
                 mapLibreMap?.getStyle()?.let { style ->
@@ -1065,8 +1047,8 @@ fun MapScreen(
             }
 
             // I MapScreen, etter at selectedPoint settes og showPopup = true, vis overlay:
-            LaunchedEffect(selectedPoint, showGrib, mapLibreMap) {
-                if (showGrib && selectedPoint != null && mapLibreMap != null) {
+            LaunchedEffect(mapLibreMap) {
+                if (mapLibreMap != null) {
                     gribOverlayLoading = true
                     val allGrids = gribRepository.getAllWeatherGrids()
                     val geoJson = GribOverlayUtil.mergeFeatureCollections(
@@ -1079,10 +1061,6 @@ fun MapScreen(
                         Log.d("GRIB", "GeoJSON: $geoJson")
                         GribOverlayManager.addOrUpdateGribOverlay(context, style, geoJson)
                         gribOverlayLoading = false
-                    }
-                } else {
-                    mapLibreMap?.getStyle { style ->
-                        GribOverlayManager.removeGribOverlay(style)
                     }
                 }
             }

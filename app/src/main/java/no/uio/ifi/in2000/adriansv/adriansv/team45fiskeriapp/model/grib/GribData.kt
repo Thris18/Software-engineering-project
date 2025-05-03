@@ -2,6 +2,8 @@ package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.grib
 
 data class GribData(
     val values: FloatArray,
+    val uValues: FloatArray? = null,  // U-komponenter for vind/strøm
+    val vValues: FloatArray? = null,  // V-komponenter for vind/strøm
     val width: Int,
     val height: Int,
     val latitudes: FloatArray,
@@ -34,6 +36,14 @@ data class GribData(
         other as GribData
 
         if (!values.contentEquals(other.values)) return false
+        if (uValues != null) {
+            if (other.uValues == null) return false
+            if (!uValues.contentEquals(other.uValues)) return false
+        } else if (other.uValues != null) return false
+        if (vValues != null) {
+            if (other.vValues == null) return false
+            if (!vValues.contentEquals(other.vValues)) return false
+        } else if (other.vValues != null) return false
         if (width != other.width) return false
         if (height != other.height) return false
         if (!latitudes.contentEquals(other.latitudes)) return false
@@ -64,6 +74,8 @@ data class GribData(
 
     override fun hashCode(): Int {
         var result = values.contentHashCode()
+        result = 31 * result + (uValues?.contentHashCode() ?: 0)
+        result = 31 * result + (vValues?.contentHashCode() ?: 0)
         result = 31 * result + width
         result = 31 * result + height
         result = 31 * result + latitudes.contentHashCode()
