@@ -6,7 +6,6 @@ import java.util.Date
 data class FishLog(
     val id: Long = System.currentTimeMillis(),
     val fishType: String,
-    val location: String,
     val area: String,
     val description: String = "",
     val weight: Float? = null,
