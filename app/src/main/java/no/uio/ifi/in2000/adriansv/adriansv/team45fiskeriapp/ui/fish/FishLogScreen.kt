@@ -1,15 +1,18 @@
 package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -17,6 +20,8 @@ import coil.compose.AsyncImage
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.fish.FishLog
 import java.text.SimpleDateFormat
 import java.util.*
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.graphics.Color
 
 private val dateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
 
@@ -36,6 +41,7 @@ fun FishLogScreen(
 ) {
     var currentSortOrder by remember { mutableStateOf(SortOrder.DATE_DESC) }
     var showSortMenu by remember { mutableStateOf(false) }
+    var selectedImageUri by remember { mutableStateOf<String?>(null) }
 
     val sortedFishLogs = remember(fishLogs, currentSortOrder) {
         when (currentSortOrder) {
@@ -141,87 +147,70 @@ fun FishLogScreen(
                                         .padding(16.dp),
                                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                                 ) {
-                                    // Venstre side med informasjon
+                                    // Venstre side: info
                                     Column(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .fillMaxHeight(),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                        modifier = Modifier.weight(1f),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)
                                     ) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Column {
-                                                Text(
-                                                    text = fishLog.fishType,
-                                                    style = MaterialTheme.typography.titleMedium
+                                        Text(
+                                            fishLog.fishType,
+                                            style = MaterialTheme.typography.titleMedium
+                                        )
+                                        if (fishLog.weight != null) {
+                                            Text(
+                                                String.format("%.1f kg", fishLog.weight),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                        if (fishLog.area.isNotEmpty()) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Map,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(16.dp),
+                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
-                                                if (fishLog.weight != null) {
-                                                    Text(
-                                                        text = String.format("%.1f kg", fishLog.weight),
-                                                        style = MaterialTheme.typography.bodyMedium,
-                                                        color = MaterialTheme.colorScheme.primary
-                                                    )
-                                                }
+                                                Spacer(modifier = Modifier.width(4.dp))
                                                 Text(
-                                                    text = dateFormat.format(fishLog.timestamp),
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    text = fishLog.area,
+                                                    style = MaterialTheme.typography.bodyMedium
                                                 )
                                             }
                                         }
-
-                                        // Vis alle detaljer
-                                        Column(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                                        ) {
-                                            if (fishLog.area.isNotEmpty()) {
-                                                Row(
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    Icon(
-                                                        imageVector = Icons.Default.Map,
-                                                        contentDescription = null,
-                                                        modifier = Modifier.size(16.dp),
-                                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                                    )
-                                                    Spacer(modifier = Modifier.width(4.dp))
-                                                    Text(
-                                                        text = fishLog.area,
-                                                        style = MaterialTheme.typography.bodyMedium
-                                                    )
-                                                }
-                                            }
-                                            if (fishLog.description.isNotEmpty()) {
-                                                Row(
-                                                    verticalAlignment = Alignment.Top
-                                                ) {
-                                                    Icon(
-                                                        imageVector = Icons.Default.Info,
-                                                        contentDescription = null,
-                                                        modifier = Modifier.size(16.dp),
-                                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                                    )
-                                                    Spacer(modifier = Modifier.width(4.dp))
-                                                    Text(
-                                                        text = fishLog.description,
-                                                        style = MaterialTheme.typography.bodyMedium
-                                                    )
-                                                }
+                                        if (fishLog.description.isNotEmpty()) {
+                                            Row(
+                                                verticalAlignment = Alignment.Top
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Info,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(16.dp),
+                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text(
+                                                    text = fishLog.description,
+                                                    style = MaterialTheme.typography.bodyMedium
+                                                )
                                             }
                                         }
+                                        Text(
+                                            text = dateFormat.format(fishLog.timestamp),
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
                                     }
 
                                     // Høyre side med bilde
                                     if (fishLog.imageUri != null) {
                                         Box(
                                             modifier = Modifier
-                                                .width(150.dp)
-                                                .fillMaxHeight()
-                                                .padding(end = 40.dp),
+                                                .width(120.dp)
+                                                .height(120.dp)
+                                                .padding(end = 40.dp)
+                                                .clickable { selectedImageUri = fishLog.imageUri },
                                             contentAlignment = Alignment.Center
                                         ) {
                                             AsyncImage(
@@ -280,6 +269,40 @@ fun FishLogScreen(
                         }
                     }
                 )
+            }
+
+            // Popup for stor bildevisning
+            if (selectedImageUri != null) {
+                Dialog(onDismissRequest = { selectedImageUri = null }) {
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        tonalElevation = 8.dp,
+                        color = MaterialTheme.colorScheme.surface
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            AsyncImage(
+                                model = selectedImageUri,
+                                contentDescription = "Stor visning av bilde",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(max = 600.dp)
+                                    .clip(RoundedCornerShape(12.dp)),
+                                contentScale = ContentScale.Fit
+                            )
+                            IconButton(
+                                onClick = { selectedImageUri = null },
+                                modifier = Modifier.align(Alignment.TopEnd)
+                            ) {
+                                Icon(Icons.Default.Close, contentDescription = "Lukk", tint = Color.Black)
+                            }
+                        }
+                    }
+                }
             }
         }
     }

@@ -27,6 +27,7 @@ import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.R
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.ProfilePopup
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.SettingsPopup
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.YourInformationScreen
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTripsScreen
 
 @Composable
 fun ProfileScreen(
@@ -55,6 +56,8 @@ fun ProfileScreen(
     var showSettings by remember { mutableStateOf(false) }
     var showYourInfo by remember { mutableStateOf(false) }
     var showImagePicker by remember { mutableStateOf(false) }
+    var showFishingTrips by remember { mutableStateOf(false) }
+    var showFishingTripDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val sharedPreferences = remember { context.getSharedPreferences("user_info", Context.MODE_PRIVATE) }
 
@@ -248,6 +251,53 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Mine fisketurer Card
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(MaterialTheme.shapes.medium)
+                    .clickable { showFishingTrips = true },
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 2.dp
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DirectionsBoat,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Column(modifier = Modifier.padding(start = 16.dp)) {
+                            Text(
+                                text = "Mine fisketurer",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "Se alle dine fisketurer",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    Icon(
+                        imageVector = Icons.Default.ArrowForward,
+                        contentDescription = "Gå til Mine fisketurer",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // Settings Card
             Surface(
                 modifier = Modifier
@@ -322,6 +372,22 @@ fun ProfileScreen(
         if (showImagePicker) {
             launcher.launch("image/*")
             showImagePicker = false
+        }
+
+        // Fishing Trips Screen
+        if (showFishingTrips) {
+            FishingTripsScreen(
+                onBack = { showFishingTrips = false },
+                onAddTrip = { showFishingTripDialog = true }
+            )
+            return
+        }
+
+        // Vis Start din fisketur-popup hvis ønsket
+        if (showFishingTripDialog) {
+            // Her må du vise din eksisterende dialog for å starte fisketur
+            // Eksempel:
+            // FishingTripDialog(..., onDismiss = { showFishingTripDialog = false }, ...)
         }
     }
 } 

@@ -46,9 +46,13 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.fish.FishLogRepository
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.fish.FishLog
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish.FishLogViewModel
 import java.util.Date
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -61,7 +65,8 @@ fun FishingTripDialog(
     onEndTrip: () -> Unit,
     startTime: LocalDateTime?,
     onClose: () -> Unit,
-    onAddCatch: (String, Double, Uri?, Location) -> Unit
+    onAddCatch: (String, Double, Uri?, Location) -> Unit,
+    fishLogViewModel: FishLogViewModel
 ) {
     var showDialog by remember { mutableStateOf(true) }
     var currentDuration by remember { mutableStateOf<Duration?>(null) }
@@ -234,7 +239,7 @@ fun FishingTripDialog(
                             label = { Text("Navn på fisketur") },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(bottom = 24.dp),
+                                .padding(bottom = 16.dp),
                             shape = MaterialTheme.shapes.medium
                         )
 
@@ -258,19 +263,19 @@ fun FishingTripDialog(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(56.dp),
+                                .height(40.dp),
                             enabled = tripName.isNotBlank() && !isGettingLocation,
                             shape = MaterialTheme.shapes.medium
                         ) {
                             if (isGettingLocation) {
                                 CircularProgressIndicator(
-                                    modifier = Modifier.size(24.dp),
+                                    modifier = Modifier.size(20.dp),
                                     color = MaterialTheme.colorScheme.onPrimary
                                 )
                             } else {
                                 Text(
                                     "Start fisketur",
-                                    style = MaterialTheme.typography.titleMedium
+                                    style = MaterialTheme.typography.bodyMedium
                                 )
                             }
                         }
@@ -279,7 +284,7 @@ fun FishingTripDialog(
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(bottom = 24.dp),
+                                .padding(bottom = 16.dp),
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.surfaceVariant
                             )
@@ -358,40 +363,83 @@ fun FishingTripDialog(
                             }
                         }
 
-                        // Legg til fangst knapp
-                        Button(
-                            onClick = { showAddCatchDialog = true },
+                        // Knapper for aktiv tur
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(bottom = 24.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary
-                            )
+                                .padding(bottom = 16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text("Legg til fangst", style = MaterialTheme.typography.titleMedium)
+                            // Legg til fangst knapp
+                            Button(
+                                onClick = { showAddCatchDialog = true },
+                                modifier = Modifier
+                                    .weight(1.2f)
+                                    .height(40.dp)
+                                    .padding(end = 4.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary
+                                )
+                            ) {
+                                Text(
+                                    "Legg til fangst",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    maxLines = 1
+                                )
+                            }
+
+                            // Avslutt tur knapp
+                            Button(
+                                onClick = { showConfirmationDialog = true },
+                                modifier = Modifier
+                                    .weight(0.8f)
+                                    .height(40.dp)
+                                    .padding(start = 4.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.error,
+                                    contentColor = MaterialTheme.colorScheme.onError
+                                )
+                            ) {
+                                Text(
+                                    "Avslutt tur",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    maxLines = 1
+                                )
+                            }
                         }
                     }
 
                     // Vis fangst seksjon
                     if (fishLogs.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(
-                            onClick = { showCatches = !showCatches },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.secondary
-                            )
-                        ) {
-                            Row(
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text("Vis fangst", style = MaterialTheme.typography.titleMedium)
-                                Icon(
-                                    imageVector = if (showCatches) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                    contentDescription = if (showCatches) "Skjul fangst" else "Vis fangst"
+                        Spacer(modifier = Modifier.height(8.dp))
+                        if (isTripActive) {
+                            Button(
+                                onClick = { showCatches = !showCatches },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(36.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
+                            ) {
+                                Row(
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        if (showCatches) "Skjul fangst" else "Vis fangst",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        maxLines = 1
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Icon(
+                                        imageVector = if (showCatches) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                        contentDescription = if (showCatches) "Skjul fangst" else "Vis fangst",
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
                             }
                         }
 
@@ -400,6 +448,7 @@ fun FishingTripDialog(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(top = 8.dp)
+                                    .heightIn(max = 300.dp)
                             ) {
                                 items(fishLogs.filter { it.area == tripName }) { fishLog ->
                                     Card(
@@ -411,7 +460,7 @@ fun FishingTripDialog(
                                         )
                                     ) {
                                         Column(
-                                            modifier = Modifier.padding(16.dp)
+                                            modifier = Modifier.padding(12.dp)
                                         ) {
                                             Text(
                                                 text = fishLog.fishType,
@@ -436,7 +485,7 @@ fun FishingTripDialog(
                                                     contentDescription = "Fangst bilde",
                                                     modifier = Modifier
                                                         .fillMaxWidth()
-                                                        .height(120.dp)
+                                                        .height(100.dp)
                                                         .clip(RoundedCornerShape(8.dp)),
                                                     contentScale = ContentScale.Fit
                                                 )
@@ -454,32 +503,15 @@ fun FishingTripDialog(
                         }
                     }
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (isTripActive) {
-                            Button(
-                                onClick = { showConfirmationDialog = true },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.error
-                                ),
-                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                                shape = MaterialTheme.shapes.medium
-                            ) {
-                                Text("Avslutt tur", style = MaterialTheme.typography.bodyMedium)
-                            }
-                        }
-                        
-                        TextButton(
-                            onClick = { 
-                                showDialog = false
-                                onClose()
-                            }
-                        ) {
-                            Text("Lukk")
-                        }
+                    // Lukk knapp
+                TextButton(
+                        onClick = { 
+                            showDialog = false
+                            onClose()
+                        },
+                        modifier = Modifier.padding(top = 8.dp)
+                ) {
+                    Text("Lukk")
                     }
                 }
             }
@@ -585,9 +617,18 @@ fun FishingTripDialog(
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = selectedWeight,
-                        onValueChange = { selectedWeight = it },
+                        onValueChange = { newValue ->
+                            // Tillat kun tall og punktum
+                            if (newValue.isEmpty() || newValue.matches(Regex("^\\d*\\.?\\d*$"))) {
+                                selectedWeight = newValue
+                            }
+                        },
                         label = { Text("Vekt (kg)") },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Decimal,
+                            imeAction = ImeAction.Done
+                        )
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
@@ -626,9 +667,7 @@ fun FishingTripDialog(
                     onClick = {
                         val weight = selectedWeight.toDoubleOrNull() ?: 0.0
                         currentLocation?.let { location ->
-                            onAddCatch(selectedFishType, weight, selectedImageUri, location)
-                            
-                            // Lagre fangsten i repository
+                            // Opprett FishLog med beskrivelse
                             val fishLog = FishLog(
                                 fishType = selectedFishType,
                                 area = tripName,
@@ -639,7 +678,12 @@ fun FishingTripDialog(
                                 longitude = location.longitude,
                                 timestamp = Date()
                             )
-                            fishLogRepository.addFishLog(fishLog)
+                            
+                            // Legg til fangsten i repository
+                            fishLogViewModel.addFishLog(fishLog)
+                            
+                            // Oppdater fangstlisten umiddelbart
+                            showCatches = true
                             
                             showAddCatchDialog = false
                             selectedFishType = ""
