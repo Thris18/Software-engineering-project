@@ -91,6 +91,8 @@ import androidx.core.content.ContextCompat
 import java.time.LocalDateTime
 import java.util.*
 import android.location.Location
+import android.os.Build
+import androidx.annotation.RequiresApi
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTrip
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTripStorage
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTripDialog
@@ -124,6 +126,7 @@ private fun updateAlertPolygon(style: Style, alertId: String?) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MapScreen(
     onNavigateToProfile: () -> Unit,
@@ -1173,6 +1176,61 @@ fun MapScreen(
                     onWeightChange = { weight = it },
                     onImageUriChange = { imageUri = it },
                     selectedLocationForFish = selectedLocationForFish?.toString()
+                )
+            }
+
+            // Vis fisketurdialog
+            if (showFishingTripDialog) {
+                FishingTripDialog(
+                    onDismiss = { showFishingTripDialog = false },
+                    tripName = fishingTripName,
+                    onTripNameChange = { fishingTripName = it },
+                    isTripActive = isFishingTripActive,
+                    onStartTrip = { location ->
+                        isFishingTripActive = true
+                        fishingTripStartTime = LocalDateTime.now()
+                        fishingTripStartLocation = LatLng(location.latitude, location.longitude)
+                        fishingTripRoute = listOf(fishingTripStartLocation!!)
+                        showFishingTripDialog = false
+                    },
+                    onEndTrip = {
+                        isFishingTripActive = false
+                        fishingTripEndTime = LocalDateTime.now()
+                        showFishingTripDialog = false
+                        showFishingTripSummary = true
+                    },
+                    startTime = fishingTripStartTime,
+                    onClose = { showFishingTripDialog = false },
+                    onAddCatch = { fishType, weight, uri, location ->
+                        // Legg til fangst i fiskeloggen
+                        val fishLog = FishLog(
+                            type = fishType,
+                            weight = weight.toString(),
+                            timestamp = System.currentTimeMillis(),
+                            latitude = location.latitude,
+                            longitude = location.longitude,
+                            area = "",
+                            description = "",
+                            imageUri = uri?.toString()
+                        )
+                        fishLogViewModel.addFishLog(fishLog)
+                    },
+                    fishLogViewModel = fishLogViewModel
+                )
+            }
+
+            // Show fishing trip summary dialog
+            if (showFishingTripSummary && fishingTripStartTime != null && fishingTripEndTime != null) {
+                FishingTripSummaryDialog(
+                    onDismiss = { showFishingTripSummary = false },
+                    tripName = fishingTripName,
+                    startTime = fishingTripStartTime!!,
+                    endTime = fishingTripEndTime!!,
+                    fishLogs = fishLogUiState.fishLogs.filter { 
+                        it.timestamp >= fishingTripStartTime!!.toEpochSecond(java.time.ZoneOffset.UTC) * 1000 && 
+                        it.timestamp <= fishingTripEndTime!!.toEpochSecond(java.time.ZoneOffset.UTC) * 1000 
+                    },
+                    mapScreenshot = mapScreenshot
                 )
             }
 
