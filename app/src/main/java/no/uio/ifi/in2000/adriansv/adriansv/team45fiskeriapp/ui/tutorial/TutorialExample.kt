@@ -19,19 +19,19 @@ fun TutorialExample() {
                 title = "Velkommen til appen!",
                 description = "Dette er hovedskjermen hvor du kan se viktig informasjon.",
                 targetTag = "welcome",
-                mascotResourceId = R.drawable.mascot_info
+                mascotResourceId = R.drawable.presenting
             ),
             TutorialStep(
                 title = "Kartvisning",
                 description = "Trykk her for å se kartet med vær- og fiskedata.",
                 targetTag = "map_button",
-                mascotResourceId = R.drawable.sailor_mascot
+                mascotResourceId = R.drawable.presenting
             ),
             TutorialStep(
                 title = "Fiskelogg",
                 description = "Her kan du logge dine fangster og se historikk.",
                 targetTag = "fish_log_button",
-                mascotResourceId = R.drawable.sailor_mascot
+                mascotResourceId = R.drawable.presenting
             )
         )
     }
@@ -79,7 +79,7 @@ fun TutorialExample() {
                     modifier = Modifier.tutorialTarget("fish_log_button", tutorialManager)
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.fish),
+                        painter = painterResource(id = R.drawable.presenting),
                         contentDescription = "Fiskelogg"
                     )
                     Spacer(modifier = Modifier.width(8.dp))

@@ -11,10 +11,11 @@ data class TutorialState(
     val currentStep: Int = 0,
     val isVisible: Boolean = false,
     val steps: List<TutorialStep> = emptyList(),
-    val highlightedBounds: Rect? = null
+    val highlightedBounds: Rect? = null,
+    val isCompleted: Boolean = false
 ) {
-    val isCompleted: Boolean
-        get() = currentStep >= steps.size
+    val isLastStep: Boolean
+        get() = currentStep >= steps.size - 1
 
     val currentStepData: TutorialStep?
         get() = steps.getOrNull(currentStep)
@@ -25,7 +26,7 @@ data class TutorialStep(
     val title: String,
     val description: String,
     val targetTag: String,
-    val mascotResourceId: Int,
+    val mascotResourceId: Int? = null,
     val mascotPosition: MascotPosition = MascotPosition.RIGHT,
     val mascotOffset: androidx.compose.ui.unit.DpOffset = androidx.compose.ui.unit.DpOffset(0.dp, 0.dp)
 )

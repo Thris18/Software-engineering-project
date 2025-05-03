@@ -81,6 +81,7 @@ import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.weather.Locati
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherUiState
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.tutorial.*
 import androidx.compose.ui.unit.DpOffset
+import kotlinx.coroutines.delay
 
 private const val TAG = "MapScreen"
 private const val SHIP_LAYER_ID = "ship-layer"
@@ -118,7 +119,9 @@ fun MapScreen(
     onGribFilterChanged: (Boolean) -> Unit,
     onAlertsFilterChanged: (Boolean) -> Unit,
     onShipsFilterChanged: (Boolean) -> Unit,
-    onLocationSelected: ((Double, Double, String) -> Unit)? = null
+    onLocationSelected: ((Double, Double, String) -> Unit)? = null,
+    isComingFromWelcome: Boolean = false,
+    onTutorialComplete: () -> Unit = {}
 ) {
     val weatherDataSource = WeatherDataSource()
     val weatherRepository = WeatherRepository(weatherDataSource)
@@ -186,6 +189,25 @@ fun MapScreen(
     var description by remember { mutableStateOf("") }
     var weight by remember { mutableStateOf("") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
+
+    // TimeOut for map loading
+    var mapLoadTimeout by remember { mutableStateOf(false) }
+    val mapLoadTimeoutDuration = 10000L // 10 sekunder
+    
+    LaunchedEffect(uiState.geoJsonData) {
+        // Reset timeout når geoJsonData oppdateres
+        mapLoadTimeout = false
+        
+        // Start timeout timer
+        if (uiState.geoJsonData != null) {
+            delay(mapLoadTimeoutDuration)
+            if (mapLibreMap == null) {
+                // Kartet lastet ikke innen tidsgrensen
+                mapLoadTimeout = true
+                Log.e(TAG, "Map loading timed out after ${mapLoadTimeoutDuration}ms")
+            }
+        }
+    }
 
     // Tøm fiskeloggen når man tømmer loggen i kartet
     fun clearFishLogs() {
@@ -369,20 +391,56 @@ fun MapScreen(
         listOf(
             TutorialStep(
                 title = "Velkommen til appen!",
-                description = "Dette er en rask introduksjon til de viktigste funksjonene.",
-                targetTag = "", // Ingen highlight på første popup
-                mascotResourceId = R.drawable.mascot_info,
-                mascotPosition = MascotPosition.LEFT,
-                mascotOffset = DpOffset((-40).dp, 0.dp)
+                description = "Dette er en rask introduksjon som hjelper deg å forstå appen.",
+                targetTag = "",
+                mascotResourceId = R.drawable.presenting
+            ),
+            TutorialStep(
+                title = "Kartvisning",
+                description = "Her på kartet kan du utforske fiskesteder, interagere med andre fartøy, og bli varslet om fare- og værvarsel." ,
+                targetTag = "",
+                mascotResourceId = R.drawable.nedvenstre
+            ),
+            TutorialStep(
+                title = "Profilsiden",
+                description = "Her kan du lage din profil, endre dine innstillinger og loggføre dine favorittfangster!",
+                targetTag = "",
+                mascotResourceId = R.drawable.nedhoyre
+            ),
+            TutorialStep(
+                title = "Båtvettregler",
+                description = "Før du ferder på sjøen, er det viktig å vite om reglene!",
+                targetTag = "",
+                mascotResourceId = R.drawable.tilhoyre
+            ),
+            TutorialStep(
+                title = "Søkefunksjonen",
+                description = "Lyst til å planlegge området først? Søkefunksjonen hjelper deg å finne fram til der du ønsker å dra!",
+                targetTag = "search_button",
+                mascotResourceId = R.drawable.pekopp
+            ),
+            TutorialStep(
+                title = "Fiskeloggen",
+                description = "I Fiskeloggen kan du lagre dine fisker og plassere de på kartet der du fikk de!",
+                targetTag = "fish_log_button",
+                mascotResourceId = R.drawable.tilhoyre
             )
-            // Legg til flere steg her etter behov
         )
     }
-    var tutorialStarted by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        if (!tutorialStarted) {
+    
+    // Observer tutorial tilstand for å oppdage når den er ferdig
+    LaunchedEffect(tutorialManager.state.isCompleted) {
+        if (tutorialManager.state.isCompleted) {
+            // Varsle når tutorial er fullført
+            onTutorialComplete()
+        }
+    }
+    
+    // Bruk en LaunchedEffect med isComingFromWelcome som key
+    // Dette kjører kun når man faktisk kommer fra welcome screen
+    LaunchedEffect(isComingFromWelcome) {
+        if (isComingFromWelcome) {
             tutorialManager.startTutorial(tutorialSteps)
-            tutorialStarted = true
         }
     }
 
@@ -393,7 +451,8 @@ fun MapScreen(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .padding(top = 16.dp, start = 16.dp, end = 16.dp)
-                    .zIndex(1f),
+                    .zIndex(1f)
+                    .tutorialTarget("search_button", tutorialManager),
                 onSearch = { query ->
                     viewModel.searchAndMoveToLocation(query)
                 }
@@ -421,271 +480,344 @@ fun MapScreen(
                     factory = { ctx ->
                         MapView(ctx).also { view ->
                             mapView = view
-                            view.getMapAsync(OnMapReadyCallback { map ->
-                                mapLibreMap = map
-                                map.setStyle(Style.Builder().fromUri("https://api.maptiler.com/maps/streets-v2/style.json?key=oMZQoq4zniKOHeMvi7oA")) { style ->
-                                    // Set initial camera position to Oslo Fjord
-                                    val osloPosition = LatLng(59.9139, 10.7522)
-                                    val position = CameraPosition.Builder()
-                                        .target(osloPosition)
-                                        .zoom(9.0)
-                                        .build()
-                                    map.moveCamera(CameraUpdateFactory.newCameraPosition(position))
-
-                                    // Add camera movement listener for weather updates
-                                    map.addOnCameraIdleListener {
-                                        val center = map.cameraPosition.target
-                                        val zoom = map.cameraPosition.zoom
-                                        if (center != null) {
-                                            weatherViewModel.updateWeather(
-                                                latitude = center.latitude,
-                                                longitude = center.longitude,
-                                                zoomLevel = zoom
-                                            )
-                                        }
-                                    }
-
-                                    // Initial weather update
-                                    weatherViewModel.updateWeather(
-                                        latitude = osloPosition.latitude,
-                                        longitude = osloPosition.longitude,
-                                        zoomLevel = position.zoom
-                                    )
-
-                                    // Load warning icons and setup layers
-                                    loadWarningIcons(context, style)
-                                    setupShipLayer(context, style)
-
-                                    // Add GeoJSON source and layer for alerts
-                                    val source = GeoJsonSource("alerts-source", uiState.geoJsonData)
-                                    style.addSource(source)
-
-                                    val symbolLayer = SymbolLayer("alert-symbol-layer", "alerts-source")
-                                        .withProperties(
-                                            PropertyFactory.iconImage(
-                                                Expression.match(
-                                                    Expression.get("eventAwarenessName"),
-                                                    Expression.literal("Sterk ising på skip"), Expression.concat(
-                                                        Expression.literal("generic-"),
-                                                        Expression.match(
-                                                            Expression.get("severity"),
-                                                            Expression.literal("Severe"), Expression.literal("red"),
-                                                            Expression.literal("Moderate"), Expression.literal("orange"),
-                                                            Expression.literal("Minor"), Expression.literal("yellow"),
-                                                            Expression.literal("yellow")
-                                                        )
-                                                    ),
-                                                    Expression.literal("Storm"), Expression.concat(
-                                                        Expression.literal("wind-"),
-                                                        Expression.match(
-                                                            Expression.get("severity"),
-                                                            Expression.literal("Severe"), Expression.literal("red"),
-                                                            Expression.literal("Moderate"), Expression.literal("orange"),
-                                                            Expression.literal("Minor"), Expression.literal("yellow"),
-                                                            Expression.literal("yellow")
-                                                        )
-                                                    ),
-                                                    Expression.literal("Kuling"), Expression.concat(
-                                                        Expression.literal("wind-"),
-                                                        Expression.match(
-                                                            Expression.get("severity"),
-                                                            Expression.literal("Severe"), Expression.literal("red"),
-                                                            Expression.literal("Moderate"), Expression.literal("orange"),
-                                                            Expression.literal("Minor"), Expression.literal("yellow"),
-                                                            Expression.literal("yellow")
-                                                        )
-                                                    ),
-                                                    Expression.literal("Kraftige vindkast"), Expression.concat(
-                                                        Expression.literal("wind-"),
-                                                        Expression.match(
-                                                            Expression.get("severity"),
-                                                            Expression.literal("Severe"), Expression.literal("red"),
-                                                            Expression.literal("Moderate"), Expression.literal("orange"),
-                                                            Expression.literal("Minor"), Expression.literal("yellow"),
-                                                            Expression.literal("yellow")
-                                                        )
-                                                    ),
-                                                    Expression.literal("Skogbrannfare"), Expression.concat(
-                                                        Expression.literal("forestfire-"),
-                                                        Expression.match(
-                                                            Expression.get("severity"),
-                                                            Expression.literal("Severe"), Expression.literal("red"),
-                                                            Expression.literal("Moderate"), Expression.literal("orange"),
-                                                            Expression.literal("Minor"), Expression.literal("yellow"),
-                                                            Expression.literal("yellow")
-                                                        )
-                                                    ),
-                                                    Expression.literal("generic-yellow")
-                                                )
-                                            ),
-                                            PropertyFactory.iconSize(0.8f),
-                                            PropertyFactory.iconAllowOverlap(true),
-                                            PropertyFactory.iconIgnorePlacement(true),
-                                            PropertyFactory.iconOffset(arrayOf(0f, -5f)),
-                                            PropertyFactory.symbolPlacement(Property.SYMBOL_PLACEMENT_POINT),
-                                            PropertyFactory.iconAnchor(Property.ICON_ANCHOR_CENTER)
-                                        )
-                                    style.addLayer(symbolLayer)
-
-                                    // Legg til polygon-laget under symbol-laget
-                                    val polygonLayer = FillLayer("alert-polygon-layer", "alerts-source")
-                                        .withProperties(
-                                            PropertyFactory.fillColor(
-                                                Expression.match(
-                                                    Expression.get("severity"),
-                                                    Expression.literal("Severe"), Expression.color(Color.parseColor("#66D32F2F")),
-                                                    Expression.literal("Moderate"), Expression.color(Color.parseColor("#66F57C00")),
-                                                    Expression.literal("Minor"), Expression.color(Color.parseColor("#66FBC02D")),
-                                                    Expression.color(Color.parseColor("#66FBC02D"))
-                                                )
-                                            ),
-                                            PropertyFactory.fillOpacity(0f),
-                                            PropertyFactory.fillOutlineColor(Color.parseColor("#000000"))
-                                        )
-                                        .withFilter(
-                                            Expression.any(
-                                                Expression.eq(Expression.geometryType(), Expression.literal("Polygon")),
-                                                Expression.eq(Expression.geometryType(), Expression.literal("MultiPolygon"))
-                                            )
-                                        )
-
-                                    style.addLayerBelow(polygonLayer, "alert-symbol-layer")
-
-                                    map.addOnMapClickListener { point ->
-                                        val screenPoint = map.projection.toScreenLocation(point)
+                            
+                            // Sett opp async map loading med bedre error handling
+                            try {
+                                view.getMapAsync(OnMapReadyCallback { map ->
+                                    try {
+                                        Log.d(TAG, "Map is ready, setting up style and layers")
+                                        mapLibreMap = map
                                         
-                                        // Håndter lokasjonsvalg først hvis vi er i lokasjonsvalg-modus
-                                        if (onLocationSelected != null) {
-                                            onLocationSelected(point.latitude, point.longitude, "Valgt lokasjon")
-                                            return@addOnMapClickListener true
-                                        }
-
-                                        // Check for fish log images first
-                                        val fishFeatures = map.queryRenderedFeatures(screenPoint)
-                                        val fishLog = fishFeatures.find { feature ->
-                                            val properties = feature.properties()
-                                            if (properties != null) {
-                                                val timestamp = properties.get("timestamp")?.asString
-                                                if (timestamp != null) {
-                                                    fishLogUiState.fishLogs.find { it.timestamp.toString() == timestamp } != null
-                                                } else false
-                                            } else false
-                                        }?.let { feature ->
-                                            val properties = feature.properties()
-                                            val timestamp = properties?.get("timestamp")?.asString
-                                            if (timestamp != null) {
-                                                fishLogUiState.fishLogs.find { it.timestamp.toString() == timestamp }
-                                            } else null
-                                        }
-
-                                        if (fishLog != null) {
-                                            selectedLocation = Pair(fishLog.latitude, fishLog.longitude)
-                                            showFishLogDialog = true
-                                            resetSelections() // Nullstill GRIB-data og andre popups
-                                            return@addOnMapClickListener true
-                                        }
-                                        
-                                        // Check for alerts (prioritert) - kun hvis alerts er aktivert
-                                        if (showAlerts) {
-                                            val alertFeatures = map.queryRenderedFeatures(screenPoint, "alert-symbol-layer")
-                                            if (alertFeatures.isNotEmpty()) {
-                                                val feature = alertFeatures[0]
-                                                val properties = feature.properties()
-                                                if (properties != null) {
-                                                    val jsonObject = JSONObject(properties.toString())
-                                                    val id = properties.get("id").asString
-                                                    resetSelections()
-                                                    viewModel.setSelectedAlert(jsonObject)
-                                                    
-                                                    // Vis polygon for dette varselet
-                                                    map.getStyle { style ->
-                                                        updateAlertPolygon(style, id)
+                                        // Force-last inn standard style hvis det oppstår problemer
+                                        val styleUrl = "https://api.maptiler.com/maps/streets-v2/style.json?key=oMZQoq4zniKOHeMvi7oA"
+                                        map.setStyle(Style.Builder().fromUri(styleUrl)) { style ->
+                                            try {
+                                                // Nullstill timeout siden kartet er lastet
+                                                mapLoadTimeout = false
+                                                
+                                                // Set initial camera position to Oslo Fjord
+                                                val osloPosition = LatLng(59.9139, 10.7522)
+                                                val position = CameraPosition.Builder()
+                                                    .target(osloPosition)
+                                                    .zoom(9.0)
+                                                    .build()
+                                                map.moveCamera(CameraUpdateFactory.newCameraPosition(position))
+                                                
+                                                // Add camera movement listener for weather updates
+                                                map.addOnCameraIdleListener {
+                                                    val center = map.cameraPosition.target
+                                                    val zoom = map.cameraPosition.zoom
+                                                    if (center != null) {
+                                                        weatherViewModel.updateWeather(
+                                                            latitude = center.latitude,
+                                                            longitude = center.longitude,
+                                                            zoomLevel = zoom
+                                                        )
                                                     }
                                                 }
-                                                return@addOnMapClickListener true
-                                            }
-                                        }
-                                        
-                                        // Check for ships - kun hvis ships er aktivert
-                                        if (showShips) {
-                                            val shipFeatures = map.queryRenderedFeatures(screenPoint, SHIP_LAYER_ID)
-                                            if (shipFeatures.isNotEmpty()) {
-                                                resetSelections()  // Nullstill alerts og grib-state først
-                                                val feature = shipFeatures[0]
-                                                val properties = feature.properties()
                                                 
-                                                if (properties != null) {
-                                                    val mmsi = properties.get("mmsi")?.asString
-                                                    if (mmsi != null) {
-                                                        selectedShip = shipUiState.ships.find { it.mmsi == mmsi }
-                                                        if (selectedShip != null) {
-                                                            selectedShipScreenPosition = mapLibreMap?.projection?.toScreenLocation(
-                                                                LatLng(selectedShip!!.latitude, selectedShip!!.longitude)
+                                                // Initial weather update
+                                                weatherViewModel.updateWeather(
+                                                    latitude = osloPosition.latitude,
+                                                    longitude = osloPosition.longitude,
+                                                    zoomLevel = position.zoom
+                                                )
+
+                                                // Load warning icons and setup layers
+                                                loadWarningIcons(context, style)
+                                                setupShipLayer(context, style)
+
+                                                // Add GeoJSON source and layer for alerts
+                                                val source = GeoJsonSource("alerts-source", uiState.geoJsonData)
+                                                style.addSource(source)
+
+                                                val symbolLayer = SymbolLayer("alert-symbol-layer", "alerts-source")
+                                                    .withProperties(
+                                                        PropertyFactory.iconImage(
+                                                            Expression.match(
+                                                                Expression.get("eventAwarenessName"),
+                                                                Expression.literal("Sterk ising på skip"), Expression.concat(
+                                                                    Expression.literal("generic-"),
+                                                                    Expression.match(
+                                                                        Expression.get("severity"),
+                                                                        Expression.literal("Severe"), Expression.literal("red"),
+                                                                        Expression.literal("Moderate"), Expression.literal("orange"),
+                                                                        Expression.literal("Minor"), Expression.literal("yellow"),
+                                                                        Expression.literal("yellow")
+                                                                    )
+                                                                ),
+                                                                Expression.literal("Storm"), Expression.concat(
+                                                                    Expression.literal("wind-"),
+                                                                    Expression.match(
+                                                                        Expression.get("severity"),
+                                                                        Expression.literal("Severe"), Expression.literal("red"),
+                                                                        Expression.literal("Moderate"), Expression.literal("orange"),
+                                                                        Expression.literal("Minor"), Expression.literal("yellow"),
+                                                                        Expression.literal("yellow")
+                                                                    )
+                                                                ),
+                                                                Expression.literal("Kuling"), Expression.concat(
+                                                                    Expression.literal("wind-"),
+                                                                    Expression.match(
+                                                                        Expression.get("severity"),
+                                                                        Expression.literal("Severe"), Expression.literal("red"),
+                                                                        Expression.literal("Moderate"), Expression.literal("orange"),
+                                                                        Expression.literal("Minor"), Expression.literal("yellow"),
+                                                                        Expression.literal("yellow")
+                                                                    )
+                                                                ),
+                                                                Expression.literal("Kraftige vindkast"), Expression.concat(
+                                                                    Expression.literal("wind-"),
+                                                                    Expression.match(
+                                                                        Expression.get("severity"),
+                                                                        Expression.literal("Severe"), Expression.literal("red"),
+                                                                        Expression.literal("Moderate"), Expression.literal("orange"),
+                                                                        Expression.literal("Minor"), Expression.literal("yellow"),
+                                                                        Expression.literal("yellow")
+                                                                    )
+                                                                ),
+                                                                Expression.literal("Skogbrannfare"), Expression.concat(
+                                                                    Expression.literal("forestfire-"),
+                                                                    Expression.match(
+                                                                        Expression.get("severity"),
+                                                                        Expression.literal("Severe"), Expression.literal("red"),
+                                                                        Expression.literal("Moderate"), Expression.literal("orange"),
+                                                                        Expression.literal("Minor"), Expression.literal("yellow"),
+                                                                        Expression.literal("yellow")
+                                                                    )
+                                                                ),
+                                                                Expression.literal("generic-yellow")
                                                             )
+                                                        ),
+                                                        PropertyFactory.iconSize(0.8f),
+                                                        PropertyFactory.iconAllowOverlap(true),
+                                                        PropertyFactory.iconIgnorePlacement(true),
+                                                        PropertyFactory.iconOffset(arrayOf(0f, -5f)),
+                                                        PropertyFactory.symbolPlacement(Property.SYMBOL_PLACEMENT_POINT),
+                                                        PropertyFactory.iconAnchor(Property.ICON_ANCHOR_CENTER)
+                                                    )
+                                                style.addLayer(symbolLayer)
+
+                                                // Legg til polygon-laget under symbol-laget
+                                                val polygonLayer = FillLayer("alert-polygon-layer", "alerts-source")
+                                                    .withProperties(
+                                                        PropertyFactory.fillColor(
+                                                            Expression.match(
+                                                                Expression.get("severity"),
+                                                                Expression.literal("Severe"), Expression.color(Color.parseColor("#66D32F2F")),
+                                                                Expression.literal("Moderate"), Expression.color(Color.parseColor("#66F57C00")),
+                                                                Expression.literal("Minor"), Expression.color(Color.parseColor("#66FBC02D")),
+                                                                Expression.color(Color.parseColor("#66FBC02D"))
+                                                            )
+                                                        ),
+                                                        PropertyFactory.fillOpacity(0f),
+                                                        PropertyFactory.fillOutlineColor(Color.parseColor("#000000"))
+                                                    )
+                                                    .withFilter(
+                                                        Expression.any(
+                                                            Expression.eq(Expression.geometryType(), Expression.literal("Polygon")),
+                                                            Expression.eq(Expression.geometryType(), Expression.literal("MultiPolygon"))
+                                                        )
+                                                    )
+
+                                                style.addLayerBelow(polygonLayer, "alert-symbol-layer")
+
+                                                map.addOnMapClickListener { point ->
+                                                    val screenPoint = map.projection.toScreenLocation(point)
+                                                    
+                                                    // Håndter lokasjonsvalg først hvis vi er i lokasjonsvalg-modus
+                                                    if (onLocationSelected != null) {
+                                                        onLocationSelected(point.latitude, point.longitude, "Valgt lokasjon")
+                                                        return@addOnMapClickListener true
+                                                    }
+
+                                                    // Check for fish log images first
+                                                    val fishFeatures = map.queryRenderedFeatures(screenPoint)
+                                                    val fishLog = fishFeatures.find { feature ->
+                                                        val properties = feature.properties()
+                                                        if (properties != null) {
+                                                            val timestamp = properties.get("timestamp")?.asString
+                                                            if (timestamp != null) {
+                                                                fishLogUiState.fishLogs.find { it.timestamp.toString() == timestamp } != null
+                                                            } else false
+                                                        } else false
+                                                    }?.let { feature ->
+                                                        val properties = feature.properties()
+                                                        val timestamp = properties?.get("timestamp")?.asString
+                                                        if (timestamp != null) {
+                                                            fishLogUiState.fishLogs.find { it.timestamp.toString() == timestamp }
+                                                        } else null
+                                                    }
+
+                                                    if (fishLog != null) {
+                                                        selectedLocation = Pair(fishLog.latitude, fishLog.longitude)
+                                                        showFishLogDialog = true
+                                                        resetSelections() // Nullstill GRIB-data og andre popups
+                                                        return@addOnMapClickListener true
+                                                    }
+                                                    
+                                                    // Check for alerts (prioritert) - kun hvis alerts er aktivert
+                                                    if (showAlerts) {
+                                                        val alertFeatures = map.queryRenderedFeatures(screenPoint, "alert-symbol-layer")
+                                                        if (alertFeatures.isNotEmpty()) {
+                                                            val feature = alertFeatures[0]
+                                                            val properties = feature.properties()
+                                                            if (properties != null) {
+                                                                val jsonObject = JSONObject(properties.toString())
+                                                                val id = properties.get("id").asString
+                                                                resetSelections()
+                                                                viewModel.setSelectedAlert(jsonObject)
+                                                                
+                                                                // Vis polygon for dette varselet
+                                                                map.getStyle { style ->
+                                                                    updateAlertPolygon(style, id)
+                                                                }
+                                                            }
+                                                            return@addOnMapClickListener true
                                                         }
                                                     }
-                                                }
-                                                
-                                                // Gjem polygon når skip velges
-                                                map.getStyle { style ->
-                                                    updateAlertPolygon(style, null)
-                                                }
-                                                return@addOnMapClickListener true
-                                            }
-                                        }
-                                        
-                                        // Håndter fiskelogg posisjonsvalg før GRIB-data
-                                        if (showLocationSelectionDialog) {
-                                            selectedLocationForFish = Pair(point.latitude, point.longitude)
-                                            showLocationSelectionDialog = false
-                                            showAddFishDialog = true
-                                            selectedLocation = Pair(point.latitude, point.longitude)
-                                            return@addOnMapClickListener true
-                                        }
-                                        
-                                        // If no alert or ship was clicked, show GRIB data if enabled
-                                        if (showGrib && uiState.selectedAlert == null && !showFishLogDialog) {
-                                            scope.launch {
-                                                val gribData = gribRepository.getGribData(
-                                                    GribPoint(
-                                                        latitude = point.latitude,
-                                                        longitude = point.longitude
-                                                    )
-                                                )
-                                                if (gribData != null) {
-                                                    resetSelections()
-                                                    selectedPoint = GribPoint(
-                                                        latitude = point.latitude,
-                                                        longitude = point.longitude,
-                                                        data = gribData
-                                                    )
-                                                    showPopup = true
                                                     
-                                                    // Gjem polygon når GRIB data vises
-                                                    map.getStyle { style ->
-                                                        updateAlertPolygon(style, null)
+                                                    // Check for ships - kun hvis ships er aktivert
+                                                    if (showShips) {
+                                                        val shipFeatures = map.queryRenderedFeatures(screenPoint, SHIP_LAYER_ID)
+                                                        if (shipFeatures.isNotEmpty()) {
+                                                            resetSelections()  // Nullstill alerts og grib-state først
+                                                            val feature = shipFeatures[0]
+                                                            val properties = feature.properties()
+                                                            
+                                                            if (properties != null) {
+                                                                val mmsi = properties.get("mmsi")?.asString
+                                                                if (mmsi != null) {
+                                                                    selectedShip = shipUiState.ships.find { it.mmsi == mmsi }
+                                                                    if (selectedShip != null) {
+                                                                        selectedShipScreenPosition = mapLibreMap?.projection?.toScreenLocation(
+                                                                            LatLng(selectedShip!!.latitude, selectedShip!!.longitude)
+                                                                        )
+                                                                    }
+                                                                }
+                                                            }
+                                                            
+                                                            // Gjem polygon når skip velges
+                                                            map.getStyle { style ->
+                                                                updateAlertPolygon(style, null)
+                                                            }
+                                                            return@addOnMapClickListener true
+                                                        }
                                                     }
+                                                    
+                                                    // Håndter fiskelogg posisjonsvalg før GRIB-data
+                                                    if (showLocationSelectionDialog) {
+                                                        selectedLocationForFish = Pair(point.latitude, point.longitude)
+                                                        showLocationSelectionDialog = false
+                                                        showAddFishDialog = true
+                                                        selectedLocation = Pair(point.latitude, point.longitude)
+                                                        return@addOnMapClickListener true
+                                                    }
+                                                    
+                                                    // If no alert or ship was clicked, show GRIB data if enabled
+                                                    if (showGrib && uiState.selectedAlert == null && !showFishLogDialog) {
+                                                        scope.launch {
+                                                            val gribData = gribRepository.getGribData(
+                                                                GribPoint(
+                                                                    latitude = point.latitude,
+                                                                    longitude = point.longitude
+                                                                )
+                                                            )
+                                                            if (gribData != null) {
+                                                                resetSelections()
+                                                                selectedPoint = GribPoint(
+                                                                    latitude = point.latitude,
+                                                                    longitude = point.longitude,
+                                                                    data = gribData
+                                                                )
+                                                                showPopup = true
+                                                                
+                                                                // Gjem polygon når GRIB data vises
+                                                                map.getStyle { style ->
+                                                                    updateAlertPolygon(style, null)
+                                                                }
+                                                            }
+                                                        }
+                                                        return@addOnMapClickListener true
+                                                    }
+                                                    
+                                                    false
                                                 }
-                                            }
-                                            return@addOnMapClickListener true
-                                        }
-                                        
-                                        false
-                                    }
 
-                                    // Update layer visibility based on filters
-                                    style.getLayer("alert-symbol-layer")?.setProperties(
-                                        PropertyFactory.iconOpacity(Expression.literal(if (showAlerts) 1f else 0f))
-                                    )
-                                    style.getLayer(SHIP_LAYER_ID)?.setProperties(
-                                        PropertyFactory.iconOpacity(Expression.literal(if (showShips) 1f else 0f))
-                                    )
+                                                // Update layer visibility based on filters
+                                                style.getLayer("alert-symbol-layer")?.setProperties(
+                                                    PropertyFactory.iconOpacity(Expression.literal(if (showAlerts) 1f else 0f))
+                                                )
+                                                style.getLayer(SHIP_LAYER_ID)?.setProperties(
+                                                    PropertyFactory.iconOpacity(Expression.literal(if (showShips) 1f else 0f))
+                                                )
+                                            } catch (e: Exception) {
+                                                Log.e(TAG, "Error setting up map layers: ${e.message}")
+                                                // Force en ny render om noe går galt
+                                                map.triggerRepaint()
+                                            }
+                                        }
+                                    } catch (e: Exception) {
+                                        Log.e(TAG, "Error setting up map: ${e.message}")
+                                    }
+                                })
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error getting map async: ${e.message}")
+                            }
+                        }
+                    },
+                    update = { mapView ->
+                        // Utfør oppdateringer til map view hvis nødvendig
+                        if (mapLoadTimeout && mapLibreMap == null) {
+                            // Forsøk å laste på nytt hvis timeout
+                            try {
+                                Log.d(TAG, "Attempting to reload map after timeout")
+                                mapView.getMapAsync { map ->
+                                    mapLibreMap = map
+                                    map.setStyle(Style.Builder().fromUri("https://api.maptiler.com/maps/streets-v2/style.json?key=oMZQoq4zniKOHeMvi7oA"))
                                 }
-                            })
+                                mapLoadTimeout = false
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error reloading map: ${e.message}")
+                            }
                         }
                     },
                     modifier = Modifier.fillMaxSize()
                 )
+                
+                // Vis loading-indikator hvis kart ikke er lastet
+                if (mapLibreMap == null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+                
+                // Vis reload-message hvis timeout har oppstått
+                if (mapLoadTimeout) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            CircularProgressIndicator()
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "Laster kartet...",
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                    }
+                }
             }
 
             // UI Elements
@@ -709,7 +841,8 @@ fun MapScreen(
                     },
                     modifier = Modifier
                         .padding(bottom = 8.dp)
-                        .align(Alignment.End),
+                        .align(Alignment.End)
+                        .tutorialTarget("fish_log_button", tutorialManager),
                     containerColor = MaterialTheme.colorScheme.surface,
                     contentColor = MaterialTheme.colorScheme.onSurface,
                     shape = MaterialTheme.shapes.medium
@@ -959,7 +1092,26 @@ fun MapScreen(
 
     DisposableEffect(Unit) {
         onDispose {
-            mapView?.onDestroy()
+            // Ryddig opprydding av mapView ressurser
+            try {
+                mapView?.onStop()
+                mapView?.onDestroy()
+                mapLibreMap = null
+            } catch (e: Exception) {
+                Log.e(TAG, "Error disposing map: ${e.message}")
+            }
+        }
+    }
+    
+    // Legg til lifecycle-håndtering for MapView
+    LaunchedEffect(mapView) {
+        if (mapView != null) {
+            try {
+                mapView?.onStart()
+                mapView?.onResume()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error in map lifecycle management: ${e.message}")
+            }
         }
     }
 }
