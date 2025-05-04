@@ -1,5 +1,7 @@
 package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components
 
+import android.graphics.drawable.AnimationDrawable
+import android.widget.ImageView
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -17,6 +19,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import coil.compose.AsyncImage
 import coil.decode.GifDecoder
 import coil.request.ImageRequest
@@ -51,7 +56,7 @@ fun WelcomeScreen(onNavigateToHome: () -> Unit) {
     
     // Calculate appropriate sizes based on screen dimensions
     val titleSize = min(screenWidth.value * 0.15f, 72f).sp
-    val imageSize = min(screenWidth.value * 0.8f, 350f).dp
+    val imageSize = min(screenWidth.value * 0.9f, 400f).dp
     val buttonWidth = min(screenWidth.value * 0.8f, 350f).dp
 
     Box(
@@ -66,8 +71,8 @@ fun WelcomeScreen(onNavigateToHome: () -> Unit) {
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Responsive spacing at top (smaller on small screens)
-            Spacer(modifier = Modifier.height((screenHeight.value * 0.05f).dp))
+            // Øk avstanden fra toppen for å senke alt innhold
+            Spacer(modifier = Modifier.height((screenHeight.value * 0.07f).dp))
 
             // Appnavn med responsiv fontstørrelse
             Text(
@@ -82,20 +87,26 @@ fun WelcomeScreen(onNavigateToHome: () -> Unit) {
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height((screenHeight.value * 0.02f).dp))
+            // Beholdt samme mellomrom mellom tittel og maskott
+            Spacer(modifier = Modifier.height((screenHeight.value * 0.01f).dp))
 
-            // Maskotbilde med responsiv størrelse
-            Image(
-                painter = painterResource(id = R.drawable.sailor_mascot),
-                contentDescription = "Sjømannsmaskott",
-                contentScale = ContentScale.Fit,
+            AndroidView(
+                factory = { context ->
+                    ImageView(context).apply {
+                        setBackgroundResource(R.drawable.waving_mascot)
+                        scaleType = ImageView.ScaleType.FIT_CENTER
+                        adjustViewBounds = true
+                        (background as? AnimationDrawable)?.start()
+                    }
+                },
                 modifier = Modifier
                     .widthIn(max = imageSize)
+                    .height(imageSize)
                     .padding(8.dp)
             )
 
-            // Flexible space that grows or shrinks based on screen size
-            Spacer(modifier = Modifier.weight(1f))
+            // Redusert mellomrom ytterligere for å flytte maskotten nærmere midten
+            Spacer(modifier = Modifier.weight(0.4f))
 
             // Fiskeanimasjon - større størrelse
             AsyncImage(

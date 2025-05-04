@@ -31,10 +31,16 @@ import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherSc
 fun NavigationHandler() {
     // Delte tilstander
     var currentRoute by remember { mutableStateOf("welcome") } // Starter med velkomstskjerm
-    var isDarkMode by remember { mutableStateOf(true) }
+    var isDarkMode by remember { mutableStateOf(false) }
     var showGrib by remember { mutableStateOf(true) }
     var showAlerts by remember { mutableStateOf(true) }
     var showShips by remember { mutableStateOf(true) }
+    
+    // Holder styr på om navigasjon kommer fra welcome screen
+    var isComingFromWelcome by remember { mutableStateOf(false) }
+    
+    // Holder styr på om tutorialen er vist (persisteres gjennom recomposition)
+    var hasTutorialBeenShown by remember { mutableStateOf(false) }
 
     // Profil-tilstander
     var showSettings by remember { mutableStateOf(false) }
@@ -78,12 +84,22 @@ fun NavigationHandler() {
                 Box(modifier = Modifier.weight(1f)) {
                     when (currentRoute) {
                         "welcome" -> WelcomeScreen(
-                            onNavigateToHome = { currentRoute = "kart" }
+                            onNavigateToHome = { 
+                                currentRoute = "kart"
+                                // Kun sett flagget hvis tutorialen ikke er vist tidligere
+                                isComingFromWelcome = !hasTutorialBeenShown
+                            }
                         )
                         "kart" -> MapScreen(
-                            onNavigateToProfile = { currentRoute = "profil" },
+                            onNavigateToProfile = { 
+                                currentRoute = "profil"
+                                isComingFromWelcome = false  // Reset flagg når vi navigerer videre
+                            },
                             currentRoute = currentRoute,
-                            onNavigate = { route -> currentRoute = route },
+                            onNavigate = { route -> 
+                                currentRoute = route
+                                isComingFromWelcome = false  // Reset flagg ved navigasjon
+                            },
                             isDarkMode = isDarkMode,
                             showGrib = showGrib,
                             showAlerts = showAlerts,
@@ -107,7 +123,13 @@ fun NavigationHandler() {
                                 previousRoute?.let { currentRoute = it }
                                 showAddFishDialog = true
                                 previousRoute = null
-                            } else null
+                            } else null,
+                            isComingFromWelcome = isComingFromWelcome && !hasTutorialBeenShown,
+                            // Når tutorialen er ferdig
+                            onTutorialComplete = {
+                                hasTutorialBeenShown = true
+                                isComingFromWelcome = false
+                            }
                         )
                         "profil" -> ProfileScreen(
                             firstName = firstName,

@@ -1,7 +1,5 @@
 package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.weather
 
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.TimeSeriesEntry
-
 data class LocationWeather(
     val latitude: Double,
     val longitude: Double,
