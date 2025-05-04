@@ -13,6 +13,6 @@ data class LocationWeather(
     val cloudAreaFraction: Double = 0.0,
     val precipitationAmount: Double = 0.0,
     val airPressure: Double = 0.0,
-    val timeseries: List<TimeSeriesEntry> = emptyList()
+    val timeseries: List<TimeSeriesEntry> = emptyList(),
 )
 

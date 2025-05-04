@@ -25,6 +25,7 @@ import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.theme.Team45Fiske
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherViewModel
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherViewModelFactory
 import android.net.Uri
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherScreen
 
 @Composable
 fun NavigationHandler() {
@@ -153,6 +154,7 @@ fun NavigationHandler() {
                                 fishLogViewModel.removeFishLog(fishLog)
                             }
                         )
+                        "vaer" -> WeatherScreen(weather = weatherUiState.weather)
                     }
                 }
 
