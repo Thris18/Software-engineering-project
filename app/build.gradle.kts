@@ -121,9 +121,14 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.5.4")
 
     // Til GIF
-    implementation("io.coil-kt:coil-compose:2.4.0")
     implementation("io.coil-kt:coil-gif:2.4.0")
 
+    // Bakoverkompitabel løsning for ZonedTimeDate
+    implementation ("com.jakewharton.threetenabp:threetenabp:1.4.5")
+
+    // Lottie animasjoner
+    implementation ("com.airbnb.android:lottie:6.6.6")
+    implementation ("com.airbnb.android:lottie-compose:6.6.6")
     implementation(libs.play.services.location)
 
 
