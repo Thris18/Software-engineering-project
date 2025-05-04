@@ -232,23 +232,23 @@ fun TutorialOverlay(
                 if (currentStep.title == "Kartvisning") {
                     // Skip-ikon på toppen
                     Image(
-                        painter = painterResource(id = R.drawable.skip),
+                        painter = painterResource(id = R.drawable.hoyhastighetsfartoy),
                         contentDescription = null,
                         modifier = Modifier
-                            .size(72.dp)  // 10% mindre enn 80dp
-                            .align(Alignment.CenterStart)
-                            .offset(x = (-50).dp, y = (-60).dp),
+                            .size(40.dp)  // 10% mindre enn 80dp
+                            .align(Alignment.Center)
+                            .offset(x = (-25).dp, y = 53.dp),
                         contentScale = ContentScale.Fit
                     )
                     
                     // Farevarsel-ikon på bunnen
                     Image(
-                        painter = painterResource(id = R.drawable.farevarsel),
+                        painter = painterResource(id = R.drawable.icon_warning_wind_orange),
                         contentDescription = null,
                         modifier = Modifier
-                            .size(60.dp)
-                            .align(Alignment.CenterStart)
-                            .offset(x = (-40).dp, y = 60.dp),
+                            .size(40.dp)
+                            .align(Alignment.Center)
+                            .offset(x = 25.dp, y = 53.dp),
                         contentScale = ContentScale.Fit
                     )
                     

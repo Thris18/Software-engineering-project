@@ -539,6 +539,112 @@ fun MapScreen(
         }
     }
 
+    // Oppdater brukerens posisjon
+    LaunchedEffect(mapLibreMap) {
+        mapLibreMap?.getStyle { style ->
+            // Legg til kilde for brukerens posisjon
+            val userLocationSource = GeoJsonSource("user-location-source")
+            style.addSource(userLocationSource)
+            
+            // Legg til kilde for fisketur-ruten
+            val routeSource = GeoJsonSource("fishing-trip-route-source")
+            style.addSource(routeSource)
+            
+            // Legg til lag for fisketur-ruten (gul linje)
+            val routeLayer = LineLayer("fishing-trip-route-layer", "fishing-trip-route-source")
+                .withProperties(
+                    lineColor(Color.YELLOW),
+                    lineWidth(4f),
+                    lineOpacity(0.8f)
+                )
+            style.addLayer(routeLayer)
+            
+            // Legg til lag for brukerens posisjon (blå sirkel)
+            val userLocationLayer = CircleLayer("user-location-layer", "user-location-source")
+                .withProperties(
+                    circleRadius(8f),
+                    circleColor(Color.BLUE),
+                    circleOpacity(0.9f),
+                    circleStrokeWidth(2f),
+                    circleStrokeColor(Color.WHITE)
+                )
+            style.addLayer(userLocationLayer)
+            
+            // Start oppdatering av brukerens posisjon
+            val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            if (locationPermissionState.value) {
+                try {
+                    locationManager.requestLocationUpdates(
+                        LocationManager.GPS_PROVIDER,
+                        1000L, // Oppdater hvert sekund
+                        1f // Oppdater hvis brukeren beveger seg mer enn 1 meter
+                    ) { location ->
+                        userLocation = LatLng(location.latitude, location.longitude)
+                        // Oppdater GeoJSON-kilden med brukerens posisjon
+                        val geoJson = """
+                        {
+                            "type": "Feature",
+                            "geometry": {
+                                "type": "Point",
+                                "coordinates": [${location.longitude}, ${location.latitude}]
+                            }
+                        }
+                        """
+                        userLocationSource.setGeoJson(geoJson)
+                        
+                        // Hvis fisketuren er aktiv, legg til posisjonen i ruten
+                        if (isFishingTripActive) {
+                            // Sjekk om den nye posisjonen er forskjellig fra den siste i ruten
+                            val lastPosition = fishingTripRoute.lastOrNull()
+                            val newPosition = LatLng(location.latitude, location.longitude)
+                            
+                            if (lastPosition == null || 
+                                (lastPosition.latitude != newPosition.latitude || 
+                                 lastPosition.longitude != newPosition.longitude)) {
+                                fishingTripRoute = fishingTripRoute + newPosition
+                                
+                                // Oppdater ruten på kartet
+                                val routeGeoJson = """
+                                {
+                                    "type": "Feature",
+                                    "geometry": {
+                                        "type": "LineString",
+                                        "coordinates": [${fishingTripRoute.joinToString(",") { "[${it.longitude}, ${it.latitude}]" }}]
+                                    }
+                                }
+                                """
+                                routeSource.setGeoJson(routeGeoJson)
+                            }
+                        }
+                        
+                        // Hvis vi følger brukeren, oppdater kameraet
+                        if (isTrackingUser) {
+                            mapLibreMap?.moveCamera(
+                                CameraUpdateFactory.newLatLngZoom(userLocation!!, 18.0)
+                            )
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Feil ved oppdatering av brukerens posisjon: ${e.message}")
+                }
+            }
+        }
+    }
+    
+    // Oppdater isTrackingUser når fisketur starter
+    LaunchedEffect(isFishingTripActive) {
+        if (isFishingTripActive) {
+            isTrackingUser = true
+            userLocation?.let { location ->
+                mapLibreMap?.moveCamera(
+                    CameraUpdateFactory.newLatLngZoom(location, 18.0)
+                )
+            }
+        } else {
+            isTrackingUser = false
+        }
+    }
+
     Team45FiskeriAppTheme(darkTheme = isDarkTheme) {
         Box(modifier = Modifier.fillMaxSize()) {
             // Søkeknapp plassert øverst på skjermen
@@ -926,19 +1032,17 @@ fun MapScreen(
                     onClick = { showFishingTripDialog = true },
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .padding(bottom = 152.dp)
+                        .padding(bottom = 143.dp)
                         .tutorialTarget("fishing_trip_button", tutorialManager),
                     containerColor = MaterialTheme.colorScheme.surface,
                     contentColor = MaterialTheme.colorScheme.onSurface,
                     shape = MaterialTheme.shapes.medium
                 ) {
                     Image(
-                        painter = rememberAsyncImagePainter(
-                            model = "file:///android_asset/png/fisketur.png"
-                        ),
+                        painter = painterResource(id = R.drawable.ftr),
                         contentDescription = "Start fisketur",
                         modifier = Modifier
-                            .size(56.dp),
+                            .size(60.dp),
                         contentScale = ContentScale.Fit
                     )
                 }
@@ -1204,12 +1308,23 @@ fun MapScreen(
                         isFishingTripActive = true
                         fishingTripStartTime = LocalDateTime.now()
                         fishingTripStartLocation = LatLng(location.latitude, location.longitude)
-                        fishingTripRoute = listOf(fishingTripStartLocation!!)
+                        // Start tracking brukerens posisjon og initialiser ruten
+                        isTrackingUser = true
+                        fishingTripRoute = listOf(LatLng(location.latitude, location.longitude))
+                        userLocation = LatLng(location.latitude, location.longitude)
+                        mapLibreMap?.moveCamera(
+                            CameraUpdateFactory.newLatLngZoom(
+                                LatLng(location.latitude, location.longitude), 
+                                18.0
+                            )
+                        )
                         showFishingTripDialog = false
                     },
                     onEndTrip = {
                         isFishingTripActive = false
                         fishingTripEndTime = LocalDateTime.now()
+                        // Stopp tracking av brukerens posisjon
+                        isTrackingUser = false
                         
                         // Ta skjermbilde av kartet
                         mapLibreMap?.snapshot { bitmap ->
@@ -1229,11 +1344,18 @@ fun MapScreen(
                             timestamp = Date(),
                             latitude = location.latitude,
                             longitude = location.longitude,
-                            area = "",
-                            description = "",
+                            area = fishingTripName, // Bruk fisketur-navn som område
+                            description = "Fanget under fisketur: $fishingTripName",
                             imageUri = uri?.toString()
                         )
                         fishLogViewModel.addFishLog(fishLog)
+                        
+                        // Oppdater kartet med den nye fangsten
+                        mapLibreMap?.getStyle { style ->
+                            if (fishLog.imageUri != null) {
+                                loadImage(style, fishLog)
+                            }
+                        }
                     },
                     fishLogViewModel = fishLogViewModel
                 )
