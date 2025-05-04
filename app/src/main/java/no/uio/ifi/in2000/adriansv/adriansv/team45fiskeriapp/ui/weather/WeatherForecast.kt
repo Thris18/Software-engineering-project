@@ -12,7 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.weather.LocationWeather
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.TimeSeriesEntry
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.weather.TimeSeriesEntry
 import org.threeten.bp.LocalDate
 import org.threeten.bp.format.DateTimeFormatter
 import java.util.*

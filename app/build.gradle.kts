@@ -123,6 +123,8 @@ dependencies {
     // Til GIF
     implementation("io.coil-kt:coil-gif:2.4.0")
 
+    
+
     // Bakoverkompitabel løsning for ZonedTimeDate
     implementation ("com.jakewharton.threetenabp:threetenabp:1.4.5")
 
