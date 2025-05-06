@@ -109,6 +109,28 @@ private fun updateAlertPolygon(style: Style, alertId: String?) {
     }
 }
 
+// Hjelpefunksjon for å rotere bitmap basert på EXIF-orientering
+private fun rotateBitmap(bitmap: Bitmap, orientation: Int): Bitmap {
+    val matrix = android.graphics.Matrix()
+    when (orientation) {
+        android.media.ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
+        android.media.ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
+        android.media.ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
+        android.media.ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.postScale(-1f, 1f)
+        android.media.ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.postScale(1f, -1f)
+        android.media.ExifInterface.ORIENTATION_TRANSPOSE -> {
+            matrix.postRotate(90f)
+            matrix.postScale(-1f, 1f)
+        }
+        android.media.ExifInterface.ORIENTATION_TRANSVERSE -> {
+            matrix.postRotate(90f)
+            matrix.postScale(1f, -1f)
+        }
+        else -> return bitmap
+    }
+    return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+}
+
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MapScreen(
@@ -301,10 +323,25 @@ fun MapScreen(
         try {
             val uri = Uri.parse(fishLog.imageUri)
             val image = if (uri.scheme == "file") {
-                BitmapFactory.decodeFile(uri.path)
+                // Håndter EXIF-rotasjon for filer
+                val exif = android.media.ExifInterface(uri.path!!)
+                val orientation = exif.getAttributeInt(
+                    android.media.ExifInterface.TAG_ORIENTATION,
+                    android.media.ExifInterface.ORIENTATION_NORMAL
+                )
+                val bitmap = BitmapFactory.decodeFile(uri.path)
+                rotateBitmap(bitmap, orientation)
             } else {
+                // Håndter EXIF-rotasjon for content URIs
                 context.contentResolver.openInputStream(uri)?.use { stream ->
-                    BitmapFactory.decodeStream(stream)
+                    val exif = android.media.ExifInterface(stream)
+                    val orientation = exif.getAttributeInt(
+                        android.media.ExifInterface.TAG_ORIENTATION,
+                        android.media.ExifInterface.ORIENTATION_NORMAL
+                    )
+                    stream.reset() // Reset stream for bitmap decoding
+                    val bitmap = BitmapFactory.decodeStream(stream)
+                    rotateBitmap(bitmap, orientation)
                 }
             }
             
@@ -324,7 +361,7 @@ fun MapScreen(
                     
                     // Bestem størrelsen basert på om bildet er fra en fisketur eller fiskelogg
                     val iconSize = if (fishLog.area == fishingTripName) {
-                        0.40f  // Justert størrelse for fisketur-bilder, litt større enn fiskelogg men ikke for stor
+                        0.40f  // Justert størrelse for fisketur-bilder
                     } else {
                         0.05f // Behold original størrelse for fiskelogg-bilder
                     }
