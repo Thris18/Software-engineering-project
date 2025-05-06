@@ -560,14 +560,6 @@ fun MapScreen(
         }
     }
 
-    // Bruk en LaunchedEffect med isComingFromWelcome som key
-    // Dette kjører kun når man faktisk kommer fra welcome screen
-    LaunchedEffect(isComingFromWelcome) {
-        if (isComingFromWelcome) {
-            tutorialManager.startTutorial(tutorialSteps)
-        }
-    }
-
     // Oppdater brukerens posisjon
     LaunchedEffect(mapLibreMap) {
         mapLibreMap?.getStyle { style ->
