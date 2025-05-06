@@ -15,7 +15,7 @@ object GribOverlayUtil {
     // Terskler for de fire typene (økt litt)
     val thresholds = mapOf(
         "wind" to 2.0,
-        "wave" to 1.0,
+        "wave" to 0.3,
         "strom" to 0.1,
         "rain" to 0.5
     )

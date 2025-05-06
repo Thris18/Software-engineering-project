@@ -53,7 +53,8 @@ object GribOverlayManager {
                 // Grupper punkter etter type
                 val windPoints = mutableListOf<GribPoint>()
                 val currentPoints = mutableListOf<GribPoint>()
-                val otherPoints = mutableListOf<GribPoint>()
+                val wavePoints = mutableListOf<GribPoint>()
+                val rainPoints = mutableListOf<GribPoint>()
 
                 for (i in 0 until features.length()) {
                     val feature = features.getJSONObject(i)
@@ -103,120 +104,30 @@ object GribOverlayManager {
                                 Log.d("GribOverlayManager", "Current point: lat=${point.latitude}, lon=${point.longitude}, speed=$speed, direction=$direction")
                                 currentPoints.add(point)
                             }
-                            else -> otherPoints.add(point)
+                            "wave" -> wavePoints.add(point)
+                            "rain" -> rainPoints.add(point)
                         }
                     }
                 }
 
-                // Bruk spesialiserte overlay for vind og strøm
+                Log.d("GribOverlayManager", "Antall bølgepunkter: ${wavePoints.size}, regnpunkter: ${rainPoints.size}")
+                wavePoints.forEach { Log.d("GribOverlayManager", "Bølgepunkt: ${it.latitude}, ${it.longitude}, verdi: ${it.data?.waveHeight}") }
+                rainPoints.forEach { Log.d("GribOverlayManager", "Regnpunkt: ${it.latitude}, ${it.longitude}, verdi: ${it.data?.precipitation}") }
                 if (windPoints.isNotEmpty()) {
                     WindOverlay.addOrUpdate(context, style, windPoints)
                 }
                 if (currentPoints.isNotEmpty()) {
                     CurrentOverlay.addOrUpdate(context, style, currentPoints)
                 }
-
-                // Håndter andre typer (bølger og regn) med standard overlay
-                if (otherPoints.isNotEmpty()) {
-                    addStandardOverlay(context, style, otherPoints)
+                if (wavePoints.isNotEmpty()) {
+                    WaveOverlay.addOrUpdate(context, style, wavePoints)
+                }
+                if (rainPoints.isNotEmpty()) {
+                    RainOverlay.addOrUpdate(context, style, rainPoints)
                 }
             }
         } catch (e: Exception) {
             Log.e("GribOverlayManager", "Error processing GeoJSON", e)
-        }
-    }
-
-    private fun addStandardOverlay(context: Context, style: Style, points: List<GribPoint>) {
-        // 1. Legg til ikoner i stilen
-        for ((type, resId) in iconMap) {
-            try {
-                Log.d("GribOverlayManager", "Forsøker å laste ikon for type: $type, resId: $resId")
-                val bitmap = getBitmapFromVectorDrawable(context, resId)
-                if (bitmap != null) {
-                    style.addImage(type, bitmap)
-                    Log.d("GribOverlayManager", "La til ikon i stil: $type")
-                } else {
-                    Log.e("GribOverlayManager", "Bitmap for $type var null!")
-                }
-            } catch (e: Exception) {
-                Log.e("GribOverlayManager", "Kunne ikke laste ikon for $type", e)
-            }
-        }
-
-        // 2. Bygg GeoJSON for standard overlay
-        val features = JSONArray()
-        points.forEach { point ->
-            val data = point.data ?: return@forEach
-            val type = data.variableName
-            val value = when (type) {
-                "wave" -> data.waveHeight
-                "rain" -> data.precipitation
-                else -> null
-            } ?: return@forEach
-
-            val feature = JSONObject().apply {
-                put("type", "Feature")
-                put("geometry", JSONObject().apply {
-                    put("type", "Point")
-                    put("coordinates", JSONArray().apply {
-                        put(point.longitude)
-                        put(point.latitude)
-                    })
-                })
-                put("properties", JSONObject().apply {
-                    put("type", type)
-                    put("value", value.toDouble())
-                    put("icon", type)
-                    put("color", GribOverlayUtil.getColor(type, value.toDouble()))
-                    put("radius", GribOverlayUtil.getRadius(type, value.toDouble()))
-                })
-            }
-            features.put(feature)
-        }
-
-        val geoJson = JSONObject().apply {
-            put("type", "FeatureCollection")
-            put("features", features)
-        }.toString()
-
-        // 3. Legg til/oppdater GeoJsonSource
-        val sourceId = "grib-standard-source"
-        if (style.getSource(sourceId) == null) {
-            style.addSource(GeoJsonSource(sourceId, geoJson))
-        } else {
-            (style.getSource(sourceId) as? GeoJsonSource)?.setGeoJson(geoJson)
-        }
-
-        // 4. SymbolLayer for ikoner og tall
-        val symbolLayerId = "grib-standard-symbol-layer"
-        if (style.getLayer(symbolLayerId) == null) {
-            val symbolLayer = SymbolLayer(symbolLayerId, sourceId)
-                .withProperties(
-                    iconImage("{icon}"),
-                    iconSize(0.04f),
-                    iconAllowOverlap(true),
-                    iconIgnorePlacement(true),
-                    iconAnchor("center"),
-                    textField("{value}"),
-                    textSize(14f),
-                    textOffset(arrayOf(0f, 2.2f)),
-                    textColor("#222222"),
-                    textHaloColor("#FFFFFF"),
-                    textHaloWidth(1.5f)
-                )
-            style.addLayer(symbolLayer)
-        }
-
-        // 5. CircleLayer for farget tåke
-        val circleLayerId = "grib-standard-circle-layer"
-        if (style.getLayer(circleLayerId) == null) {
-            val circleLayer = CircleLayer(circleLayerId, sourceId)
-                .withProperties(
-                    circleColor(get("color")),
-                    circleRadius(get("radius")),
-                    circleOpacity(0.4f)
-                )
-            style.addLayer(circleLayer)
         }
     }
 
@@ -228,9 +139,10 @@ object GribOverlayManager {
         style.removeLayer(standardSymbolLayerId)
         style.removeLayer(standardCircleLayerId)
         style.removeSource(standardSourceId)
-
-        // Fjern vind og strøm overlay
+        // Fjern alle overlays
         WindOverlay.remove(style)
         CurrentOverlay.remove(style)
+        WaveOverlay.remove(style)
+        RainOverlay.remove(style)
     }
 }

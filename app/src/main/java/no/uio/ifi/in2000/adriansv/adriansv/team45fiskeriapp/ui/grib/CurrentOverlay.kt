@@ -142,7 +142,7 @@ object CurrentOverlay {
                     .withFilter(Expression.not(Expression.has("point_count")))
                     .withProperties(
                         iconImage(CURRENT_ICON_ID),
-                        iconSize(0.04f),
+                        iconSize(0.5f),
                         iconAllowOverlap(true),
                         iconIgnorePlacement(true),
                         iconAnchor(Property.ICON_ANCHOR_CENTER)
@@ -186,7 +186,7 @@ object CurrentOverlay {
                     .withFilter(Expression.has("point_count"))
                     .withProperties(
                         iconImage(CURRENT_ICON_ID),
-                        iconSize(0.06f),
+                        iconSize(0.6f),
                         iconAllowOverlap(true),
                         iconIgnorePlacement(true),
                         textField(Expression.get("point_count")),
