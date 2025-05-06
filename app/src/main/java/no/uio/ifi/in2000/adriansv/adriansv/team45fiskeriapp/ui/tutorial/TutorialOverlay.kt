@@ -15,14 +15,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -30,7 +35,8 @@ import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.R
 import androidx.compose.animation.graphics.res.animatedVectorResource
 import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import kotlinx.coroutines.delay
-
+import kotlin.math.max
+import kotlin.math.min
 
 @Composable
 fun TutorialOverlay(
@@ -42,103 +48,116 @@ fun TutorialOverlay(
     if (!state.isVisible || state.isCompleted) return
 
     val currentStep = state.currentStepData ?: return
+    val highlightedBounds = state.highlightedBounds
     
-    // Dialog som alltid vises
-    Dialog(onDismissRequest = onSkip) {
+    // Adaptive layout for tutorial overlay
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        // Tilgang til skjermens dimensjoner
+        val screenWidth = maxWidth
+        val screenHeight = maxHeight
+        
+        // Semi-transparent overlay with highlight cutout
         Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentSize(align = Alignment.Center)
-                    .offset(x = 0.dp)
-            ) {
-                // Bestem størrelse basert på tittel/trinn
-                val (minHeight, maxHeight) = when (currentStep.title) {
-                    "Velkommen til appen!" -> Pair(170.dp, 220.dp)
-                    else -> Pair(190.dp, 250.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.6f))
+                .drawWithContent {
+                    drawContent()
+                    
+                    // Draw highlight if we have bounds
+                    highlightedBounds?.let { bounds ->
+                        drawHighlight(
+                            bounds = bounds,
+                            config = currentStep.highlightConfig
+                        )
+                    }
                 }
-
+        )
+        
+        // Tutorial dialog with responsive positioning
+        Box(modifier = Modifier.fillMaxSize()) {
+            // Position dialog at center of screen regardless of highlight position
                 Surface(
                     modifier = Modifier
-                        .widthIn(max = 280.dp)
-                        .heightIn(min = minHeight, max = maxHeight),
-                    shape = RoundedCornerShape(28.dp),
+                    .widthIn(max = min(250.dp, screenWidth * 0.65f))
+                    .padding(16.dp)
+                    .align(Alignment.Center),
+                shape = RoundedCornerShape(16.dp),
                     color = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 6.dp
-                ) {
-                    Column(
-                        modifier = Modifier.padding(24.dp, 20.dp),
+                tonalElevation = 8.dp
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
                     ) {
                         Text(
                             text = currentStep.title,
-                            style = MaterialTheme.typography.headlineSmall,
+                            style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
                         Box(
                             modifier = Modifier
-                                .weight(1f)
                                 .fillMaxWidth()
                         ) {
                             Text(
                                 text = currentStep.description,
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                         
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             if (currentStep.isLastStep) {
-                                // For det siste steget viser vi bare én enkelt "Kom i gang"-knapp i midten
+                            // Kun "Kom i gang" for siste steg
                                 Spacer(Modifier.weight(1f))
                                 Button(
                                     onClick = onNext,
-                                    modifier = Modifier.padding(horizontal = 8.dp)
+                                    modifier = Modifier.padding(horizontal = 4.dp),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                                 ) {
-                                    Text("Kom i gang!")
+                                    Text("Kom i gang!", style = MaterialTheme.typography.labelMedium)
                                 }
                                 Spacer(Modifier.weight(1f))
                             } else {
-                                // For alle andre steg viser vi "Hopp over" og "Neste"
-                                TextButton(onClick = onSkip) {
-                                    Text("Hopp over")
+                            // "Hopp over" og "Neste" for andre steg
+                                TextButton(
+                                    onClick = onSkip,
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Text("Hopp over", style = MaterialTheme.typography.labelMedium)
                                 }
                                 
-                                TextButton(onClick = onNext) {
-                                    Text("Neste")
+                                TextButton(
+                                    onClick = onNext,
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Text("Neste", style = MaterialTheme.typography.labelMedium)
                                 }
                             }
                         }
                     }
                 }
                 
+            // Mascot with adaptive positioning
                 if (currentStep.mascotResourceId != null) {
-                    when (currentStep.title) {
-                        "Profilsiden" -> {
-                            // For profilsiden: Plasser maskotten nederst i midten og gjør den mindre
-                            Image(
-                                painter = painterResource(id = currentStep.mascotResourceId),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(175.dp)  // Mindre størrelse for profilsiden
-                                    .align(Alignment.BottomCenter)
-                                    .offset(y = 210.dp, x = 50.dp),  // Plassert under dialogen
-                                contentScale = ContentScale.Fit
-                            )
-                        }
-                        "Da er du klar !" -> {
-                            // For det avsluttende steget: Bruk AnimationDrawable for vinkende maskott
+                // Plasser maskotten basert på adaptive regler og highlight position
+                val mascotPosition = getMascotPosition(
+                    targetBounds = highlightedBounds,
+                    screenWidth = screenWidth,
+                    screenHeight = screenHeight,
+                    step = currentStep,
+                    defaultSize = 140.dp
+                )
+                
+                if (currentStep.title == "Da er du klar !") {
+                    // Vingende maskot for siste steg
                             AndroidView(
                                 factory = { context ->
                                     ImageView(context).apply {
@@ -149,172 +168,315 @@ fun TutorialOverlay(
                                     }
                                 },
                                 modifier = Modifier
-                                    .size(200.dp)
-                                    .align(Alignment.CenterEnd)
-                                    .offset(x = 100.dp, y = 25.dp)
-                            )
-                        }
-                        "Kartvisning" -> {
-                            // For kartvisningstrinnet: Høyre side med spesifikk offset
+                            .size(mascotPosition.size)
+                            .align(mascotPosition.alignment)
+                            .offset(x = mascotPosition.offset.x, y = mascotPosition.offset.y)
+                    )
+                } else {
+                    // Standard maskot for andre steg
                             Image(
                                 painter = painterResource(id = currentStep.mascotResourceId),
                                 contentDescription = null,
                                 modifier = Modifier
-                                    .size(175.dp)
-                                    .align(Alignment.BottomCenter)
-                                    .offset(y = 215.dp, x = (-35).dp),
+                            .size(mascotPosition.size)
+                            .align(mascotPosition.alignment)
+                            .offset(x = mascotPosition.offset.x, y = mascotPosition.offset.y),
                                 contentScale = ContentScale.Fit
                             )
                         }
-                        "Båtvettregler" -> {
-                            // For båtvettregler: Plassert litt til høyre for midten, litt opp fra bunnen
-                            Image(
-                                painter = painterResource(id = currentStep.mascotResourceId),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(180.dp)
-                                    .align(Alignment.BottomCenter)
-                                    .offset(y = 225.dp, x = 40.dp),
-                                contentScale = ContentScale.Fit
-                            )
-                        }
-                        "Søkefunksjonen" -> {
-                            // For søkefunksjonen: Plassert til venstre for å peke på søkefeltet
-                            Image(
-                                painter = painterResource(id = currentStep.mascotResourceId),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(210.dp)
-                                    .align(Alignment.TopCenter)
-                                    .offset(y = (-210).dp, x = (80).dp),
-                                contentScale = ContentScale.Fit
-                            )
-                        }
-                        "Fiskeloggen" -> {
-                            // For fiskeloggen: Plassert nederst til høyre for å peke på fiskelogg-knappen
-                            Image(
-                                painter = painterResource(id = currentStep.mascotResourceId),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(180.dp)
-                                    .align(Alignment.BottomCenter)
-                                    .offset(y = 180.dp, x = 40.dp),
-                                contentScale = ContentScale.Fit
-                            )
-                        }
-                        "Fisketuren" -> {
-                            // For fisketuren: Plassert til høyre for å peke på fisketurknappen
-                            Image(
-                                painter = painterResource(id = currentStep.mascotResourceId),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(180.dp)
-                                    .align(Alignment.BottomCenter)
-                                    .offset(y = 130.dp, x = 40.dp),
-                                contentScale = ContentScale.Fit
-                            )
-                        }
-                        else -> {
-                            // For andre trinn: Standard plassering til høyre
-                            Image(
-                                painter = painterResource(id = currentStep.mascotResourceId),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(200.dp)
-                                    .align(Alignment.CenterEnd)
-                                    .offset(x = 80.dp, y = 0.dp),
-                                contentScale = ContentScale.Fit
-                            )
-                        }
-                    }
-                }
+            }
+        }
+    }
+}
 
-                if (currentStep.title == "Kartvisning") {
-                    // Skip-ikon på toppen
-                    Image(
-                        painter = painterResource(id = R.drawable.hoyhastighetsfartoy),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(40.dp)  // 10% mindre enn 80dp
-                            .align(Alignment.Center)
-                            .offset(x = (-25).dp, y = 53.dp),
-                        contentScale = ContentScale.Fit
-                    )
-                    
-                    // Farevarsel-ikon på bunnen
-                    Image(
-                        painter = painterResource(id = R.drawable.icon_warning_wind_orange),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(40.dp)
-                            .align(Alignment.Center)
-                            .offset(x = 25.dp, y = 53.dp),
-                        contentScale = ContentScale.Fit
-                    )
-                    
-                    // Circular highlight for Kartvisning
-                    Box(
-                        modifier = Modifier
-                            .size(60.dp)
-                            .align(Alignment.Center)
-                            .offset(y = 355.dp, x = (-113).dp)
-                            .clip(CircleShape)
-                            .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f))
-                    )
-                }
-                
-                // Circular highlight for Profilsiden
-                if (currentStep.title == "Profilsiden") {
-                    Box(
-                        modifier = Modifier
-                            .size(60.dp)
-                            .align(Alignment.Center) 
-                            .offset(y = 355.dp, x = 113.dp)
-                            .clip(CircleShape)
-                            .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f))
-                    )
-                }
-                
-                // Circular highlight for Båtvettregler
-                if (currentStep.title == "Båtvettregler") {
-                    Box(
-                        modifier = Modifier
-                            .size(70.dp)
-                            .align(Alignment.Center)
-                            .offset(y = 265.dp, x = 147.dp)
-                            .clip(CircleShape)
-                            .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f))
-                    )
-                }
-                
-                // Circular highlight for Fiskeloggen
-                if (currentStep.title == "Fiskeloggen") {
-                    Box(
-                        modifier = Modifier
-                            .size(70.dp)
-                            .align(Alignment.Center)
-                            .offset(y = 197.dp, x = 147.dp)
-                            .clip(CircleShape)
-                            .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f))
-                    )
-                }
-                
-                // Circular highlight for Fisketuren
-                if (currentStep.title == "Fisketuren") {
-                    Box(
-                        modifier = Modifier
-                            .size(70.dp)
-                            .align(Alignment.Center)
-                            .offset(y = 127.dp, x = 147.dp)
-                            .clip(CircleShape)
-                            .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f))
-                    )
-                }
+// Helper-funksjon for å tegne highlight med ønsket form og stil
+private fun DrawScope.drawHighlight(bounds: Rect, config: HighlightConfig) {
+    // Legg til litt padding rundt det fremhevede elementet
+    val highlightBounds = Rect(
+        left = bounds.left - config.padding.toPx(),
+        top = bounds.top - config.padding.toPx(),
+        right = bounds.right + config.padding.toPx(),
+        bottom = bounds.bottom + config.padding.toPx()
+    )
+    
+    // Variabler for highlight-tegning
+    val center = Offset(highlightBounds.center.x, highlightBounds.center.y)
+    val radius = max(highlightBounds.width, highlightBounds.height) * 0.55f
+    
+    when (config.highlightShape) {
+        HighlightShape.CIRCLE -> {
+            // Tegn en sirkulær "hull" med BlendMode.Clear
+            drawCircle(
+                color = Color.White,
+                radius = radius,
+                center = center,
+                blendMode = BlendMode.Clear
+            )
+            
+            // Tegn en kontur rundt highlight-sirkelen
+            drawCircle(
+                color = Color(0xFF2196F3),
+                radius = radius,
+                center = center,
+                style = Stroke(width = 2.dp.toPx())
+            )
+        }
+        HighlightShape.RECTANGLE -> {
+            // Tegn et rektangulært "hull"
+            drawRect(
+                color = Color.White,
+                topLeft = Offset(highlightBounds.left, highlightBounds.top),
+                size = androidx.compose.ui.geometry.Size(
+                    width = highlightBounds.width,
+                    height = highlightBounds.height
+                ),
+                blendMode = BlendMode.Clear
+            )
+            
+            // Tegn en kontur rundt highlight-rektangelet
+            drawRect(
+                color = Color(0xFF2196F3),
+                topLeft = Offset(highlightBounds.left, highlightBounds.top),
+                size = androidx.compose.ui.geometry.Size(
+                    width = highlightBounds.width,
+                    height = highlightBounds.height
+                ),
+                style = Stroke(width = 2.dp.toPx())
+            )
+        }
+        HighlightShape.OVAL -> {
+            // Tegn en oval highlight (samme som sirkel for nå)
+            drawCircle(
+                color = Color.White,
+                radius = radius,
+                center = center,
+                blendMode = BlendMode.Clear
+            )
+            
+            drawCircle(
+                color = Color(0xFF2196F3),
+                radius = radius,
+                center = center,
+                style = Stroke(width = 2.dp.toPx())
+            )
+        }
+    }
+}
+
+// Helper-funksjon for å bestemme hvor dialogen skal plasseres
+@Composable
+private fun getDialogAlignment(
+    bounds: Rect?,
+    screenWidth: androidx.compose.ui.unit.Dp,
+    screenHeight: androidx.compose.ui.unit.Dp
+): Alignment {
+    if (bounds == null) return Alignment.Center
+    
+    val screenWidthPx = with(LocalDensity.current) { screenWidth.toPx() }
+    val screenHeightPx = with(LocalDensity.current) { screenHeight.toPx() }
+    
+    // Beregn hvor på skjermen elementet befinner seg
+    val centerX = bounds.center.x / screenWidthPx
+    val centerY = bounds.center.y / screenHeightPx
+    
+    return when {
+        // Element i øvre del av skjermen -> dialog nederst
+        centerY < 0.3f -> Alignment.BottomCenter
+        
+        // Element i nedre del -> dialog øverst
+        centerY > 0.7f -> Alignment.TopCenter
+        
+        // Element i venstre side -> dialog til høyre
+        centerX < 0.3f -> Alignment.CenterEnd
+        
+        // Element i høyre side -> dialog til venstre
+        centerX > 0.7f -> Alignment.CenterStart
+        
+        // Default: sentrert dialog
+        else -> Alignment.Center
+    }
+}
+
+// Data class for maskot-posisjonering
+private data class MascotPosition(
+    val alignment: Alignment,
+    val offset: androidx.compose.ui.unit.DpOffset,
+    val size: androidx.compose.ui.unit.Dp
+)
+
+// Helper-funksjon for å bestemme maskot-posisjon
+@Composable
+private fun getMascotPosition(
+    targetBounds: Rect?,
+    screenWidth: androidx.compose.ui.unit.Dp,
+    screenHeight: androidx.compose.ui.unit.Dp,
+    step: TutorialStep,
+    defaultSize: androidx.compose.ui.unit.Dp = 140.dp
+): MascotPosition {
+    // Beregn proporsjoner for adaptiv posisjonering
+    val widthFactor = screenWidth / 360.dp  // Standard referansebredde
+    val heightFactor = screenHeight / 720.dp // Standard referansehøyde
+    
+    // Definerer punkt der knappene er plassert (relativt til skjermstørrelse)
+    val kartPos = androidx.compose.ui.unit.DpOffset(
+        x = screenWidth * 0.125f, 
+        y = screenHeight * 0.9f
+    )
+    val værPos = androidx.compose.ui.unit.DpOffset(
+        x = screenWidth * 0.5f,
+        y = screenHeight * 0.9f
+    )
+    val profilPos = androidx.compose.ui.unit.DpOffset(
+        x = screenWidth * 0.875f,
+        y = screenHeight * 0.9f
+    )
+    val fisketurPos = androidx.compose.ui.unit.DpOffset(
+        x = screenWidth * 0.92f,
+        y = screenHeight * 0.65f
+    )
+    val fiskeloggPos = androidx.compose.ui.unit.DpOffset(
+        x = screenWidth * 0.92f,
+        y = screenHeight * 0.75f
+    )
+    val båtvettPos = androidx.compose.ui.unit.DpOffset(
+        x = screenWidth * 0.92f,
+        y = screenHeight * 0.85f
+    )
+    val søkPos = androidx.compose.ui.unit.DpOffset(
+        x = screenWidth * 0.5f,
+        y = screenHeight * 0.1f
+    )
+    
+    // Velg posisjon basert på hvilket steg vi er på
+    when (step.title) {
+        "Velkommen til appen!" -> {
+            return MascotPosition(
+                alignment = Alignment.Center,
+                offset = androidx.compose.ui.unit.DpOffset(screenWidth * 0.25f, 0.dp),
+                size = 160.dp * widthFactor
+            )
+        }
+        "Kartvisning" -> {
+            // Peker på kartknappen (nederst til venstre)
+            return MascotPosition(
+                alignment = Alignment.BottomStart,
+                offset = androidx.compose.ui.unit.DpOffset(
+                    x = kartPos.x * 0.8f,
+                    y = -30.dp * heightFactor
+                ),
+                size = 140.dp * widthFactor
+            )
+        }
+        "Profilsiden" -> {
+            // Peker på profilknappen (nederst til høyre)
+            return MascotPosition(
+                alignment = Alignment.BottomEnd,
+                offset = androidx.compose.ui.unit.DpOffset(
+                    x = -30.dp * widthFactor,
+                    y = -30.dp * heightFactor
+                ),
+                size = 140.dp * widthFactor
+            )
+        }
+        "Søkefunksjonen" -> {
+            // Peker på søkeknappen (øverst)
+            return MascotPosition(
+                alignment = Alignment.TopCenter,
+                offset = androidx.compose.ui.unit.DpOffset(
+                    x = 0.dp,
+                    y = 60.dp * heightFactor
+                ),
+                size = 150.dp * widthFactor
+            )
+        }
+        "Lyst til å sjekke værmeldingen?" -> {
+            // Peker på værknappen (nederst i midten)
+            return MascotPosition(
+                alignment = Alignment.BottomCenter,
+                offset = androidx.compose.ui.unit.DpOffset(
+                    x = 0.dp,
+                    y = -30.dp * heightFactor
+                ),
+                size = 140.dp * widthFactor
+            )
+        }
+        "Båtvettregler" -> {
+            // Peker på båtvettknappen (nederst til høyre)
+            return MascotPosition(
+                alignment = Alignment.BottomEnd,
+                offset = androidx.compose.ui.unit.DpOffset(
+                    x = -30.dp * widthFactor,
+                    y = -100.dp * heightFactor
+                ),
+                size = 140.dp * widthFactor
+            )
+        }
+        "Fiskeloggen" -> {
+            // Peker på fiskeloggknappen (midten til høyre)
+            return MascotPosition(
+                alignment = Alignment.CenterEnd,
+                offset = androidx.compose.ui.unit.DpOffset(
+                    x = -30.dp * widthFactor,
+                    y = 50.dp * heightFactor
+                ),
+                size = 140.dp * widthFactor
+            )
+        }
+        "Fisketuren" -> {
+            // Peker på fisketurknappen (øverst til høyre)
+            return MascotPosition(
+                alignment = Alignment.CenterEnd,
+                offset = androidx.compose.ui.unit.DpOffset(
+                    x = -30.dp * widthFactor,
+                    y = -50.dp * heightFactor
+                ),
+                size = 140.dp * widthFactor
+            )
+        }
+        "Da er du klar !" -> {
+            // Avsluttende maskot
+            return MascotPosition(
+                alignment = Alignment.Center,
+                offset = androidx.compose.ui.unit.DpOffset(
+                    x = screenWidth * 0.25f,
+                    y = 0.dp
+                ),
+                size = 160.dp * widthFactor
+            )
+        }
+        else -> {
+            // Standard plassering basert på mascotPlacement
+            return when (step.mascotPlacement) {
+                MascotPlacement.CENTER -> MascotPosition(
+                    alignment = Alignment.Center,
+                    offset = step.mascotOffset,
+                    size = defaultSize * widthFactor
+                )
+                MascotPlacement.LEFT -> MascotPosition(
+                    alignment = Alignment.CenterStart,
+                    offset = androidx.compose.ui.unit.DpOffset(30.dp * widthFactor, 0.dp),
+                    size = defaultSize * widthFactor
+                )
+                MascotPlacement.RIGHT -> MascotPosition(
+                    alignment = Alignment.CenterEnd,
+                    offset = androidx.compose.ui.unit.DpOffset(-30.dp * widthFactor, 0.dp),
+                    size = defaultSize * widthFactor
+                )
+                MascotPlacement.TOP -> MascotPosition(
+                    alignment = Alignment.TopCenter,
+                    offset = androidx.compose.ui.unit.DpOffset(0.dp, 30.dp * heightFactor),
+                    size = defaultSize * widthFactor
+                )
+                MascotPlacement.BOTTOM -> MascotPosition(
+                    alignment = Alignment.BottomCenter,
+                    offset = androidx.compose.ui.unit.DpOffset(0.dp, -30.dp * heightFactor),
+                    size = defaultSize * widthFactor
+                )
+                MascotPlacement.AUTO -> MascotPosition(
+                    alignment = Alignment.Center,
+                    offset = androidx.compose.ui.unit.DpOffset(screenWidth * 0.25f, 0.dp),
+                    size = defaultSize * widthFactor
+                )
             }
         }
     }

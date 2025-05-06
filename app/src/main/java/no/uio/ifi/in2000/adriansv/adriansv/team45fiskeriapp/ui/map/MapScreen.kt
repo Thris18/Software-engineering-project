@@ -508,10 +508,18 @@ fun MapScreen(
     }
 
     // Observer tutorial tilstand for å oppdage når den er ferdig
-    LaunchedEffect(tutorialManager.state.isCompleted) {
-        if (tutorialManager.state.isCompleted) {
+    LaunchedEffect(tutorialManager.isCompleted) {
+        if (tutorialManager.isCompleted) {
             // Varsle når tutorial er fullført
             onTutorialComplete()
+        }
+    }
+
+    // Bruk en LaunchedEffect med isComingFromWelcome som key
+    // Dette kjører kun når man faktisk kommer fra welcome screen
+    LaunchedEffect(isComingFromWelcome) {
+        if (isComingFromWelcome) {
+            tutorialManager.startTutorial()
         }
     }
 
@@ -1428,7 +1436,13 @@ fun MapScreen(
 
             // Legg til tutorial overlay på toppen av alt
             TutorialOverlay(
-                state = tutorialManager.state,
+                state = TutorialState(
+                    currentStep = tutorialManager.currentStep,
+                    isVisible = tutorialManager.isVisible,
+                    steps = tutorialManager.steps,
+                    highlightedBounds = tutorialManager.highlightedBounds,
+                    isCompleted = tutorialManager.isCompleted
+                ),
                 onNext = { tutorialManager.nextStep() },
                 onSkip = { tutorialManager.skipTutorial() }
             )

@@ -14,6 +14,8 @@ import androidx.compose.ui.unit.dp
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.R
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.weather.LocationWeather
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherUiState
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.tutorial.TutorialManager
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.tutorial.tutorialTarget
 
 @Composable
 fun NavigationBar(
@@ -21,7 +23,8 @@ fun NavigationBar(
     onNavigate: (String) -> Unit,
     modifier: Modifier = Modifier,
     weather: LocationWeather? = null,
-    weatherState: WeatherUiState? = null
+    weatherState: WeatherUiState? = null,
+    tutorialManager: TutorialManager? = null
 ) {
     Surface(
         modifier = modifier
@@ -51,9 +54,9 @@ fun NavigationBar(
                 icon = Icons.Default.WbSunny,
                 label = "Vær",
                 selected = currentRoute == "vaer",
-                onClick = { onNavigate("vaer") }
+                onClick = { onNavigate("vaer") },
+                modifier = tutorialManager?.let { Modifier.tutorialTarget("weather_button", it) } ?: Modifier
             )
-
 
             // Profil-knapp
             NavigationItem(
@@ -71,11 +74,12 @@ private fun NavigationItem(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
     selected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
+        modifier = modifier
             .padding(horizontal = 8.dp)
             .height(56.dp)
     ) {
@@ -108,11 +112,12 @@ private fun NavigationItem(
     icon: androidx.compose.ui.graphics.painter.Painter,
     label: String,
     selected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
+        modifier = modifier
             .padding(horizontal = 8.dp)
             .height(56.dp)
     ) {
