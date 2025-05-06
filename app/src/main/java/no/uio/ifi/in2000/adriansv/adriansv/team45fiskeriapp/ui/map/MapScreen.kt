@@ -322,11 +322,18 @@ fun MapScreen(
                     )
                     style.addSource(source)
                     
+                    // Bestem størrelsen basert på om bildet er fra en fisketur eller fiskelogg
+                    val iconSize = if (fishLog.area == fishingTripName) {
+                        0.40f  // Justert størrelse for fisketur-bilder, litt større enn fiskelogg men ikke for stor
+                    } else {
+                        0.05f // Behold original størrelse for fiskelogg-bilder
+                    }
+                    
                     // Legg til symbol layer
                     val layer = SymbolLayer("fish_${fishLog.timestamp}", "fish_${fishLog.timestamp}")
                         .withProperties(
                             iconImage(imageId),
-                            iconSize(0.05f),
+                            iconSize(iconSize),
                             iconAllowOverlap(true),
                             iconIgnorePlacement(true),
                             iconAnchor(Property.ICON_ANCHOR_CENTER),
