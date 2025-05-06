@@ -453,65 +453,20 @@ fun MapScreen(
 
     // --- Tutorial ---
     val tutorialManager = rememberTutorialManager()
-    val tutorialSteps = remember {
-        listOf(
-            TutorialStep(
-                title = "Velkommen til appen!",
-                description = "Dette er en rask introduksjon som hjelper deg å forstå appen.",
-                targetTag = "",
-                mascotResourceId = R.drawable.presenting
-            ),
-            TutorialStep(
-                title = "Kartvisning",
-                description = "Her på kartet kan du utforske fiskesteder, interagere med andre fartøy, og bli varslet om fare- og værvarsel." ,
-                targetTag = "",
-                mascotResourceId = R.drawable.nedvenstre
-            ),
-            TutorialStep(
-                title = "Profilsiden",
-                description = "Her kan du lage din profil, endre dine innstillinger og loggføre dine favorittfangster!",
-                targetTag = "",
-                mascotResourceId = R.drawable.nedhoyre
-            ),
-            TutorialStep(
-                title = "Søkefunksjonen",
-                description = "Lyst til å planlegge området først? Søkefunksjonen hjelper deg å finne fram til der du ønsker å dra!",
-                targetTag = "search_button",
-                mascotResourceId = R.drawable.pekopp
-            ),
-            TutorialStep(
-                title = "Båtvettregler",
-                description = "Før du ferder på sjøen, er det viktig å vite om reglene!",
-                targetTag = "",
-                mascotResourceId = R.drawable.tilhoyre
-            ),
-            TutorialStep(
-                title = "Fiskeloggen",
-                description = "I Fiskeloggen kan du lagre dine fisker og plassere de på kartet der du fikk de!",
-                targetTag = "fish_log_button",
-                mascotResourceId = R.drawable.tilhoyre
-            ),
-            TutorialStep(
-                title = "Fisketuren",
-                description = "Trykk her for å starte en fisketur. Appen holder styr på tiden og fangstene dine, som du kan finne igjen i Min Profil!",
-                targetTag = "fishing_trip_button",
-                mascotResourceId = R.drawable.tilhoyre
-            ),
-            TutorialStep(
-                title = "Da er du klar !",
-                description = "Nå har du lært det grunnleggende i appen, og du er klar til å utforske norske farvann. God fisketur!",
-                targetTag = "",
-                mascotResourceId = R.drawable.presenting,
-                isLastStep = true
-            )
-        )
-    }
 
     // Observer tutorial tilstand for å oppdage når den er ferdig
-    LaunchedEffect(tutorialManager.state.isCompleted) {
-        if (tutorialManager.state.isCompleted) {
+    LaunchedEffect(tutorialManager.isCompleted) {
+        if (tutorialManager.isCompleted) {
             // Varsle når tutorial er fullført
             onTutorialComplete()
+        }
+    }
+
+    // Bruk en LaunchedEffect med isComingFromWelcome som key
+    // Dette kjører kun når man faktisk kommer fra welcome screen
+    LaunchedEffect(isComingFromWelcome) {
+        if (isComingFromWelcome) {
+            tutorialManager.startTutorial()
         }
     }
 
@@ -549,14 +504,6 @@ fun MapScreen(
             putLong("start_time", fishingTripStartTime?.toEpochSecond(java.time.ZoneOffset.UTC) ?: 0)
             putBoolean("is_active", isFishingTripActive)
             apply()
-        }
-    }
-
-    // Bruk en LaunchedEffect med isComingFromWelcome som key
-    // Dette kjører kun når man faktisk kommer fra welcome screen
-    LaunchedEffect(isComingFromWelcome) {
-        if (isComingFromWelcome) {
-            tutorialManager.startTutorial(tutorialSteps)
         }
     }
 
@@ -1428,7 +1375,7 @@ fun MapScreen(
 
             // Legg til tutorial overlay på toppen av alt
             TutorialOverlay(
-                state = tutorialManager.state,
+                state = tutorialManager.tutorialState,
                 onNext = { tutorialManager.nextStep() },
                 onSkip = { tutorialManager.skipTutorial() }
             )
