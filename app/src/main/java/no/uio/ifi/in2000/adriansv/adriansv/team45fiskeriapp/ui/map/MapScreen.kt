@@ -84,6 +84,8 @@ import org.maplibre.android.style.layers.CircleLayer
 import org.maplibre.android.style.layers.LineLayer
 import java.io.File
 import java.io.FileOutputStream
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.GribOverlayManager
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.GribOverlayUtil
 
 private const val TAG = "MapScreen"
 private const val SHIP_LAYER_ID = "ship-layer"
@@ -229,7 +231,7 @@ fun MapScreen(
     // TimeOut for map loading
     var mapLoadTimeout by remember { mutableStateOf(false) }
     val mapLoadTimeoutDuration = 10000L // 10 sekunder
-    
+
     // Legg til states for brukerens posisjon
     var userLocation by remember { mutableStateOf<LatLng?>(null) }
     var isTrackingUser by remember { mutableStateOf(false) }
@@ -247,7 +249,7 @@ fun MapScreen(
     LaunchedEffect(uiState.geoJsonData) {
         // Reset timeout når geoJsonData oppdateres
         mapLoadTimeout = false
-        
+
         // Start timeout timer
         if (uiState.geoJsonData != null) {
             delay(mapLoadTimeoutDuration)
@@ -258,6 +260,9 @@ fun MapScreen(
             }
         }
     }
+
+    // State for GRIB overlay loading
+    var gribOverlayLoading by remember { mutableStateOf(false) }
 
     // Tøm fiskeloggen når man tømmer loggen i kartet
     fun clearFishLogs() {
@@ -278,7 +283,7 @@ fun MapScreen(
 
     // Observer for søkeresultat og oppdater kameraposisjon
     val searchTarget by viewModel.searchTarget.collectAsStateWithLifecycle()
-    
+
     LaunchedEffect(searchTarget) {
         searchTarget?.let { target ->
             val zoom = 12.0
@@ -314,7 +319,7 @@ fun MapScreen(
     // Helper function to load image
     fun loadImage(style: Style, fishLog: FishLog) {
         val imageId = "fish_${fishLog.timestamp}"
-        
+
         // Skip if already loaded or failed
         if (imageId in loadedImages || imageId in failedImageLoads) {
             return
@@ -344,28 +349,28 @@ fun MapScreen(
                     rotateBitmap(bitmap, orientation)
                 }
             }
-            
+
             if (image != null) {
                 try {
                     // Legg til bildet
                     style.addImage(imageId, image)
                     loadedImages = loadedImages + imageId
                     fishLogViewModel.addLoadedImage(imageId)
-                    
+
                     // Legg til GeoJSON kilde
                     val source = GeoJsonSource(
                         "fish_${fishLog.timestamp}",
                         "{\"type\":\"Feature\",\"geometry\":{\"type\":\"Point\",\"coordinates\":[${fishLog.longitude},${fishLog.latitude}]},\"properties\":{\"timestamp\":\"${fishLog.timestamp}\"}}"
                     )
                     style.addSource(source)
-                    
+
                     // Bestem størrelsen basert på om bildet er fra en fisketur eller fiskelogg
                     val iconSize = if (fishLog.area == fishingTripName) {
                         0.40f  // Justert størrelse for fisketur-bilder
                     } else {
                         0.05f // Behold original størrelse for fiskelogg-bilder
                     }
-                    
+
                     // Legg til symbol layer
                     val layer = SymbolLayer("fish_${fishLog.timestamp}", "fish_${fishLog.timestamp}")
                         .withProperties(
@@ -418,7 +423,7 @@ fun MapScreen(
                 style.removeImage(oldImageId)
             }
             loadedImages = loadedImages.filter { it in currentImageIds }.toSet()
-            
+
             // Legg til nye fiskelag
             fishLogUiState.fishLogs.forEach { fishLog ->
                 if (fishLog.imageUri != null) {
@@ -501,7 +506,7 @@ fun MapScreen(
             )
         )
     }
-    
+
     // Observer tutorial tilstand for å oppdage når den er ferdig
     LaunchedEffect(tutorialManager.state.isCompleted) {
         if (tutorialManager.state.isCompleted) {
@@ -509,7 +514,7 @@ fun MapScreen(
             onTutorialComplete()
         }
     }
-    
+
     // Be om lokasjonstillatelse hvis nødvendig
     LaunchedEffect(Unit) {
         if (!locationPermissionState.value) {
@@ -546,7 +551,7 @@ fun MapScreen(
             apply()
         }
     }
-    
+
     // Bruk en LaunchedEffect med isComingFromWelcome som key
     // Dette kjører kun når man faktisk kommer fra welcome screen
     LaunchedEffect(isComingFromWelcome) {
@@ -561,11 +566,11 @@ fun MapScreen(
             // Legg til kilde for brukerens posisjon
             val userLocationSource = GeoJsonSource("user-location-source")
             style.addSource(userLocationSource)
-            
+
             // Legg til kilde for fisketur-ruten
             val routeSource = GeoJsonSource("fishing-trip-route-source")
             style.addSource(routeSource)
-            
+
             // Legg til lag for fisketur-ruten (gul linje)
             val routeLayer = LineLayer("fishing-trip-route-layer", "fishing-trip-route-source")
                 .withProperties(
@@ -574,7 +579,7 @@ fun MapScreen(
                     lineOpacity(0.8f)
                 )
             style.addLayer(routeLayer)
-            
+
             // Legg til lag for brukerens posisjon (blå sirkel)
             val userLocationLayer = CircleLayer("user-location-layer", "user-location-source")
                 .withProperties(
@@ -585,7 +590,7 @@ fun MapScreen(
                     circleStrokeColor(Color.WHITE)
                 )
             style.addLayer(userLocationLayer)
-            
+
             // Start oppdatering av brukerens posisjon
             val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
             if (locationPermissionState.value) {
@@ -607,18 +612,18 @@ fun MapScreen(
                         }
                         """
                         userLocationSource.setGeoJson(geoJson)
-                        
+
                         // Hvis fisketuren er aktiv, legg til posisjonen i ruten
                         if (isFishingTripActive) {
                             // Sjekk om den nye posisjonen er forskjellig fra den siste i ruten
                             val lastPosition = fishingTripRoute.lastOrNull()
                             val newPosition = LatLng(location.latitude, location.longitude)
-                            
-                            if (lastPosition == null || 
-                                (lastPosition.latitude != newPosition.latitude || 
+
+                            if (lastPosition == null ||
+                                (lastPosition.latitude != newPosition.latitude ||
                                  lastPosition.longitude != newPosition.longitude)) {
                                 fishingTripRoute = fishingTripRoute + newPosition
-                                
+
                                 // Oppdater ruten på kartet
                                 val routeGeoJson = """
                                 {
@@ -632,7 +637,7 @@ fun MapScreen(
                                 routeSource.setGeoJson(routeGeoJson)
                             }
                         }
-                        
+
                         // Hvis vi følger brukeren, oppdater kameraet
                         if (isTrackingUser) {
                             mapLibreMap?.moveCamera(
@@ -646,7 +651,7 @@ fun MapScreen(
             }
         }
     }
-    
+
     // Oppdater isTrackingUser når fisketur starter
     LaunchedEffect(isFishingTripActive) {
         if (isFishingTripActive) {
@@ -697,21 +702,21 @@ fun MapScreen(
                     factory = { ctx ->
                         MapView(ctx).also { view ->
                             mapView = view
-                            
+
                             // Sett opp async map loading med bedre error handling
                             try {
                                 view.getMapAsync(OnMapReadyCallback { map ->
                                     try {
                                         Log.d(TAG, "Map is ready, setting up style and layers")
                                         mapLibreMap = map
-                                        
+
                                         // Force-last inn standard style hvis det oppstår problemer
                                         val styleUrl = "https://api.maptiler.com/maps/streets-v2/style.json?key=oMZQoq4zniKOHeMvi7oA"
                                         map.setStyle(Style.Builder().fromUri(styleUrl)) { style ->
                                             try {
                                                 // Nullstill timeout siden kartet er lastet
                                                 mapLoadTimeout = false
-                                                
+
                                                 // Set initial camera position to Oslo Fjord
                                                 val osloPosition = LatLng(59.9139, 10.7522)
                                                 val position = CameraPosition.Builder()
@@ -719,7 +724,7 @@ fun MapScreen(
                                                     .zoom(9.0)
                                                     .build()
                                                 map.moveCamera(CameraUpdateFactory.newCameraPosition(position))
-                                                
+
                                                 // Add camera movement listener for weather updates
                                                 map.addOnCameraIdleListener {
                                                     val center = map.cameraPosition.target
@@ -732,7 +737,7 @@ fun MapScreen(
                                                         )
                                                     }
                                                 }
-                                                
+
                                                 // Initial weather update
                                                 weatherViewModel.updateWeather(
                                                     latitude = osloPosition.latitude,
@@ -841,7 +846,7 @@ fun MapScreen(
 
                                                 map.addOnMapClickListener { point ->
                                                     val screenPoint = map.projection.toScreenLocation(point)
-                                                    
+
                                                     // Håndter lokasjonsvalg først hvis vi er i lokasjonsvalg-modus
                                                     if (onLocationSelected != null) {
                                                         onLocationSelected(point.latitude, point.longitude, "Valgt lokasjon")
@@ -872,7 +877,7 @@ fun MapScreen(
                                                         resetSelections() // Nullstill GRIB-data og andre popups
                                                         return@addOnMapClickListener true
                                                     }
-                                                    
+
                                                     // Check for alerts (prioritert) - kun hvis alerts er aktivert
                                                     if (showAlerts) {
                                                         val alertFeatures = map.queryRenderedFeatures(screenPoint, "alert-symbol-layer")
@@ -884,7 +889,7 @@ fun MapScreen(
                                                                 val id = properties.get("id").asString
                                                                 resetSelections()
                                                                 viewModel.setSelectedAlert(jsonObject)
-                                                                
+
                                                                 // Vis polygon for dette varselet
                                                                 map.getStyle { style ->
                                                                     updateAlertPolygon(style, id)
@@ -893,7 +898,7 @@ fun MapScreen(
                                                             return@addOnMapClickListener true
                                                         }
                                                     }
-                                                    
+
                                                     // Check for ships - kun hvis ships er aktivert
                                                     if (showShips) {
                                                         val shipFeatures = map.queryRenderedFeatures(screenPoint, SHIP_LAYER_ID)
@@ -901,7 +906,7 @@ fun MapScreen(
                                                             resetSelections()  // Nullstill alerts og grib-state først
                                                             val feature = shipFeatures[0]
                                                             val properties = feature.properties()
-                                                            
+
                                                             if (properties != null) {
                                                                 val mmsi = properties.get("mmsi")?.asString
                                                                 if (mmsi != null) {
@@ -913,7 +918,7 @@ fun MapScreen(
                                                                     }
                                                                 }
                                                             }
-                                                            
+
                                                             // Gjem polygon når skip velges
                                                             map.getStyle { style ->
                                                                 updateAlertPolygon(style, null)
@@ -921,7 +926,7 @@ fun MapScreen(
                                                             return@addOnMapClickListener true
                                                         }
                                                     }
-                                                    
+
                                                     // Håndter fiskelogg posisjonsvalg før GRIB-data
                                                     if (showLocationSelectionDialog) {
                                                         selectedLocationForFish = Pair(point.latitude, point.longitude)
@@ -930,7 +935,7 @@ fun MapScreen(
                                                         selectedLocation = Pair(point.latitude, point.longitude)
                                                         return@addOnMapClickListener true
                                                     }
-                                                    
+
                                                     // If no alert or ship was clicked, show GRIB data if enabled
                                                     if (showGrib && uiState.selectedAlert == null && !showFishLogDialog) {
                                                         scope.launch {
@@ -948,7 +953,7 @@ fun MapScreen(
                                                                     data = gribData
                                                                 )
                                                                 showPopup = true
-                                                                
+
                                                                 // Gjem polygon når GRIB data vises
                                                                 map.getStyle { style ->
                                                                     updateAlertPolygon(style, null)
@@ -957,7 +962,7 @@ fun MapScreen(
                                                         }
                                                         return@addOnMapClickListener true
                                                     }
-                                                    
+
                                                     false
                                                 }
 
@@ -1001,7 +1006,7 @@ fun MapScreen(
                     },
                     modifier = Modifier.fillMaxSize()
                 )
-                
+
                 // Vis loading-indikator hvis kart ikke er lastet
                 if (mapLibreMap == null) {
                     Box(
@@ -1013,7 +1018,7 @@ fun MapScreen(
                         CircularProgressIndicator()
                     }
                 }
-                
+
                 // Vis reload-message hvis timeout har oppstått
                 if (mapLoadTimeout) {
                     Box(
@@ -1163,22 +1168,6 @@ fun MapScreen(
                 )
             }
 
-            // Show GRIB popup if GRIB data is enabled
-            if (showGrib && showPopup && selectedPoint != null && uiState.selectedAlert == null) {
-                selectedPoint!!.data?.let {
-                    AlertInfoCard(
-                        alertData = it,
-                        onDismiss = {
-                            selectedPoint = null
-                            showPopup = false
-                        },
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(16.dp)
-                    )
-                }
-            }
-
             // Update ship positions when they change
             LaunchedEffect(shipUiState.ships) {
                 mapLibreMap?.getStyle()?.let { style ->
@@ -1313,6 +1302,26 @@ fun MapScreen(
                 )
             }
 
+            // I MapScreen, etter at selectedPoint settes og showPopup = true, vis overlay:
+            LaunchedEffect(mapLibreMap) {
+                if (mapLibreMap != null) {
+                    gribOverlayLoading = true
+                    val allGrids = gribRepository.getAllWeatherGrids()
+                    val geoJson = GribOverlayUtil.mergeFeatureCollections(
+                        allGrids["wind"]?.let { GribOverlayUtil.gribDataToFeatureCollection(it, "wind", "wind") } ?: "",
+                        allGrids["wave"]?.let { GribOverlayUtil.gribDataToFeatureCollection(it, "wave", "wave") } ?: "",
+                        allGrids["strom"]?.let { GribOverlayUtil.gribDataToFeatureCollection(it, "strom", "strom") } ?: "",
+                        allGrids["rain"]?.let { GribOverlayUtil.gribDataToFeatureCollection(it, "rain", "rain") } ?: ""
+                    )
+                    mapLibreMap!!.getStyle { style ->
+                        Log.d("GRIB", "GeoJSON: $geoJson")
+                        GribOverlayManager.addOrUpdateGribOverlay(context, style, geoJson)
+                        gribOverlayLoading = false
+                    }
+                }
+            }
+
+            // Show fishing trip dialog
             // Vis fisketurdialog
             if (showFishingTripDialog) {
                 FishingTripDialog(
@@ -1330,7 +1339,7 @@ fun MapScreen(
                         userLocation = LatLng(location.latitude, location.longitude)
                         mapLibreMap?.moveCamera(
                             CameraUpdateFactory.newLatLngZoom(
-                                LatLng(location.latitude, location.longitude), 
+                                LatLng(location.latitude, location.longitude),
                                 18.0
                             )
                         )
@@ -1346,7 +1355,7 @@ fun MapScreen(
                         mapLibreMap?.snapshot { bitmap ->
                             mapScreenshot = saveMapScreenshot(context, bitmap)
                         }
-                        
+
                         showFishingTripDialog = false
                         showFishingTripSummary = true
                     },
@@ -1365,7 +1374,7 @@ fun MapScreen(
                             imageUri = uri?.toString()
                         )
                         fishLogViewModel.addFishLog(fishLog)
-                        
+
                         // Oppdater kartet med den nye fangsten
                         mapLibreMap?.getStyle { style ->
                             if (fishLog.imageUri != null) {
@@ -1379,19 +1388,19 @@ fun MapScreen(
 
             // Show fishing trip summary dialog
             if (showFishingTripSummary && fishingTripStartTime != null && fishingTripEndTime != null) {
-                val catchesForTrip = fishLogUiState.fishLogs.filter { 
+                val catchesForTrip = fishLogUiState.fishLogs.filter {
                     val logDate = it.timestamp
                     val startDate = Date.from(fishingTripStartTime!!.atZone(java.time.ZoneId.systemDefault()).toInstant())
                     val endDate = Date.from(fishingTripEndTime!!.atZone(java.time.ZoneId.systemDefault()).toInstant())
                     logDate.after(startDate) && logDate.before(endDate)
                 }
-                
+
                 FishingTripSummaryDialog(
                     onDismiss = { 
                         // Lagre fisketuren i lagring når dialogen lukkes
                         val startTimeMillis = fishingTripStartTime!!.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
                         val endTimeMillis = fishingTripEndTime!!.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
-                        
+
                         if (mapScreenshot != null) {
                             val fishingTrip = FishingTrip(
                                 name = fishingTripName,
@@ -1400,12 +1409,12 @@ fun MapScreen(
                                 endTime = endTimeMillis,
                                 catchCount = catchesForTrip.size
                             )
-                            
+
                             // Lagre turen i storage
                             FishingTripStorage.saveTrip(context, fishingTrip)
                         }
-                        
-                        showFishingTripSummary = false 
+
+                        showFishingTripSummary = false
                     },
                     tripName = fishingTripName,
                     startTime = fishingTripStartTime!!,
@@ -1438,7 +1447,7 @@ fun MapScreen(
             }
         }
     }
-    
+
     // Legg til lifecycle-håndtering for MapView
     LaunchedEffect(mapView) {
         if (mapView != null) {
@@ -1521,14 +1530,14 @@ private fun saveMapScreenshot(context: Context, bitmap: Bitmap): Uri? {
     return try {
         val fileName = "fishing_trip_${System.currentTimeMillis()}.jpg"
         val file = File(context.getExternalFilesDir(null), fileName)
-        
+
         FileOutputStream(file).use { out ->
             bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
         }
-        
+
         Uri.fromFile(file)
     } catch (e: Exception) {
         Log.e(TAG, "Failed to save map screenshot: ${e.message}")
         null
     }
-} 
+}

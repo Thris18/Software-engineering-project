@@ -296,8 +296,8 @@ fun FishingTripDialog(
                                 // Varighet
                                 currentDuration?.let { duration ->
                                     val hours = duration.toHours()
-                                    val minutes = duration.toMinutesPart()
-                                    val seconds = duration.toSecondsPart()
+                                    val minutes = (duration.toMinutes() % 60)
+                                    val seconds = (duration.seconds % 60)
                                     
                                     Text(
                                         text = "Varighet",

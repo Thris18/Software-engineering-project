@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.grib.GribData
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.grib.GribPoint
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.GribDirectionUtil
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.logging.HttpLoggingInterceptor
@@ -16,6 +17,8 @@ import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
+import kotlin.math.atan2
+import kotlin.math.sqrt
 
 class GribRepository(private val context: Context) {
     private val TAG = "GribRepository"
@@ -56,6 +59,24 @@ class GribRepository(private val context: Context) {
             ) ?: return@withContext null
             val vWind = getValueAtCoordinates(vWindData, point.latitude, point.longitude)
 
+            // Beregn vindhastighet og retning
+            val windSpeed = if (uWind != null && vWind != null) {
+                sqrt(uWind * uWind + vWind * vWind)
+            } else null
+
+            val windDirection = if (uWind != null && vWind != null) {
+                // Beregn retning i grader (0-360)
+                val direction = Math.toDegrees(atan2(vWind.toDouble(), uWind.toDouble()))
+                // Konverter til meteorologisk retning (hvor vinden kommer fra)
+                ((direction + 180) % 360).toFloat()
+            } else null
+
+            Log.d(TAG, "Vind data:")
+            Log.d(TAG, "  u-komponent: $uWind")
+            Log.d(TAG, "  v-komponent: $vWind")
+            Log.d(TAG, "  Hastighet: $windSpeed")
+            Log.d(TAG, "  Retning: $windDirection")
+
             // Hent nedbør data
             val precipitationData = GribParser.parseGribFile(
                 weatherFile,
@@ -83,9 +104,37 @@ class GribRepository(private val context: Context) {
                 Log.e(TAG, "Kunne ikke laste ned current GRIB-fil")
                 return@withContext null
             }
-            val currentData = GribParser.parseGribFile(currentFile) ?: return@withContext null
-            val currentSpeed = getValueAtCoordinates(currentData, point.latitude, point.longitude)
-            val currentDirection = getValueAtCoordinates(currentData, point.latitude, point.longitude)
+
+            // Hent u- og v-komponenter for strøm
+            val uCurrentData = GribParser.parseGribFile(
+                currentFile,
+                "u-component_of_current_depth_below_sea"
+            ) ?: return@withContext null
+            val uCurrent = getValueAtCoordinates(uCurrentData, point.latitude, point.longitude)
+
+            val vCurrentData = GribParser.parseGribFile(
+                currentFile,
+                "v-component_of_current_depth_below_sea"
+            ) ?: return@withContext null
+            val vCurrent = getValueAtCoordinates(vCurrentData, point.latitude, point.longitude)
+
+            // Beregn strømhastighet og retning
+            val currentSpeed = if (uCurrent != null && vCurrent != null) {
+                sqrt(uCurrent * uCurrent + vCurrent * vCurrent)
+            } else null
+
+            val currentDirection = if (uCurrent != null && vCurrent != null) {
+                // Beregn retning i grader (0-360)
+                val direction = Math.toDegrees(atan2(vCurrent.toDouble(), uCurrent.toDouble()))
+                // Konverter til meteorologisk retning (hvor strømmen går)
+                ((direction + 180) % 360).toFloat()
+            } else null
+
+            Log.d(TAG, "Strøm data:")
+            Log.d(TAG, "  u-komponent: $uCurrent")
+            Log.d(TAG, "  v-komponent: $vCurrent")
+            Log.d(TAG, "  Hastighet: $currentSpeed")
+            Log.d(TAG, "  Retning: $currentDirection")
 
             // Hent bølge data
             val wavesFile = downloadGribFile("waves")
@@ -110,8 +159,8 @@ class GribRepository(private val context: Context) {
                 unit = "mixed",
                 referenceTime = weatherData.referenceTime,
                 temperature = null,
-                windSpeed = uWind,
-                windDirection = vWind,
+                windSpeed = windSpeed,
+                windDirection = windDirection,
                 waveHeight = waveHeight,
                 waveDirection = waveDirection,
                 currentSpeed = currentSpeed,
@@ -281,5 +330,48 @@ class GribRepository(private val context: Context) {
             }
         }
         return null
+    }
+
+    // Hjelpefunksjon: Hent hele gridet for én type
+    suspend fun getGribDataGrid(type: String, variableName: String? = null): GribData? = withContext(Dispatchers.IO) {
+        val file = downloadGribFile(type)
+        return@withContext if (file != null) GribParser.parseGribFile(file, variableName) else null
+    }
+
+    // Hent alle relevante grids for overlay
+    suspend fun getAllWeatherGrids(): Map<String, GribData?> = withContext(Dispatchers.IO) {
+        // Hent vind-data med både u- og v-komponenter
+        val windU = getGribDataGrid("weather", "u-component_of_wind_height_above_ground")
+        val windV = getGribDataGrid("weather", "v-component_of_wind_height_above_ground")
+        val wind = if (windU != null && windV != null) {
+            windU.copy(
+                uValues = windU.values,
+                vValues = windV.values,
+                windSpeed = GribDirectionUtil.calculateSpeedFromUV(windU.values[0].toDouble(), windV.values[0].toDouble()),
+                windDirection = GribDirectionUtil.calculateDirectionFromUV(windU.values[0].toDouble(), windV.values[0].toDouble())
+            )
+        } else null
+
+        // Hent strøm-data med både u- og v-komponenter
+        val currentU = getGribDataGrid("current", "u-component_of_current_depth_below_sea")
+        val currentV = getGribDataGrid("current", "v-component_of_current_depth_below_sea")
+        val strom = if (currentU != null && currentV != null) {
+            currentU.copy(
+                uValues = currentU.values,
+                vValues = currentV.values,
+                currentSpeed = GribDirectionUtil.calculateSpeedFromUV(currentU.values[0].toDouble(), currentV.values[0].toDouble()),
+                currentDirection = GribDirectionUtil.calculateDirectionFromUV(currentU.values[0].toDouble(), currentV.values[0].toDouble())
+            )
+        } else null
+
+        val wave = getGribDataGrid("waves", "Significant_height_of_combined_wind_waves_and_swell_height_above_ground")
+        val rain = getGribDataGrid("weather", "Total_precipitation_height_above_ground")
+        
+        mapOf(
+            "wind" to wind,
+            "wave" to wave,
+            "strom" to strom,
+            "rain" to rain
+        )
     }
 }
