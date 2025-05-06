@@ -3,6 +3,7 @@ package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.navigation
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -26,6 +27,8 @@ import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherVi
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherViewModelFactory
 import android.net.Uri
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherScreen
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.tutorial.rememberTutorialManager
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.tutorial.TutorialManager
 
 @Composable
 fun NavigationHandler() {
@@ -41,6 +44,9 @@ fun NavigationHandler() {
     
     // Holder styr på om tutorialen er vist (persisteres gjennom recomposition)
     var hasTutorialBeenShown by remember { mutableStateOf(false) }
+    
+    // Tutorial manager for å håndtere tutorial for værknappen
+    val tutorialManager = rememberTutorialManager()
 
     // Profil-tilstander
     var showSettings by remember { mutableStateOf(false) }
@@ -74,6 +80,9 @@ fun NavigationHandler() {
     var description by remember { mutableStateOf("") }
     var weight by remember { mutableStateOf("") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
+
+    // State for å styre visning av popup-er
+    var showSettingsPopup by remember { mutableStateOf(false) }
 
     // Tema
     Team45FiskeriAppTheme(darkTheme = isDarkMode) {
@@ -186,7 +195,8 @@ fun NavigationHandler() {
                         currentRoute = currentRoute,
                         onNavigate = { route -> currentRoute = route },
                         weather = weatherUiState.weather,
-                        weatherState = weatherUiState
+                        weatherState = weatherUiState,
+                        tutorialManager = tutorialManager
                     )
                 }
             }
