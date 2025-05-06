@@ -2,133 +2,132 @@ package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.tutorial
 
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.layout.boundsInWindow
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.R
 
 class TutorialManager {
-    var highlightedBounds by mutableStateOf<Rect?>(null)
+    var tutorialState by mutableStateOf(TutorialState())
         private set
-    
-    var currentStep by mutableStateOf(0)
-        private set
-    
-    var isVisible by mutableStateOf(false)
-        private set
-    
-    var isCompleted by mutableStateOf(false)
-        private set
-    
-    val steps = listOf(
+
+    // For bakoverkompatibilitet
+    val isCompleted: Boolean
+        get() = tutorialState.isCompleted
+
+    val isVisible: Boolean
+        get() = tutorialState.isVisible
+
+    val currentStep: Int
+        get() = tutorialState.currentStepIndex
+
+    val steps: List<TutorialStep>
+        get() = privateSteps.toList()
+
+    fun getCurrentStep(): TutorialStep? = tutorialState.currentStepData
+
+    fun isLastStep(): Boolean = tutorialState.currentStepIndex >= privateSteps.size - 1
+
+    private val privateSteps = listOf(
         TutorialStep(
             title = "Velkommen til appen!",
             description = "Dette er en rask introduksjon som hjelper deg å forstå appen.",
-            targetTag = "welcome",
+            targetTag = "",
             mascotResourceId = R.drawable.presenting,
-            mascotPlacement = MascotPlacement.CENTER
+            mascotPlacement = MascotPlacement.RIGHT
         ),
         TutorialStep(
             title = "Kartvisning",
             description = "Her på kartet kan du utforske fiskesteder, interagere med andre fartøy, og bli varslet om fare- og værvarsel.",
-            targetTag = "map_view",
+            targetTag = "kart_button",
             mascotResourceId = R.drawable.nedvenstre,
-            mascotPlacement = MascotPlacement.BOTTOM
+            mascotPlacement = MascotPlacement.LEFT
         ),
         TutorialStep(
             title = "Profilsiden",
             description = "Her kan du lage din profil, endre dine innstillinger og loggføre dine favorittfangster!",
-            targetTag = "",
+            targetTag = "profile_button",
             mascotResourceId = R.drawable.nedhoyre,
-            mascotPlacement = MascotPlacement.BOTTOM
+            mascotPlacement = MascotPlacement.RIGHT
         ),
         TutorialStep(
             title = "Søkefunksjonen",
-            description = "Lyst til å planlegge området først? Søkefunksjonen hjelper deg å finne fram til der du ønsker å dra!",
-            targetTag = "search_button",
+            description = "Bruk søkefunksjonen for å finne steder og andre fiskere!",
+            targetTag = "search_bar",
             mascotResourceId = R.drawable.pekopp,
-            mascotPlacement = MascotPlacement.TOP
+            mascotPlacement = MascotPlacement.BOTTOM
         ),
         TutorialStep(
             title = "Lyst til å sjekke værmeldingen?",
             description = "Bruk værvarselssiden for 10 dagers varsel",
             targetTag = "weather_button",
             mascotResourceId = R.drawable.nedhoyre,
-            mascotPlacement = MascotPlacement.BOTTOM
+            mascotPlacement = MascotPlacement.LEFT
         ),
         TutorialStep(
             title = "Båtvettregler",
             description = "Før du ferder på sjøen, er det viktig å vite om reglene!",
             targetTag = "boat_rules_button",
             mascotResourceId = R.drawable.tilhoyre,
-            mascotPlacement = MascotPlacement.RIGHT
+            mascotPlacement = MascotPlacement.BOTTOM
         ),
         TutorialStep(
             title = "Fiskeloggen",
-            description = "I Fiskeloggen kan du lagre dine fisker og plassere de på kartet der du fikk de!",
+            description = "I Fiske oggen kan du lagre dine fisker og plassere de på kartet der du fikk de!",
             targetTag = "fish_log_button",
             mascotResourceId = R.drawable.tilhoyre,
-            mascotPlacement = MascotPlacement.RIGHT
+            mascotPlacement = MascotPlacement.BOTTOM
         ),
         TutorialStep(
             title = "Fisketuren",
-            description = "Trykk her for å starte en fisketur. Appen holder styr på tiden og fangstene dine, som du kan finne igjen i Min Profil!",
+            description = "Trykk her for å starte en ny tur! Appen holder styr på tid og fangstene dine, som du ser igjen i Min Profil!",
             targetTag = "fishing_trip_button",
             mascotResourceId = R.drawable.tilhoyre,
-            mascotPlacement = MascotPlacement.RIGHT
+            mascotPlacement = MascotPlacement.BOTTOM
         ),
         TutorialStep(
             title = "Da er du klar !",
-            description = "Nå har du lært det grunnleggende i appen, og du er klar til å utforske norske farvann. God fisketur!",
-            targetTag = "complete",
+            description = "Nå vet du det mest grunnleggende for Fiske-appen!",
+            targetTag = "",
             mascotResourceId = R.drawable.presenting,
-            isLastStep = true,
-            mascotPlacement = MascotPlacement.CENTER
+            mascotPlacement = MascotPlacement.RIGHT,
+            isLastStep = true
         )
     )
-    
+
     fun startTutorial() {
-        isVisible = true
-        isCompleted = false
-        currentStep = 0
-        updateHighlightedBounds()
+        tutorialState = TutorialState(
+            isVisible = true,
+            isCompleted = false,
+            currentStepIndex = 0,
+            currentStepData = privateSteps.firstOrNull()
+        )
     }
-    
+
     fun nextStep() {
-        if (currentStep < steps.size - 1) {
-            currentStep++
-            updateHighlightedBounds()
-        } else {
+        val currentIndex = tutorialState.currentStepIndex
+        
+        if (currentIndex >= privateSteps.size - 1) {
             completeTutorial()
+            return
         }
+        
+        val nextIndex = currentIndex + 1
+        tutorialState = tutorialState.copy(
+            currentStepIndex = nextIndex,
+            currentStepData = privateSteps.getOrNull(nextIndex)
+        )
     }
     
     fun skipTutorial() {
         completeTutorial()
     }
     
-    private fun completeTutorial() {
-        isVisible = false
-        isCompleted = true
-        highlightedBounds = null
+    fun completeTutorial() {
+        tutorialState = tutorialState.copy(
+            isVisible = false,
+            isCompleted = true
+        )
     }
-    
-    fun updateButtonPosition(targetTag: String, bounds: Rect) {
-        if (steps.getOrNull(currentStep)?.targetTag == targetTag) {
-            highlightedBounds = bounds
-        }
-    }
-    
-    private fun updateHighlightedBounds() {
-        // Reset highlighted bounds when changing steps
-        highlightedBounds = null
-    }
-    
-    fun getCurrentStep(): TutorialStep? = steps.getOrNull(currentStep)
-    
-    fun isLastStep(): Boolean = currentStep >= steps.size - 1
 }
 
 @Composable
@@ -137,20 +136,14 @@ fun rememberTutorialManager(): TutorialManager {
 }
 
 /**
- * Modifier-utvidelse som legger til posisjonssporing for tutorialTarget-elementer.
- * Dette gjør at vi kan fremheve UI-elementer i tutorialen.
+ * En dummy modifier for tutorialTarget for å unngå kompileringsfeil i filer som bruker denne.
+ * Gjør ingenting funksjonelt men bevarer API-kompatibilitet.
  */
 @Composable
 fun Modifier.tutorialTarget(
     tag: String,
     tutorialManager: TutorialManager
 ): Modifier {
-    return this.then(
-        Modifier.onGloballyPositioned { coordinates ->
-            val bounds = coordinates.boundsInWindow()
-            if (tutorialManager.steps.getOrNull(tutorialManager.currentStep)?.targetTag == tag) {
-                tutorialManager.updateButtonPosition(tag, bounds)
-            }
-        }
-    )
+    // Denne versjonen gjør ingenting, men holder API-et kompatibelt
+    return this
 } 
