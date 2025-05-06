@@ -78,6 +78,7 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.runtime:runtime-livedata")
     implementation("androidx.navigation:navigation-compose:2.7.5")
+    implementation("androidx.compose.animation:animation-graphics:1.5.4")
 
     // Alternativ mapping bibilotek - bruker OSMDroid istedet for MapBox
     implementation("org.osmdroid:osmdroid-android:6.1.16")
@@ -98,6 +99,8 @@ dependencies {
     implementation("com.google.guava:guava:32.1.2-android")
     implementation(libs.play.services.maps)
     implementation(libs.androidx.appcompat.resources) // Required by NetCDF
+    implementation(libs.play.services.maps)
+    implementation(libs.androidx.animation.graphics.android) // Required by NetCDF
 
     // Testing
     testImplementation("junit:junit:4.13.2")
@@ -120,9 +123,16 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.5.4")
 
     // Til GIF
-    implementation("io.coil-kt:coil-compose:2.4.0")
     implementation("io.coil-kt:coil-gif:2.4.0")
 
+
+
+    // Bakoverkompitabel løsning for ZonedTimeDate
+    implementation ("com.jakewharton.threetenabp:threetenabp:1.4.5")
+
+    // Lottie animasjoner
+    implementation ("com.airbnb.android:lottie:6.6.6")
+    implementation ("com.airbnb.android:lottie-compose:6.6.6")
     implementation(libs.play.services.location)
 
 

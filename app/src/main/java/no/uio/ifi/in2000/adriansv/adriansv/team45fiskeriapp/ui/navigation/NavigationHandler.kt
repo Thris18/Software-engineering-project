@@ -1,17 +1,13 @@
 package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.navigation
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.fish.FishLogRepository
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.WeatherDataSource
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.WeatherRepository
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.fish.FishLog
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.NavigationBar
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.SettingsPopup
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.WelcomeScreen
@@ -25,15 +21,22 @@ import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.theme.Team45Fiske
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherViewModel
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherViewModelFactory
 import android.net.Uri
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherScreen
 
 @Composable
 fun NavigationHandler() {
     // Delte tilstander
     var currentRoute by remember { mutableStateOf("welcome") } // Starter med velkomstskjerm
-    var isDarkMode by remember { mutableStateOf(true) }
+    var isDarkMode by remember { mutableStateOf(false) }
     var showGrib by remember { mutableStateOf(true) }
     var showAlerts by remember { mutableStateOf(true) }
     var showShips by remember { mutableStateOf(true) }
+    
+    // Holder styr på om navigasjon kommer fra welcome screen
+    var isComingFromWelcome by remember { mutableStateOf(false) }
+    
+    // Holder styr på om tutorialen er vist (persisteres gjennom recomposition)
+    var hasTutorialBeenShown by remember { mutableStateOf(false) }
 
     // Profil-tilstander
     var showSettings by remember { mutableStateOf(false) }
@@ -77,12 +80,22 @@ fun NavigationHandler() {
                 Box(modifier = Modifier.weight(1f)) {
                     when (currentRoute) {
                         "welcome" -> WelcomeScreen(
-                            onNavigateToHome = { currentRoute = "kart" }
+                            onNavigateToHome = { 
+                                currentRoute = "kart"
+                                // Kun sett flagget hvis tutorialen ikke er vist tidligere
+                                isComingFromWelcome = !hasTutorialBeenShown
+                            }
                         )
                         "kart" -> MapScreen(
-                            onNavigateToProfile = { currentRoute = "profil" },
+                            onNavigateToProfile = { 
+                                currentRoute = "profil"
+                                isComingFromWelcome = false  // Reset flagg når vi navigerer videre
+                            },
                             currentRoute = currentRoute,
-                            onNavigate = { route -> currentRoute = route },
+                            onNavigate = { route -> 
+                                currentRoute = route
+                                isComingFromWelcome = false  // Reset flagg ved navigasjon
+                            },
                             isDarkMode = isDarkMode,
                             showGrib = showGrib,
                             showAlerts = showAlerts,
@@ -106,7 +119,13 @@ fun NavigationHandler() {
                                 previousRoute?.let { currentRoute = it }
                                 showAddFishDialog = true
                                 previousRoute = null
-                            } else null
+                            } else null,
+                            isComingFromWelcome = isComingFromWelcome && !hasTutorialBeenShown,
+                            // Når tutorialen er ferdig
+                            onTutorialComplete = {
+                                hasTutorialBeenShown = true
+                                isComingFromWelcome = false
+                            }
                         )
                         "profil" -> ProfileScreen(
                             firstName = firstName,
@@ -153,6 +172,7 @@ fun NavigationHandler() {
                                 fishLogViewModel.removeFishLog(fishLog)
                             }
                         )
+                        "vaer" -> WeatherScreen(weather = weatherUiState.weather)
                     }
                 }
 

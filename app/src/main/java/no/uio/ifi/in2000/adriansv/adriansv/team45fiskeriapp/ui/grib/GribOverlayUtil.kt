@@ -90,27 +90,8 @@ object GribOverlayUtil {
         gribData: GribData,
         type: String,
         icon: String,
-        minDistanceKm: Double = 13.0 // Juster radius etter behov
+        minDistanceKm: Double = 10.0 // Juster radius etter behov
     ): String {
-        // Logg alle tilgjengelige variabler
-        Log.d("GRIB", """
-            GRIB Data for type: $type
-            Wind Speed: ${gribData.windSpeed}
-            Wind Direction: ${gribData.windDirection}
-            Wave Height: ${gribData.waveHeight}
-            Wave Direction: ${gribData.waveDirection}
-            Current Speed: ${gribData.currentSpeed}
-            Current Direction: ${gribData.currentDirection}
-            Precipitation: ${gribData.precipitation}
-            Pressure: ${gribData.pressure}
-            Temperature: ${gribData.temperature}
-            Variable Name: ${gribData.variableName}
-            Unit: ${gribData.unit}
-            Values array size: ${gribData.values.size}
-            Min value: ${gribData.minValue}
-            Max value: ${gribData.maxValue}
-        """.trimIndent())
-
         val features = mutableListOf<String>()
         val threshold = thresholds[type] ?: 0.0
         val width = gribData.width
@@ -163,7 +144,6 @@ object GribOverlayUtil {
                 }
             }
         }
-        Log.d("GRIB", "Features for $type: ${features.size}")
         return """{"type": "FeatureCollection", "features": [${features.joinToString(",")}] }"""
     }
 

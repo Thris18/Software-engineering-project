@@ -3,6 +3,7 @@ package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -12,7 +13,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.R
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.weather.LocationWeather
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherInfoBox
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherUiState
 
 @Composable
@@ -47,13 +47,13 @@ fun NavigationBar(
             )
 
             // Vær-knapp
-            if (weather != null && weatherState != null) {
-                WeatherInfoBox(
-                    weather = weather,
-                    weatherState = weatherState,
-                    modifier = Modifier
-                )
-            }
+            NavigationItem(
+                icon = Icons.Default.WbSunny,
+                label = "Vær",
+                selected = currentRoute == "vaer",
+                onClick = { onNavigate("vaer") }
+            )
+
 
             // Profil-knapp
             NavigationItem(

@@ -50,6 +50,7 @@ object CurrentOverlay {
     }
 
     fun addOrUpdate(context: Context, style: Style, points: List<GribPoint>) {
+        Log.d("CurrentOverlay", "Antall punkter som tegnes: ${points.size}")
         // Legg til bilder hvis de ikke allerede er lagt til
         if (style.getImage(CURRENT_ICON_ID) == null) {
             val currentIcon = getBitmapFromVectorDrawable(context, R.drawable.strom)

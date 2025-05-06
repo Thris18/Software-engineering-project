@@ -65,6 +65,7 @@ object RainOverlay {
         addFogImages(context, style)
         val features = JSONArray()
         Log.d("RainOverlay", "Antall punkter til overlay: ${points.size}")
+        Log.d("RainOverlay", "Antall punkter som tegnes: ${points.size}")
         points.forEach { Log.d("RainOverlay", "Punkt: ${it.latitude}, ${it.longitude}, verdi: ${it.data?.precipitation}") }
         points.forEach { point ->
             val data = point.data ?: return@forEach

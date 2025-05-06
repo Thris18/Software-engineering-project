@@ -50,6 +50,7 @@ object WindOverlay {
     }
 
     fun addOrUpdate(context: Context, style: Style, points: List<GribPoint>) {
+        Log.d("WindOverlay", "Antall punkter som tegnes: ${points.size}")
         // Legg til bilder hvis de ikke allerede er lagt til
         if (style.getImage(WIND_ICON_ID) == null) {
             val windIcon = getBitmapFromVectorDrawable(context, R.drawable.wind)

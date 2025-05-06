@@ -65,6 +65,7 @@ object WaveOverlay {
         addFogImages(context, style)
         val features = JSONArray()
         Log.d("WaveOverlay", "Antall punkter til overlay: ${points.size}")
+        Log.d("WaveOverlay", "Antall punkter som tegnes: ${points.size}")
         points.forEach { Log.d("WaveOverlay", "Punkt: ${it.latitude}, ${it.longitude}, verdi: ${it.data?.waveHeight}") }
         points.forEach { point ->
             val data = point.data ?: return@forEach
