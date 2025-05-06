@@ -1,17 +1,13 @@
 package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.navigation
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.fish.FishLogRepository
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.WeatherDataSource
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.WeatherRepository
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.fish.FishLog
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.NavigationBar
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.SettingsPopup
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.WelcomeScreen

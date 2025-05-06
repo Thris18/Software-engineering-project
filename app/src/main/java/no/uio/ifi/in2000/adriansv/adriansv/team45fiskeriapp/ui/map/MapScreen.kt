@@ -17,9 +17,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.createSavedStateHandle
-import androidx.lifecycle.viewmodel.CreationExtras
 import kotlinx.coroutines.launch
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.grib.GribRepository
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.WeatherDataSource
@@ -56,11 +53,6 @@ import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.layers.SymbolLayer
 import org.maplibre.android.style.sources.GeoJsonSource
 import java.io.InputStream
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
-import android.graphics.Point
-import androidx.compose.material.icons.filled.Add
-import com.google.android.gms.common.Feature
 import org.maplibre.android.style.layers.PropertyFactory.*
 import android.net.Uri
 import androidx.compose.foundation.Image
@@ -69,17 +61,9 @@ import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish.FishLogDialo
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish.AddFishDialog
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.fish.FishLog
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.sp
-import coil.compose.rememberAsyncImagePainter
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.R
-import androidx.compose.ui.graphics.ColorFilter
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.NavigationBar
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.weather.LocationWeather
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherUiState
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.tutorial.*
-import androidx.compose.ui.unit.DpOffset
 import kotlinx.coroutines.delay
 import android.Manifest
 import android.content.pm.PackageManager
@@ -89,13 +73,13 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import java.time.LocalDateTime
 import java.util.*
-import android.location.Location
 import android.os.Build
 import androidx.annotation.RequiresApi
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTrip
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTripStorage
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTripDialog
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTripSummaryDialog
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherScreen
 import org.maplibre.android.style.layers.CircleLayer
 import org.maplibre.android.style.layers.LineLayer
 import java.io.File
@@ -270,28 +254,18 @@ fun MapScreen(
         shipViewModel.startPeriodicUpdates()
     }
 
-    // Observer for søkeresultat
+    // Observer for søkeresultat og oppdater kameraposisjon
     val searchTarget by viewModel.searchTarget.collectAsStateWithLifecycle()
     
-    // Oppdater værvarsel når kameraet flyttes
-    LaunchedEffect(mapLibreMap) {
-        mapLibreMap?.addOnCameraIdleListener {
-            val center = mapLibreMap?.cameraPosition?.target
-            val zoom = mapLibreMap?.cameraPosition?.zoom ?: 12.0
-            if (center != null) {
-                Log.d(TAG, "Oppdaterer værvarsel med koordinater: ${center.latitude}, ${center.longitude}, zoom: $zoom")
-                weatherViewModel.updateWeather(center.latitude, center.longitude, zoom)
-            }
-        }
-    }
-
-    // Oppdater værvarsel når søkeresultat er tilgjengelig
     LaunchedEffect(searchTarget) {
-        if (searchTarget != null && mapLibreMap != null) {
+        searchTarget?.let { target ->
             val zoom = 12.0
-            Log.d(TAG, "Oppdaterer værvarsel med søkeresultat: ${searchTarget!!.latitude}, ${searchTarget!!.longitude}, zoom: $zoom")
-            mapLibreMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(searchTarget!!, zoom))
-            weatherViewModel.updateWeather(searchTarget!!.latitude, searchTarget!!.longitude, zoom)
+            Log.d(TAG, "Flytter kamera til søkeresultat: ${target.latitude}, ${target.longitude}")
+            mapLibreMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(
+                LatLng(target.latitude, target.longitude),
+                zoom
+            ))
+            weatherViewModel.updateWeather(target.latitude, target.longitude, zoom)
         }
     }
 
@@ -300,8 +274,7 @@ fun MapScreen(
         mapLibreMap?.getStyle { style ->
             val osloPosition = LatLng(59.9139, 10.7522)
             val zoom = 9.0
-            Log.d(TAG, "Oppdaterer værvarsel med initial posisjon: ${osloPosition.latitude}, ${osloPosition.longitude}, zoom: $zoom")
-            weatherViewModel.updateWeather(osloPosition.latitude, osloPosition.longitude, zoom)
+            mapLibreMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(osloPosition, zoom))
         }
     }
 
@@ -1432,6 +1405,15 @@ fun MapScreen(
                 Log.e(TAG, "Error in map lifecycle management: ${e.message}")
             }
         }
+    }
+
+    // I NavigationRail, endre WeatherScreen-kallet
+    if (currentRoute == "weather") {
+        WeatherScreen(
+            weather = weatherUiState.weather,
+            viewModel = weatherViewModel,
+            mapCenter = mapLibreMap?.cameraPosition?.target
+        )
     }
 }
 

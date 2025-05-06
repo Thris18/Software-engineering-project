@@ -24,12 +24,17 @@ import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.weather.Locati
 @Composable
 fun WeatherScreen(
     weather: LocationWeather?,
-    viewModel: WeatherViewModel = viewModel()
+    viewModel: WeatherViewModel = viewModel(),
+    mapCenter: org.maplibre.android.geometry.LatLng? = null
 ) {
     var selectedTab by remember { mutableStateOf(0) }
 
-    // Kaller kun én gang når skjermen vises
-    LaunchedEffect(Unit) { viewModel.updateWeather(59.91, 10.75, 12.0) }
+    // Oppdater værdata når mapCenter endres
+    LaunchedEffect(mapCenter) {
+        if (mapCenter != null) {
+            viewModel.updateWeather(mapCenter.latitude, mapCenter.longitude, 12.0)
+        }
+    }
 
     Box(
         modifier = Modifier
