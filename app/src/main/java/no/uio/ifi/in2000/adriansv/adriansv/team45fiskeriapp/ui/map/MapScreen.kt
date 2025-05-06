@@ -1349,13 +1349,7 @@ fun MapScreen(
 
             // Legg til tutorial overlay på toppen av alt
             TutorialOverlay(
-                state = TutorialState(
-                    currentStep = tutorialManager.currentStep,
-                    isVisible = tutorialManager.isVisible,
-                    steps = tutorialManager.steps,
-                    highlightedBounds = tutorialManager.highlightedBounds,
-                    isCompleted = tutorialManager.isCompleted
-                ),
+                state = tutorialManager.tutorialState,
                 onNext = { tutorialManager.nextStep() },
                 onSkip = { tutorialManager.skipTutorial() }
             )
