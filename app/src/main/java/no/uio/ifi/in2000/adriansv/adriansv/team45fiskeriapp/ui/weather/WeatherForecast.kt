@@ -16,6 +16,7 @@ import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.weather.TimeSe
 import org.threeten.bp.LocalDate
 import org.threeten.bp.format.DateTimeFormatter
 import java.util.*
+import com.google.android.gms.maps.model.LatLng
 
 @Composable
 fun WeatherForecast(weather: LocationWeather?) {
