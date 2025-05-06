@@ -657,8 +657,12 @@ fun MapScreen(
                                         Log.d(TAG, "Map is ready, setting up style and layers")
                                         mapLibreMap = map
 
-                                        // Force-last inn standard style hvis det oppstår problemer
-                                        val styleUrl = "https://api.maptiler.com/maps/streets-v2/style.json?key=oMZQoq4zniKOHeMvi7oA"
+                                        // Velg stil basert på dark mode
+                                        val styleUrl = if (isDarkMode) {
+                                            "https://api.maptiler.com/maps/streets-v2-dark/style.json?key=oMZQoq4zniKOHeMvi7oA"
+                                        } else {
+                                            "https://api.maptiler.com/maps/streets-v2/style.json?key=oMZQoq4zniKOHeMvi7oA"
+                                        }
                                         map.setStyle(Style.Builder().fromUri(styleUrl)) { style ->
                                             try {
                                                 // Nullstill timeout siden kartet er lastet
