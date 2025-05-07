@@ -18,7 +18,6 @@ import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.grib.GribRepository
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.WeatherDataSource
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.WeatherRepository
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.grib.GribPoint
@@ -28,7 +27,6 @@ import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.Baatve
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.ProfilePopup
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.SettingsPopup
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.SokeKnapp
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.farevarsel.AlertInfoCard
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.farevarsel.FarevarselPopup
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.farevarsel.GeoJsonViewModel
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.ship.ShipInfoCard
@@ -75,6 +73,7 @@ import java.time.LocalDateTime
 import java.util.*
 import android.os.Build
 import androidx.annotation.RequiresApi
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.grib.GribData
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTrip
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTripStorage
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTripDialog
@@ -86,6 +85,8 @@ import java.io.File
 import java.io.FileOutputStream
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.GribOverlayManager
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.GribOverlayUtil
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.GribViewModel
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.GribViewModelFactory
 
 private const val TAG = "MapScreen"
 private const val SHIP_LAYER_ID = "ship-layer"
@@ -164,10 +165,16 @@ fun MapScreen(
     
     val shipViewModel: ShipViewModel = viewModel()
     
+    // Add GribViewModel
+    val gribViewModel: GribViewModel = viewModel(
+        factory = GribViewModelFactory(appContext)
+    )
+    
     // Collect states
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val shipUiState by shipViewModel.uiState.collectAsStateWithLifecycle()
     val weatherUiState by weatherViewModel.uiState.collectAsStateWithLifecycle()
+    val gribUiState by gribViewModel.uiState.collectAsStateWithLifecycle()
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -177,7 +184,6 @@ fun MapScreen(
     var showPopup by remember { mutableStateOf(false) }
     var selectedShip: Ship? by remember { mutableStateOf(null) }
     var selectedShipScreenPosition by remember { mutableStateOf<android.graphics.PointF?>(null) }
-    val gribRepository = remember { GribRepository(context) }
     
     // Filter states
     var showBaatvettRules by remember { mutableStateOf(false) }
@@ -915,18 +921,19 @@ fun MapScreen(
                                                     // If no alert or ship was clicked, show GRIB data if enabled
                                                     if (showGrib && uiState.selectedAlert == null && !showFishLogDialog) {
                                                         scope.launch {
-                                                            val gribData = gribRepository.getGribData(
+                                                            gribViewModel.loadGribData(
                                                                 GribPoint(
                                                                     latitude = point.latitude,
                                                                     longitude = point.longitude
                                                                 )
                                                             )
-                                                            if (gribData != null) {
+                                                            // The data will be available in gribUiState.gribData
+                                                            if (gribUiState.gribData != null) {
                                                                 resetSelections()
                                                                 selectedPoint = GribPoint(
                                                                     latitude = point.latitude,
                                                                     longitude = point.longitude,
-                                                                    data = gribData
+                                                                    data = gribUiState.gribData!!
                                                                 )
                                                                 showPopup = true
 
@@ -1279,19 +1286,59 @@ fun MapScreen(
             }
 
             // I MapScreen, etter at selectedPoint settes og showPopup = true, vis overlay:
-            LaunchedEffect(mapLibreMap) {
-                if (mapLibreMap != null) {
-                    gribOverlayLoading = true
-                    val allGrids = gribRepository.getAllWeatherGrids()
-                    val geoJson = GribOverlayUtil.mergeFeatureCollections(
-                        allGrids["wind"]?.let { GribOverlayUtil.gribDataToFeatureCollection(it, "wind", "wind") } ?: "",
-                        allGrids["wave"]?.let { GribOverlayUtil.gribDataToFeatureCollection(it, "wave", "wave") } ?: "",
-                        allGrids["strom"]?.let { GribOverlayUtil.gribDataToFeatureCollection(it, "strom", "strom") } ?: "",
-                        allGrids["rain"]?.let { GribOverlayUtil.gribDataToFeatureCollection(it, "rain", "rain") } ?: ""
-                    )
-                    mapLibreMap!!.getStyle { style ->
-                        Log.d("GRIB", "GeoJSON: $geoJson")
-                        GribOverlayManager.addOrUpdateGribOverlay(context, style, geoJson)
+            LaunchedEffect(mapLibreMap, gribUiState.weatherGrids, showGrib) {
+                if (mapLibreMap != null && showGrib) {
+                    try {
+                        gribOverlayLoading = true
+                        Log.d("GRIB", "Starting GRIB overlay update")
+                        
+                        // Get weather grids either from state or load new ones
+                        val weatherGrids: Map<String, GribData?> = if (gribUiState.weatherGrids.isEmpty()) {
+                            Log.d("GRIB", "No weather grids in state, loading new data")
+                            gribViewModel.loadWeatherGrids()
+                            gribUiState.weatherGrids
+                        } else {
+                            gribUiState.weatherGrids
+                        }
+                        
+                        // Extract and convert each data type
+                        val windData = weatherGrids["wind"]
+                        val waveData = weatherGrids["wave"]
+                        val stromData = weatherGrids["strom"]
+                        val rainData = weatherGrids["rain"]
+                        
+                        // Convert to GeoJSON
+                        val windGeoJson = windData?.let { 
+                            GribOverlayUtil.gribDataToFeatureCollection(it, "wind", "wind") 
+                        } ?: ""
+                        val waveGeoJson = waveData?.let { 
+                            GribOverlayUtil.gribDataToFeatureCollection(it, "wave", "wave") 
+                        } ?: ""
+                        val stromGeoJson = stromData?.let { 
+                            GribOverlayUtil.gribDataToFeatureCollection(it, "strom", "strom") 
+                        } ?: ""
+                        val rainGeoJson = rainData?.let { 
+                            GribOverlayUtil.gribDataToFeatureCollection(it, "rain", "rain") 
+                        } ?: ""
+                        
+                        // Merge all GeoJSON data
+                        val mergedGeoJson = GribOverlayUtil.mergeFeatureCollections(
+                            windGeoJson,
+                            waveGeoJson,
+                            stromGeoJson,
+                            rainGeoJson
+                        )
+                        
+                        Log.d("GRIB", "Merged GeoJSON created, updating overlay")
+                        
+                        // Update the overlay on the map
+                        mapLibreMap?.getStyle { style ->
+                            GribOverlayManager.addOrUpdateGribOverlay(context, style, mergedGeoJson)
+                            Log.d("GRIB", "GRIB overlay updated successfully")
+                        }
+                    } catch (e: Exception) {
+                        Log.e("GRIB", "Error updating GRIB overlay: ${e.message}", e)
+                    } finally {
                         gribOverlayLoading = false
                     }
                 }
@@ -1408,6 +1455,73 @@ fun MapScreen(
                 onNext = { tutorialManager.nextStep() },
                 onSkip = { tutorialManager.skipTutorial() }
             )
+
+            // Show loading indicator when data is being fetched
+            if (gribUiState.isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .align(Alignment.Center)
+                )
+            }
+
+            // Show error message if there's an error
+            gribUiState.error?.let { error ->
+                Text(
+                    text = error,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .align(Alignment.TopCenter)
+                )
+            }
+
+            // Show GRIB data popup when a point is selected
+            if (showPopup && selectedPoint != null) {
+                gribUiState.gribData?.let { data ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .padding(16.dp)
+                                    .fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = "Værvarslingsdata",
+                                    style = MaterialTheme.typography.titleLarge
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text("Vindhastighet: ${data.windSpeed?.toInt() ?: "N/A"} m/s")
+                                Text("Vindretning: ${data.windDirection?.toInt() ?: "N/A"}°")
+                                Text("Bølgehøyde: ${data.waveHeight?.toInt() ?: "N/A"} m")
+                                Text("Strømhastighet: ${data.currentSpeed?.toInt() ?: "N/A"} m/s")
+                                Text("Strømretning: ${data.currentDirection?.toInt() ?: "N/A"}°")
+                                Text("Nedbør: ${data.precipitation?.toInt() ?: "N/A"} mm")
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Button(
+                                    onClick = {
+                                        showPopup = false
+                                        selectedPoint = null
+                                        gribViewModel.clearSelection()
+                                    }
+                                ) {
+                                    Text("Lukk")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -1443,6 +1557,22 @@ fun MapScreen(
             viewModel = weatherViewModel,
             mapCenter = mapLibreMap?.cameraPosition?.target
         )
+    }
+
+    // Update map click handler
+    mapLibreMap?.addOnMapClickListener { latLng ->
+        if (showGrib) {
+            val point = GribPoint(latLng.latitude, latLng.longitude)
+            scope.launch {
+                gribViewModel.loadGribData(point)
+                // The data will be available in gribUiState.gribData
+                if (gribUiState.gribData != null) {
+                    selectedPoint = point.copy(data = gribUiState.gribData!!)
+                    showPopup = true
+                }
+            }
+        }
+        true
     }
 }
 
