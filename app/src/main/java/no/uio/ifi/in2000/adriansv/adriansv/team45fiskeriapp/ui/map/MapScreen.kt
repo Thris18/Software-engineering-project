@@ -510,91 +510,116 @@ fun MapScreen(
     // Oppdater brukerens posisjon
     LaunchedEffect(mapLibreMap) {
         mapLibreMap?.getStyle { style ->
-            // Legg til kilde for brukerens posisjon
-            val userLocationSource = GeoJsonSource("user-location-source")
-            style.addSource(userLocationSource)
+            try {
+                // Legg til kilde for brukerens posisjon
+                val userLocationSource = GeoJsonSource("user-location-source")
+                style.addSource(userLocationSource)
 
-            // Legg til kilde for fisketur-ruten
-            val routeSource = GeoJsonSource("fishing-trip-route-source")
-            style.addSource(routeSource)
+                // Legg til kilde for fisketur-ruten
+                val routeSource = GeoJsonSource("fishing-trip-route-source")
+                style.addSource(routeSource)
 
-            // Legg til lag for fisketur-ruten (gul linje)
-            val routeLayer = LineLayer("fishing-trip-route-layer", "fishing-trip-route-source")
-                .withProperties(
-                    lineColor(Color.YELLOW),
-                    lineWidth(4f),
-                    lineOpacity(0.8f)
-                )
-            style.addLayer(routeLayer)
+                // Legg til lag for fisketur-ruten (gul linje)
+                val routeLayer = LineLayer("fishing-trip-route-layer", "fishing-trip-route-source")
+                    .withProperties(
+                        lineColor(Color.YELLOW),
+                        lineWidth(4f),
+                        lineOpacity(0.8f)
+                    )
+                style.addLayer(routeLayer)
 
-            // Legg til lag for brukerens posisjon (blå sirkel)
-            val userLocationLayer = CircleLayer("user-location-layer", "user-location-source")
-                .withProperties(
-                    circleRadius(8f),
-                    circleColor(Color.BLUE),
-                    circleOpacity(0.9f),
-                    circleStrokeWidth(2f),
-                    circleStrokeColor(Color.WHITE)
-                )
-            style.addLayer(userLocationLayer)
+                // Legg til lag for brukerens posisjon (blå sirkel)
+                val userLocationLayer = CircleLayer("user-location-layer", "user-location-source")
+                    .withProperties(
+                        circleRadius(8f),
+                        circleColor(Color.BLUE),
+                        circleOpacity(0.9f),
+                        circleStrokeWidth(2f),
+                        circleStrokeColor(Color.WHITE)
+                    )
+                style.addLayer(userLocationLayer)
 
-            // Start oppdatering av brukerens posisjon
-            val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-            if (locationPermissionState.value) {
-                try {
-                    locationManager.requestLocationUpdates(
-                        LocationManager.GPS_PROVIDER,
-                        1000L, // Oppdater hvert sekund
-                        1f // Oppdater hvis brukeren beveger seg mer enn 1 meter
-                    ) { location ->
-                        userLocation = LatLng(location.latitude, location.longitude)
-                        // Oppdater GeoJSON-kilden med brukerens posisjon
-                        val geoJson = """
-                        {
-                            "type": "Feature",
-                            "geometry": {
-                                "type": "Point",
-                                "coordinates": [${location.longitude}, ${location.latitude}]
+                Log.d(TAG, "Location layers and sources added to map")
+
+                // Start oppdatering av brukerens posisjon
+                val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+                if (locationPermissionState.value) {
+                    if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                        Log.d(TAG, "Starting location updates")
+                        locationManager.requestLocationUpdates(
+                            LocationManager.GPS_PROVIDER,
+                            1000L, // Oppdater hvert sekund
+                            1f // Oppdater hvis brukeren beveger seg mer enn 1 meter
+                        ) { location ->
+                            Log.d(TAG, "Location update received: lat=${location.latitude}, lon=${location.longitude}, accuracy=${location.accuracy}")
+                            
+                            // Oppdater brukerens posisjon
+                            userLocation = LatLng(location.latitude, location.longitude)
+                            
+                            // Oppdater GeoJSON-kilden med brukerens posisjon
+                            val geoJson = """
+                            {
+                                "type": "Feature",
+                                "geometry": {
+                                    "type": "Point",
+                                    "coordinates": [${location.longitude}, ${location.latitude}]
+                                }
                             }
-                        }
-                        """
-                        userLocationSource.setGeoJson(geoJson)
+                            """
+                            try {
+                                userLocationSource.setGeoJson(geoJson)
+                                Log.d(TAG, "Successfully updated user location on map")
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error updating user location on map: ${e.message}")
+                            }
 
-                        // Hvis fisketuren er aktiv, legg til posisjonen i ruten
-                        if (isFishingTripActive) {
-                            // Sjekk om den nye posisjonen er forskjellig fra den siste i ruten
-                            val lastPosition = fishingTripRoute.lastOrNull()
-                            val newPosition = LatLng(location.latitude, location.longitude)
+                            // Hvis fisketuren er aktiv, legg til posisjonen i ruten
+                            if (isFishingTripActive) {
+                                Log.d(TAG, "Fishing trip is active, updating route")
+                                // Sjekk om den nye posisjonen er forskjellig fra den siste i ruten
+                                val lastPosition = fishingTripRoute.lastOrNull()
+                                val newPosition = LatLng(location.latitude, location.longitude)
 
-                            if (lastPosition == null ||
-                                (lastPosition.latitude != newPosition.latitude ||
-                                 lastPosition.longitude != newPosition.longitude)) {
-                                fishingTripRoute = fishingTripRoute + newPosition
+                                if (lastPosition == null ||
+                                    (lastPosition.latitude != newPosition.latitude ||
+                                     lastPosition.longitude != newPosition.longitude)) {
+                                    fishingTripRoute = fishingTripRoute + newPosition
+                                    Log.d(TAG, "Updated fishing trip route. New route size: ${fishingTripRoute.size}")
 
-                                // Oppdater ruten på kartet
-                                val routeGeoJson = """
-                                {
-                                    "type": "Feature",
-                                    "geometry": {
-                                        "type": "LineString",
-                                        "coordinates": [${fishingTripRoute.joinToString(",") { "[${it.longitude}, ${it.latitude}]" }}]
+                                    // Oppdater ruten på kartet
+                                    val routeGeoJson = """
+                                    {
+                                        "type": "Feature",
+                                        "geometry": {
+                                            "type": "LineString",
+                                            "coordinates": [${fishingTripRoute.joinToString(",") { "[${it.longitude}, ${it.latitude}]" }}]
+                                        }
+                                    }
+                                    """
+                                    try {
+                                        routeSource.setGeoJson(routeGeoJson)
+                                        Log.d(TAG, "Successfully updated route on map")
+                                    } catch (e: Exception) {
+                                        Log.e(TAG, "Error updating route on map: ${e.message}")
                                     }
                                 }
-                                """
-                                routeSource.setGeoJson(routeGeoJson)
+                            }
+
+                            // Hvis vi følger brukeren, oppdater kameraet
+                            if (isTrackingUser) {
+                                mapLibreMap?.moveCamera(
+                                    CameraUpdateFactory.newLatLngZoom(userLocation!!, 18.0)
+                                )
                             }
                         }
-
-                        // Hvis vi følger brukeren, oppdater kameraet
-                        if (isTrackingUser) {
-                            mapLibreMap?.moveCamera(
-                                CameraUpdateFactory.newLatLngZoom(userLocation!!, 18.0)
-                            )
-                        }
+                    } else {
+                        Log.e(TAG, "GPS provider is not enabled")
                     }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Feil ved oppdatering av brukerens posisjon: ${e.message}")
+                } else {
+                    Log.e(TAG, "Location permission not granted")
                 }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error setting up location tracking: ${e.message}")
             }
         }
     }
