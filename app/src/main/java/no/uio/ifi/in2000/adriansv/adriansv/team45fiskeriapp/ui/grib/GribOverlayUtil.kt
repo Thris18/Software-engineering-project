@@ -10,19 +10,62 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
+import android.content.Context
+import android.content.SharedPreferences
 
 object GribOverlayUtil {
-    // Terskler for de fire typene (økt litt)
-    val thresholds = mapOf(
+    private const val PREFS_NAME = "GribThresholds"
+    private const val KEY_WIND = "wind_threshold"
+    private const val KEY_WAVE = "wave_threshold"
+    private const val KEY_CURRENT = "current_threshold"
+    private const val KEY_RAIN = "rain_threshold"
+
+    // Standard terskelverdier som fallback
+    private val defaultThresholds = mapOf(
         "wind" to 2.0,
         "wave" to 0.3,
         "strom" to 0.1,
         "rain" to 0.5
     )
 
+    // Dynamiske terskelverdier som kan oppdateres
+    private var currentThresholds = defaultThresholds.toMutableMap()
+
+    // Initialiser med lagrede verdier
+    fun initialize(context: Context) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        currentThresholds["wind"] = prefs.getFloat(KEY_WIND, defaultThresholds["wind"]!!.toFloat()).toDouble()
+        currentThresholds["wave"] = prefs.getFloat(KEY_WAVE, defaultThresholds["wave"]!!.toFloat()).toDouble()
+        currentThresholds["strom"] = prefs.getFloat(KEY_CURRENT, defaultThresholds["strom"]!!.toFloat()).toDouble()
+        currentThresholds["rain"] = prefs.getFloat(KEY_RAIN, defaultThresholds["rain"]!!.toFloat()).toDouble()
+    }
+
+    // Funksjon for å oppdatere terskelverdier
+    fun updateThresholds(
+        context: Context,
+        windThreshold: Float,
+        waveThreshold: Float,
+        currentThreshold: Float,
+        precipitationThreshold: Float
+    ) {
+        currentThresholds["wind"] = windThreshold.toDouble()
+        currentThresholds["wave"] = waveThreshold.toDouble()
+        currentThresholds["strom"] = currentThreshold.toDouble()
+        currentThresholds["rain"] = precipitationThreshold.toDouble()
+
+        // Lagre verdiene
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit().apply {
+            putFloat(KEY_WIND, windThreshold)
+            putFloat(KEY_WAVE, waveThreshold)
+            putFloat(KEY_CURRENT, currentThreshold)
+            putFloat(KEY_RAIN, precipitationThreshold)
+            apply()
+        }
+    }
+
     // Farge basert på hvor mye verdien overstiger terskelen
     fun getColor(type: String, value: Double): String {
-        val threshold = thresholds[type] ?: return "#888888"
+        val threshold = currentThresholds[type] ?: defaultThresholds[type] ?: return "#888888"
         val ratio = ((value - threshold) / (threshold.takeIf { it > 0 } ?: 1.0)).coerceAtLeast(0.0)
         return when {
             ratio > 1.5 -> "#D32F2F" // Rød
@@ -34,7 +77,7 @@ object GribOverlayUtil {
 
     // Radius for tåke (i pixels, for MapLibre)
     fun getRadius(type: String, value: Double): Double {
-        val threshold = thresholds[type] ?: return 12.0
+        val threshold = currentThresholds[type] ?: defaultThresholds[type] ?: return 12.0
         val base = 12.0
         val extra = ((value - threshold) * 2.0).coerceAtLeast(0.0)
         return base + extra
@@ -54,7 +97,7 @@ object GribOverlayUtil {
                 Triple("rain", data.precipitation, "rain")
             )
             for ((type, value, icon) in gribTypes) {
-                if (value != null && value > (thresholds[type] ?: Double.MAX_VALUE)) {
+                if (value != null && value > (currentThresholds[type] ?: Double.MAX_VALUE)) {
                     val color = getColor(type, value.toDouble())
                     val radius = getRadius(type, value.toDouble())
                     features.add("""
@@ -93,7 +136,7 @@ object GribOverlayUtil {
         minDistanceKm: Double = 10.0 // Juster radius etter behov
     ): String {
         val features = mutableListOf<String>()
-        val threshold = thresholds[type] ?: 0.0
+        val threshold = currentThresholds[type] ?: 0.0
         val width = gribData.width
         val height = gribData.height
         var lastLat = Double.NaN

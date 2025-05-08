@@ -203,12 +203,13 @@ fun NavigationHandler() {
             // Innstillinger-popup
             if (showSettings) {
                 SettingsPopup(
+                    context = context,
                     isDarkMode = isDarkMode,
                     showGrib = showGrib,
                     showAlerts = showAlerts,
                     showShips = showShips,
-                    onDarkModeChange = { newValue ->
-                        isDarkMode = newValue
+                    onDarkModeChange = { newDarkMode ->
+                        isDarkMode = newDarkMode
                         currentRoute = currentRoute
                     },
                     onGribFilterChanged = { newValue ->

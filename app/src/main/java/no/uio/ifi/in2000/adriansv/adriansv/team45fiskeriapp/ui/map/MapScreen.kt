@@ -632,6 +632,11 @@ fun MapScreen(
         }
     }
 
+    // Initialize GribOverlayUtil with saved thresholds
+    LaunchedEffect(Unit) {
+        GribOverlayUtil.initialize(context)
+    }
+
     Team45FiskeriAppTheme(darkTheme = isDarkTheme) {
         Box(modifier = Modifier.fillMaxSize()) {
             // Søkeknapp plassert øverst på skjermen
@@ -1065,6 +1070,7 @@ fun MapScreen(
 
             if (showFilterMenu) {
                 SettingsPopup(
+                    context = context,
                     isDarkMode = isDarkMode,
                     showGrib = showGrib,
                     showAlerts = showAlerts,

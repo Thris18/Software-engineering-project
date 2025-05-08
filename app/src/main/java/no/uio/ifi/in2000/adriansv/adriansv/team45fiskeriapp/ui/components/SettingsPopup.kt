@@ -19,9 +19,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.text.input.KeyboardType
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.GribOverlayUtil
+import android.content.Context
 
 @Composable
 fun SettingsPopup(
+    context: Context,
     isDarkMode: Boolean,
     showGrib: Boolean,
     showAlerts: Boolean,
@@ -32,17 +35,31 @@ fun SettingsPopup(
     onShipsFilterChanged: (Boolean) -> Unit,
     onDismiss: () -> Unit
 ) {
+    // Hent lagrede terskelverdier
+    val prefs = context.getSharedPreferences("GribThresholds", Context.MODE_PRIVATE)
+    
     // Terskelverdier for varsler
-    var windThreshold by remember { mutableStateOf(10f) }
-    var currentThreshold by remember { mutableStateOf(2f) }
-    var precipitationThreshold by remember { mutableStateOf(5f) }
-    var waveHeightThreshold by remember { mutableStateOf(2f) }
+    var windThreshold by remember { mutableStateOf(prefs.getFloat("wind_threshold", 10f)) }
+    var currentThreshold by remember { mutableStateOf(prefs.getFloat("current_threshold", 2f)) }
+    var precipitationThreshold by remember { mutableStateOf(prefs.getFloat("rain_threshold", 5f)) }
+    var waveHeightThreshold by remember { mutableStateOf(prefs.getFloat("wave_threshold", 2f)) }
 
     // Tekstfelt for manuell input
     var windText by remember { mutableStateOf(windThreshold.toString()) }
     var currentText by remember { mutableStateOf(currentThreshold.toString()) }
     var precipitationText by remember { mutableStateOf(precipitationThreshold.toString()) }
     var waveHeightText by remember { mutableStateOf(waveHeightThreshold.toString()) }
+
+    // Oppdater GribOverlayUtil når terskelverdiene endres
+    LaunchedEffect(windThreshold, currentThreshold, precipitationThreshold, waveHeightThreshold) {
+        GribOverlayUtil.updateThresholds(
+            context = context,
+            windThreshold = windThreshold,
+            waveThreshold = waveHeightThreshold,
+            currentThreshold = currentThreshold,
+            precipitationThreshold = precipitationThreshold
+        )
+    }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -77,7 +94,12 @@ fun SettingsPopup(
                     }
                 }
 
-                Divider(modifier = Modifier.padding(vertical = 16.dp))
+                Text(
+                    text = "Terskelverdier",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+                HorizontalDivider()
 
                 Column(
                     modifier = Modifier
