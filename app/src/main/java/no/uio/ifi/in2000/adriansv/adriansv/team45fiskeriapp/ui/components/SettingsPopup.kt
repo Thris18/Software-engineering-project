@@ -94,18 +94,21 @@ fun SettingsPopup(
                     }
                 }
 
-                Text(
-                    text = "Terskelverdier",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
                 HorizontalDivider()
+
+
 
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
                 ) {
+                    Text(
+                        text = "Bytt modus",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.padding(bottom = 20.dp, top = 15.dp)
+                    )
                     // Dark Mode Switch
                     Surface(
                         modifier = Modifier
@@ -161,7 +164,7 @@ fun SettingsPopup(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "GRIB Data",
+                                text = "Værvarsler",
                                 style = MaterialTheme.typography.bodyLarge
                             )
                             Switch(

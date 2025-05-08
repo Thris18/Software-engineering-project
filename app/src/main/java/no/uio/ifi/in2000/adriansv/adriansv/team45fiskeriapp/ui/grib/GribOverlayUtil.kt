@@ -64,14 +64,41 @@ object GribOverlayUtil {
     }
 
     // Farge basert på hvor mye verdien overstiger terskelen
-    fun getColor(type: String, value: Double): String {
-        val threshold = currentThresholds[type] ?: defaultThresholds[type] ?: return "#888888"
-        val ratio = ((value - threshold) / (threshold.takeIf { it > 0 } ?: 1.0)).coerceAtLeast(0.0)
-        return when {
-            ratio > 1.5 -> "#D32F2F" // Rød
-            ratio > 0.5 -> "#F57C00" // Oransje
-            ratio > 0.0 -> "#FBC02D" // Gul
-            else -> "#66FBC02D" // Lys gul (nesten usynlig)
+    fun getColor(type: String, value: Double): Int {
+        val threshold = currentThresholds[type] ?: defaultThresholds[type] ?: 0.0
+        val normalizedValue = (value - threshold).coerceAtLeast(0.0)
+        val maxValue = when (type) {
+            "wind" -> 30.0
+            "wave" -> 10.0
+            "strom" -> 5.0
+            "rain" -> 20.0
+            else -> 1.0
+        }
+        val normalizedThreshold = maxValue - threshold
+        val intensity = (normalizedValue / normalizedThreshold).coerceIn(0.0, 1.0)
+
+        return when (type) {
+            "wind" -> {
+                val red = (255 * intensity).toInt()
+                val green = (255 * (1 - intensity)).toInt()
+                Color.rgb(red, green, 0)
+            }
+            "wave" -> {
+                val blue = (255 * intensity).toInt()
+                val green = (255 * (1 - intensity)).toInt()
+                Color.rgb(0, green, blue)
+            }
+            "strom" -> {
+                val red = (255 * intensity).toInt()
+                val blue = (255 * (1 - intensity)).toInt()
+                Color.rgb(red, 0, blue)
+            }
+            "rain" -> {
+                val blue = (255 * intensity).toInt()
+                val red = (255 * (1 - intensity)).toInt()
+                Color.rgb(red, 0, blue)
+            }
+            else -> Color.TRANSPARENT
         }
     }
 
