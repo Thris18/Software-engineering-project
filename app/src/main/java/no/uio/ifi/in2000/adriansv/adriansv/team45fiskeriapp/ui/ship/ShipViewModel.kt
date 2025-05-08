@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.ship.ShipRepository
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.ship.Ship
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.ship.ShipRepositoryImpl
 
