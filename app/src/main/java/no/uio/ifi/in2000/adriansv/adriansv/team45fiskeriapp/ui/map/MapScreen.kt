@@ -654,16 +654,7 @@ fun MapScreen(
                     .zIndex(1f)
                     .tutorialTarget("search_button", tutorialManager),
                 onSearch = { query ->
-                    if (query.isNotEmpty()) {
-                        viewModel.searchAndMoveToLocation(query)
-                    }
-                },
-                onQueryChange = { query ->
-                    viewModel.getSearchSuggestions(query)
-                },
-                suggestions = uiState.searchSuggestions,
-                onSuggestionSelected = { suggestion ->
-                    viewModel.selectSuggestion(suggestion)
+                    viewModel.searchAndMoveToLocation(query)
                 }
             )
             
