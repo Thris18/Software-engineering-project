@@ -173,11 +173,9 @@ fun MapScreen(
     val scope = rememberCoroutineScope()
     var mapView: MapView? by remember { mutableStateOf(null) }
     var mapLibreMap: MapLibreMap? by remember { mutableStateOf(null) }
-    var selectedPoint: GribPoint? by remember { mutableStateOf(null) }
-    var showPopup by remember { mutableStateOf(false) }
     var selectedShip: Ship? by remember { mutableStateOf(null) }
     var selectedShipScreenPosition by remember { mutableStateOf<android.graphics.PointF?>(null) }
-    val gribRepository = remember { GribRepository(context) }
+    val gribRepository = remember { GribRepository.GribRepositoryImpl(context) }
     
     // Filter states
     var showBaatvettRules by remember { mutableStateOf(false) }
@@ -272,8 +270,6 @@ fun MapScreen(
 
     // Helper function to reset selection states
     fun resetSelections() {
-        selectedPoint = null
-        showPopup = false
         viewModel.setSelectedAlert(null)
     }
 
@@ -919,33 +915,6 @@ fun MapScreen(
                                                         return@addOnMapClickListener true
                                                     }
 
-                                                    // If no alert or ship was clicked, show GRIB data if enabled
-                                                    if (showGrib && uiState.selectedAlert == null && !showFishLogDialog) {
-                                                        scope.launch {
-                                                            val gribData = gribRepository.getGribData(
-                                                                GribPoint(
-                                                                    latitude = point.latitude,
-                                                                    longitude = point.longitude
-                                                                )
-                                                            )
-                                                            if (gribData != null) {
-                                                                resetSelections()
-                                                                selectedPoint = GribPoint(
-                                                                    latitude = point.latitude,
-                                                                    longitude = point.longitude,
-                                                                    data = gribData
-                                                                )
-                                                                showPopup = true
-
-                                                                // Gjem polygon når GRIB data vises
-                                                                map.getStyle { style ->
-                                                                    updateAlertPolygon(style, null)
-                                                                }
-                                                            }
-                                                        }
-                                                        return@addOnMapClickListener true
-                                                    }
-
                                                     false
                                                 }
 
@@ -1055,8 +1024,8 @@ fun MapScreen(
                     onClick = { 
                         showFishLogDialog = true
                         selectedLocation = null
-                        selectedPoint = null
-                        showPopup = false
+                        selectedShip = null
+                        selectedShipScreenPosition = null
                         showLocationSelectionDialog = false
                         showAddFishDialog = false
                         selectedLocationForFish = null
@@ -1238,8 +1207,8 @@ fun MapScreen(
                         showAddFishDialog = false
                         showLocationSelectionDialog = true
                         selectedLocation = null
-                        selectedPoint = null
-                        showPopup = false
+                        selectedShip = null
+                        selectedShipScreenPosition = null
                     },
                     initialFishType = fishType,
                     initialLocation = location,
