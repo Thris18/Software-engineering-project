@@ -38,7 +38,8 @@ data class MapUiState(
 data class SearchSuggestion(
     val name: String,
     val latitude: Double,
-    val longitude: Double
+    val longitude: Double,
+    val distance: String? = null
 )
 
 class GeoJsonViewModel(private val applicationContext: Context) : ViewModel() {
@@ -122,68 +123,68 @@ class GeoJsonViewModel(private val applicationContext: Context) : ViewModel() {
 
     fun getSearchSuggestions(query: String) {
         viewModelScope.launch {
-            if (query.isEmpty()) {
-                _uiState.update { it.copy(searchSuggestions = emptyList()) }
-                return@launch
-            }
-
             try {
-                withContext(Dispatchers.IO) {
-                    val encodedQuery = URLEncoder.encode(query, "UTF-8")
-                    val url = "https://api.maptiler.com/geocoding/$encodedQuery.json?key=$MAPTILER_API_KEY&language=no&limit=10&country=no&types=place,locality,neighbourhood,address,postal_code"
-                    Log.d(TAG, "Fetching suggestions from URL: $url")
-                    
-                    val request = Request.Builder()
-                        .url(url)
-                        .addHeader("Accept", "application/json")
-                        .build()
+                val response = withContext(Dispatchers.IO) {
+                    val url = "https://api.maptiler.com/geocoding/$query.json?key=oMZQoq4zniKOHeMvi7oA&language=no&limit=10&country=no&types=place,locality,neighbourhood,address,postal_code"
+                    URL(url).openStream().bufferedReader().use { it.readText() }
+                }
 
-                    val response = httpClient.newCall(request).execute()
-                    if (!response.isSuccessful) {
-                        val errorBody = response.body?.string()
-                        Log.e(TAG, "API Error Response: $errorBody")
-                        throw IOException("Unexpected response code: ${response.code}, Error: $errorBody")
-                    }
+                val jsonObject = JSONObject(response)
+                val features = jsonObject.getJSONArray("features")
+                val suggestions = mutableListOf<SearchSuggestion>()
 
-                    val responseBody = response.body?.string()
-                    if (responseBody == null) {
-                        throw IOException("Empty response body")
-                    }
-                    
-                    Log.d(TAG, "Received response: $responseBody")
-                    
-                    val jsonResponse = JSONObject(responseBody)
-                    val features = jsonResponse.getJSONArray("features")
-                    Log.d(TAG, "Number of features found: ${features.length()}")
-                    
-                    val suggestions = mutableListOf<SearchSuggestion>()
-                    for (i in 0 until features.length()) {
-                        val feature = features.getJSONObject(i)
-                        val properties = feature.getJSONObject("properties")
-                        val geometry = feature.getJSONObject("geometry")
-                        val coordinates = geometry.getJSONArray("coordinates")
-                        
-                        val suggestion = SearchSuggestion(
+                // Hent brukerens posisjon fra SharedPreferences
+                val prefs = applicationContext.getSharedPreferences("user_location", Context.MODE_PRIVATE)
+                val userLat = prefs.getFloat("latitude", 59.9139f)
+                val userLon = prefs.getFloat("longitude", 10.7522f)
+
+                for (i in 0 until features.length()) {
+                    val feature = features.getJSONObject(i)
+                    val properties = feature.getJSONObject("properties")
+                    val geometry = feature.getJSONObject("geometry")
+                    val coordinates = geometry.getJSONArray("coordinates")
+                    val lon = coordinates.getDouble(0)
+                    val lat = coordinates.getDouble(1)
+
+                    // Beregn avstand fra brukerens posisjon
+                    val distance = calculateDistance(userLat.toDouble(), userLon.toDouble(), lat, lon)
+                    val formattedDistance = formatDistance(distance)
+
+                    suggestions.add(
+                        SearchSuggestion(
                             name = feature.getString("place_name"),
-                            latitude = coordinates.getDouble(1),
-                            longitude = coordinates.getDouble(0)
+                            latitude = lat,
+                            longitude = lon,
+                            distance = formattedDistance
                         )
-                        Log.d(TAG, "Adding suggestion: ${suggestion.name}")
-                        suggestions.add(suggestion)
-                    }
-                    
-                    Log.d(TAG, "Total suggestions: ${suggestions.size}")
-                    _uiState.update { it.copy(searchSuggestions = suggestions) }
+                    )
                 }
+
+                _uiState.update { it.copy(searchSuggestions = suggestions) }
             } catch (e: Exception) {
-                Log.e(TAG, "Error getting search suggestions: ${e.message}", e)
-                _uiState.update { 
-                    it.copy(
-                        searchSuggestions = emptyList(),
-                        error = "Kunne ikke hente søkeforslag: ${e.message}"
-                    ) 
-                }
+                Log.e("GeoJsonViewModel", "Error fetching search suggestions: ${e.message}")
+                _uiState.update { it.copy(searchSuggestions = emptyList()) }
             }
+        }
+    }
+
+    private fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val r = 6371.0 // Jordens radius i kilometer
+
+        val latDistance = Math.toRadians(lat2 - lat1)
+        val lonDistance = Math.toRadians(lon2 - lon1)
+        val a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2)
+        val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+
+        return r * c
+    }
+
+    private fun formatDistance(distance: Double): String {
+        return when {
+            distance < 1 -> "${(distance * 1000).toInt()} m"
+            else -> String.format("%.1f km", distance)
         }
     }
 

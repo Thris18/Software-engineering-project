@@ -196,6 +196,7 @@ fun MapScreen(
     // Add state for tracking loaded images
     var loadedImages by remember { mutableStateOf<Set<String>>(emptySet()) }
     var failedImageLoads by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var fishingTripImages by remember { mutableStateOf<Set<String>>(emptySet()) }
 
     // Add FishLog ViewModel
     val fishLogViewModel = viewModel { FishLogViewModel(context) }
@@ -365,7 +366,16 @@ fun MapScreen(
                     style.addSource(source)
 
                     // Bestem størrelsen basert på om bildet er fra en fisketur eller fiskelogg
-                    val iconSize = if (fishLog.area == fishingTripName) {
+                    val isFromFishingTrip = fishLog.area == fishingTripName || 
+                        (isFishingTripActive && fishLog.timestamp.time >= (fishingTripStartTime?.toEpochSecond(java.time.ZoneOffset.UTC) ?: 0L) * 1000) ||
+                        (fishLog.description != null && fishLog.description.contains("Fanget under fisketur"))
+
+                    // Lagre informasjon om bildet
+                    if (isFromFishingTrip) {
+                        fishingTripImages = fishingTripImages + imageId
+                    }
+
+                    val iconSize = if (imageId in fishingTripImages) {
                         0.40f  // Justert størrelse for fisketur-bilder
                     } else {
                         0.05f // Behold original størrelse for fiskelogg-bilder
@@ -395,23 +405,6 @@ fun MapScreen(
         }
     }
 
-    // Håndterer klikk på kartet
-    fun onMapClick(latLng: LatLng) {
-        if (onLocationSelected != null && showLocationSelectionDialog) {
-            // Hvis vi er i lokasjonsvalg-modus, send valgt lokasjon tilbake
-            onLocationSelected(latLng.latitude, latLng.longitude, "Valgt lokasjon")
-            showLocationSelectionDialog = false
-            return
-        }
-
-        // Normal kartinteraksjon
-        if (!showLocationSelectionDialog) {
-            selectedPoint = null
-            showPopup = false
-            viewModel.setSelectedAlert(null)
-        }
-    }
-
     // Oppdater fiskelogg-bilder på kartet
     LaunchedEffect(fishLogUiState.fishLogs) {
         mapLibreMap?.getStyle { style ->
@@ -421,6 +414,7 @@ fun MapScreen(
                 style.getLayer(oldImageId)?.let { style.removeLayer(it) }
                 style.getSource(oldImageId)?.let { style.removeSource(it) }
                 style.removeImage(oldImageId)
+                fishingTripImages = fishingTripImages - oldImageId
             }
             loadedImages = loadedImages.filter { it in currentImageIds }.toSet()
 
@@ -489,20 +483,24 @@ fun MapScreen(
             .getLong("start_time", 0)
         val savedIsActive = context.getSharedPreferences("fishing_trip", Context.MODE_PRIVATE)
             .getBoolean("is_active", false)
+        val savedFishingTripImages = context.getSharedPreferences("fishing_trip", Context.MODE_PRIVATE)
+            .getStringSet("fishing_trip_images", emptySet()) ?: emptySet()
 
         if (savedIsActive && savedStartTime > 0) {
             fishingTripName = savedTripName ?: ""
             isFishingTripActive = true
             fishingTripStartTime = LocalDateTime.ofEpochSecond(savedStartTime, 0, java.time.ZoneOffset.UTC)
         }
+        fishingTripImages = savedFishingTripImages
     }
 
     // Lagre fisketur-tilstand når den endres
-    LaunchedEffect(isFishingTripActive, fishingTripStartTime, fishingTripName) {
+    LaunchedEffect(isFishingTripActive, fishingTripStartTime, fishingTripName, fishingTripImages) {
         context.getSharedPreferences("fishing_trip", Context.MODE_PRIVATE).edit().apply {
             putString("trip_name", fishingTripName)
             putLong("start_time", fishingTripStartTime?.toEpochSecond(java.time.ZoneOffset.UTC) ?: 0)
             putBoolean("is_active", isFishingTripActive)
+            putStringSet("fishing_trip_images", fishingTripImages)
             apply()
         }
     }
@@ -531,10 +529,10 @@ fun MapScreen(
                 // Legg til lag for brukerens posisjon (blå sirkel)
                 val userLocationLayer = CircleLayer("user-location-layer", "user-location-source")
                     .withProperties(
-                        circleRadius(8f),
+                        circleRadius(4f),
                         circleColor(Color.BLUE),
                         circleOpacity(0.9f),
-                        circleStrokeWidth(2f),
+                        circleStrokeWidth(1f),
                         circleStrokeColor(Color.WHITE)
                     )
                 style.addLayer(userLocationLayer)
@@ -1167,34 +1165,6 @@ fun MapScreen(
                         style,
                         uiState.selectedAlert?.optString("id")
                     )
-                }
-            }
-
-            // Add Settings button
-            Column(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = 24.dp, end = 16.dp),
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // Settings button
-                Surface(
-                    shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-                    tonalElevation = 2.dp
-                ) {
-                    IconButton(
-                        onClick = { showFilterMenu = !showFilterMenu },
-                        modifier = Modifier.size(48.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "Innstillinger",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(28.dp)
-                        )
-                    }
                 }
             }
 
