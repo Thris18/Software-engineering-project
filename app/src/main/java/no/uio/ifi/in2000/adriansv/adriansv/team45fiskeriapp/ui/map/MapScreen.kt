@@ -5,8 +5,6 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.util.Log
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,18 +15,15 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.launch
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.grib.GribRepository
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.WeatherDataSource
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.WeatherRepository
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.grib.GribPoint
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.ship.Ship
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.BaatvettButton
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.BaatvettOverlay
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.ProfilePopup
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.SettingsPopup
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.SokeKnapp
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.farevarsel.AlertInfoCard
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.farevarsel.FarevarselPopup
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.farevarsel.GeoJsonViewModel
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.ship.ShipInfoCard
@@ -84,54 +79,13 @@ import org.maplibre.android.style.layers.CircleLayer
 import org.maplibre.android.style.layers.LineLayer
 import java.io.File
 import java.io.FileOutputStream
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.GribOverlayManager
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.GribOverlayUtil
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.GribViewModel
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.GribViewModelFactory
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.farevarsel.AlertUtils
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.utils.ImageUtils
 
 private const val TAG = "MapScreen"
 private const val SHIP_LAYER_ID = "ship-layer"
-
-private fun updateAlertPolygon(style: Style, alertId: String?) {
-    val layer = style.getLayer("alert-polygon-layer") as? FillLayer ?: return
-
-    if (alertId != null) {
-        // Vis kun polygoner med samme id
-        layer.setFilter(
-            Expression.all(
-                Expression.any(
-                    Expression.eq(Expression.geometryType(), Expression.literal("Polygon")),
-                    Expression.eq(Expression.geometryType(), Expression.literal("MultiPolygon"))
-                ),
-                Expression.eq(Expression.get("id"), Expression.literal(alertId))
-            )
-        )
-        layer.setProperties(PropertyFactory.fillOpacity(0.5f))
-    } else {
-        // Gjem alt
-        layer.setProperties(PropertyFactory.fillOpacity(0f))
-    }
-}
-
-// Hjelpefunksjon for å rotere bitmap basert på EXIF-orientering
-private fun rotateBitmap(bitmap: Bitmap, orientation: Int): Bitmap {
-    val matrix = android.graphics.Matrix()
-    when (orientation) {
-        android.media.ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
-        android.media.ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
-        android.media.ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
-        android.media.ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.postScale(-1f, 1f)
-        android.media.ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.postScale(1f, -1f)
-        android.media.ExifInterface.ORIENTATION_TRANSPOSE -> {
-            matrix.postRotate(90f)
-            matrix.postScale(-1f, 1f)
-        }
-        android.media.ExifInterface.ORIENTATION_TRANSVERSE -> {
-            matrix.postRotate(90f)
-            matrix.postScale(1f, -1f)
-        }
-        else -> return bitmap
-    }
-    return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
-}
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -151,7 +105,7 @@ fun MapScreen(
     onTutorialComplete: () -> Unit = {}
 ) {
     val weatherDataSource = WeatherDataSource()
-    val weatherRepository = WeatherRepository(weatherDataSource)
+    val weatherRepository = WeatherRepository.WeatherRepositoryImpl(weatherDataSource)
     val weatherViewModel: WeatherViewModel = viewModel(
         factory = WeatherViewModelFactory(weatherRepository)
     )
@@ -245,6 +199,14 @@ fun MapScreen(
         )
     }
 
+    val gribViewModel: GribViewModel = viewModel(
+        factory = GribViewModelFactory(
+            context = LocalContext.current,
+            gribRepository = gribRepository
+        )
+    )
+    val gribUiState by gribViewModel.uiState.collectAsStateWithLifecycle()
+
     LaunchedEffect(uiState.geoJsonData) {
         // Reset timeout når geoJsonData oppdateres
         mapLoadTimeout = false
@@ -259,9 +221,6 @@ fun MapScreen(
             }
         }
     }
-
-    // State for GRIB overlay loading
-    var gribOverlayLoading by remember { mutableStateOf(false) }
 
     // Tøm fiskeloggen når man tømmer loggen i kartet
     fun clearFishLogs() {
@@ -332,7 +291,7 @@ fun MapScreen(
                     android.media.ExifInterface.ORIENTATION_NORMAL
                 )
                 val bitmap = BitmapFactory.decodeFile(uri.path)
-                rotateBitmap(bitmap, orientation)
+                ImageUtils.rotateBitmap(bitmap, orientation)
             } else {
                 // Håndter EXIF-rotasjon for content URIs
                 context.contentResolver.openInputStream(uri)?.use { stream ->
@@ -343,7 +302,7 @@ fun MapScreen(
                     )
                     stream.reset() // Reset stream for bitmap decoding
                     val bitmap = BitmapFactory.decodeStream(stream)
-                    rotateBitmap(bitmap, orientation)
+                    ImageUtils.rotateBitmap(bitmap, orientation)
                 }
             }
 
@@ -871,7 +830,7 @@ fun MapScreen(
 
                                                                 // Vis polygon for dette varselet
                                                                 map.getStyle { style ->
-                                                                    updateAlertPolygon(style, id)
+                                                                    AlertUtils.updateAlertPolygon(style, id)
                                                                 }
                                                             }
                                                             return@addOnMapClickListener true
@@ -900,7 +859,7 @@ fun MapScreen(
 
                                                             // Gjem polygon når skip velges
                                                             map.getStyle { style ->
-                                                                updateAlertPolygon(style, null)
+                                                                AlertUtils.updateAlertPolygon(style, null)
                                                             }
                                                             return@addOnMapClickListener true
                                                         }
@@ -1130,7 +1089,7 @@ fun MapScreen(
             // LaunchedEffect for å håndtere polygon-visning når selectedAlert endres
             LaunchedEffect(uiState.selectedAlert) {
                 mapLibreMap?.getStyle { style ->
-                    updateAlertPolygon(
+                    AlertUtils.updateAlertPolygon(
                         style,
                         uiState.selectedAlert?.optString("id")
                     )
@@ -1227,21 +1186,9 @@ fun MapScreen(
             }
 
             // I MapScreen, etter at selectedPoint settes og showPopup = true, vis overlay:
-            LaunchedEffect(mapLibreMap) {
-                if (mapLibreMap != null) {
-                    gribOverlayLoading = true
-                    val allGrids = gribRepository.getAllWeatherGrids()
-                    val geoJson = GribOverlayUtil.mergeFeatureCollections(
-                        allGrids["wind"]?.let { GribOverlayUtil.gribDataToFeatureCollection(it, "wind", "wind") } ?: "",
-                        allGrids["wave"]?.let { GribOverlayUtil.gribDataToFeatureCollection(it, "wave", "wave") } ?: "",
-                        allGrids["strom"]?.let { GribOverlayUtil.gribDataToFeatureCollection(it, "strom", "strom") } ?: "",
-                        allGrids["rain"]?.let { GribOverlayUtil.gribDataToFeatureCollection(it, "rain", "rain") } ?: ""
-                    )
-                    mapLibreMap!!.getStyle { style ->
-                        Log.d("GRIB", "GeoJSON: $geoJson")
-                        GribOverlayManager.addOrUpdateGribOverlay(context, style, geoJson)
-                        gribOverlayLoading = false
-                    }
+            LaunchedEffect(mapLibreMap, showGrib) {
+                if (mapLibreMap != null && showGrib) {
+                    gribViewModel.loadGribOverlay(mapLibreMap)
                 }
             }
 

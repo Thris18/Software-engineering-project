@@ -62,16 +62,4 @@ class WeatherViewModel(private val repository: WeatherRepository) : ViewModel() 
             }
         }
     }
-    
-    fun shouldShowWeather(zoomLevel: Double): Boolean {
-        return WeatherZoomLevel.fromZoom(zoomLevel) != null
-    }
-    
-    fun clearWeather() {
-        Log.d(TAG, "Clearing weather data")
-        _uiState.update { it.copy(
-            weather = null,
-            error = null
-        )}
-    }
 }
