@@ -10,9 +10,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.ship.ShipRepository
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.ship.ShipRepository.ShipRepositoryImpl
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.ship.Ship
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.ship.ShipRepositoryImpl
+
 
 private const val TAG = "ShipViewModel"
 private const val UPDATE_INTERVAL = 15000L // 15 sekunder
@@ -70,10 +70,6 @@ class ShipViewModel : ViewModel() {
                 }
             )
         }
-    }
-
-    fun setSelectedShip(ship: Ship?) {
-        _uiState.update { it.copy(selectedShip = ship) }
     }
 
     override fun onCleared() {
