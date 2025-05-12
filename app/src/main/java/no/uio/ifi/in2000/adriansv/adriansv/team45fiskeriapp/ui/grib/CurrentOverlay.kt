@@ -50,17 +50,17 @@ object CurrentOverlay {
         }
     }
 
-    fun addOrUpdate(context: Context, style: Style, points: List<GribPoint>, spatialGrid: SpatialGrid) {
+    fun addOrUpdate(context: Context, style: Style, points: List<GribPoint>, spatialGrid: SpatialGrid, isDarkMode: Boolean) {
         Log.d("CurrentOverlay", "Antall punkter som tegnes: ${points.size}")
         // Legg til bilder hvis de ikke allerede er lagt til
         if (style.getImage(CURRENT_ICON_ID) == null) {
-            val currentIcon = getBitmapFromVectorDrawable(context, R.drawable.strom)
+            val currentIcon = getBitmapFromVectorDrawable(context, if (isDarkMode) R.drawable.dark_strom else R.drawable.strom)
             if (currentIcon != null) {
                 style.addImage(CURRENT_ICON_ID, currentIcon)
             }
         }
         if (style.getImage(ARROW_ICON_ID) == null) {
-            val arrowIcon = getBitmapFromVectorDrawable(context, R.drawable.arrow)
+            val arrowIcon = getBitmapFromVectorDrawable(context, if (isDarkMode) R.drawable.dark_arrow else R.drawable.arrow)
             if (arrowIcon != null) {
                 style.addImage(ARROW_ICON_ID, arrowIcon)
             }
@@ -68,7 +68,6 @@ object CurrentOverlay {
 
         // Bygg GeoJSON features
         val features = JSONArray()
-        val minDistanceKm = spatialGrid.minDistanceKm
         points.forEach { point ->
             val data = point.data ?: return@forEach
             val speed = data.currentSpeed ?: 0f

@@ -183,7 +183,7 @@ fun FarevarselPopup(
                 Column(
                     modifier = Modifier
                         .padding(16.dp)
-                        .widthIn(max = 300.dp),
+                        .widthIn(max = 260.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     // Header med tittel, lukkeknapp og severity badge

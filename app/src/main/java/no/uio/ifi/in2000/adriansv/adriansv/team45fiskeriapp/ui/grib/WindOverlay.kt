@@ -50,7 +50,7 @@ object WindOverlay {
         }
     }
 
-    fun addOrUpdate(context: Context, style: Style, points: List<GribPoint>, spatialGrid: SpatialGrid) {
+    fun addOrUpdate(context: Context, style: Style, points: List<GribPoint>, spatialGrid: SpatialGrid, isDarkMode: Boolean) {
         Log.d("WindOverlay", "Antall punkter som tegnes: ${points.size}")
         // Legg til bilder hvis de ikke allerede er lagt til
         if (style.getImage(WIND_ICON_ID) == null) {
@@ -60,7 +60,7 @@ object WindOverlay {
             }
         }
         if (style.getImage(ARROW_ICON_ID) == null) {
-            val arrowIcon = getBitmapFromVectorDrawable(context, R.drawable.arrow)
+            val arrowIcon = getBitmapFromVectorDrawable(context, if (isDarkMode) R.drawable.dark_arrow else R.drawable.arrow)
             if (arrowIcon != null) {
                 style.addImage(ARROW_ICON_ID, arrowIcon)
             }
@@ -68,7 +68,6 @@ object WindOverlay {
 
         // Bygg GeoJSON features
         val features = JSONArray()
-        val minDistanceKm = spatialGrid.minDistanceKm
         points.forEach { point ->
             val data = point.data ?: return@forEach
             val speed = data.windSpeed ?: 0f

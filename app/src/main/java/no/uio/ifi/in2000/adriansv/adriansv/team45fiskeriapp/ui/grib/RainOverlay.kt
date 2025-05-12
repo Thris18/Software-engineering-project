@@ -62,7 +62,6 @@ object RainOverlay {
     fun addOrUpdate(context: Context, style: Style, points: List<GribPoint>, spatialGrid: SpatialGrid, isDarkMode: Boolean) {
         addFogImages(context, style)
         val features = JSONArray()
-        val minDistanceKm = spatialGrid.minDistanceKm
         Log.d("RainOverlay", "Antall punkter til overlay: ${points.size}")
         Log.d("RainOverlay", "Antall punkter som tegnes: ${points.size}")
         points.forEach { Log.d("RainOverlay", "Punkt: ${it.latitude}, ${it.longitude}, verdi: ${it.data?.precipitation}") }

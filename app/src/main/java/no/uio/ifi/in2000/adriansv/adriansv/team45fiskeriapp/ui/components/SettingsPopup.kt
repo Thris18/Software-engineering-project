@@ -278,11 +278,13 @@ fun SettingsPopup(
                                 Spacer(modifier = Modifier.width(8.dp))
                                 OutlinedTextField(
                                     value = windText,
-                                    onValueChange = { 
-                                        windText = it
-                                        it.toFloatOrNull()?.let { value ->
+                                    onValueChange = {
+                                        val filtered = it.replace(',', '.')
+                                        windText = filtered
+                                        filtered.toFloatOrNull()?.let { value ->
                                             if (value in 0f..30f) {
-                                                windThreshold = value
+                                                windThreshold = String.format("%.2f", value).toFloat()
+                                                windText = String.format("%.2f", value)
                                             }
                                         }
                                     },
@@ -300,9 +302,10 @@ fun SettingsPopup(
                             Spacer(modifier = Modifier.height(8.dp))
                             Slider(
                                 value = windThreshold,
-                                onValueChange = { 
-                                    windThreshold = it
-                                    windText = String.format("%.1f", it)
+                                onValueChange = {
+                                    val rounded = String.format("%.2f", it).toFloat()
+                                    windThreshold = rounded
+                                    windText = String.format("%.2f", rounded)
                                 },
                                 valueRange = 0f..30f,
                                 colors = SliderDefaults.colors(
@@ -339,11 +342,13 @@ fun SettingsPopup(
                                 Spacer(modifier = Modifier.width(8.dp))
                                 OutlinedTextField(
                                     value = currentText,
-                                    onValueChange = { 
-                                        currentText = it
-                                        it.toFloatOrNull()?.let { value ->
+                                    onValueChange = {
+                                        val filtered = it.replace(',', '.')
+                                        currentText = filtered
+                                        filtered.toFloatOrNull()?.let { value ->
                                             if (value in 0f..5f) {
-                                                currentThreshold = value
+                                                currentThreshold = String.format("%.2f", value).toFloat()
+                                                currentText = String.format("%.2f", value)
                                             }
                                         }
                                     },
@@ -361,9 +366,10 @@ fun SettingsPopup(
                             Spacer(modifier = Modifier.height(8.dp))
                             Slider(
                                 value = currentThreshold,
-                                onValueChange = { 
-                                    currentThreshold = it
-                                    currentText = String.format("%.1f", it)
+                                onValueChange = {
+                                    val rounded = String.format("%.2f", it).toFloat()
+                                    currentThreshold = rounded
+                                    currentText = String.format("%.2f", rounded)
                                 },
                                 valueRange = 0f..5f,
                                 colors = SliderDefaults.colors(
@@ -400,11 +406,13 @@ fun SettingsPopup(
                                 Spacer(modifier = Modifier.width(8.dp))
                                 OutlinedTextField(
                                     value = precipitationText,
-                                    onValueChange = { 
-                                        precipitationText = it
-                                        it.toFloatOrNull()?.let { value ->
+                                    onValueChange = {
+                                        val filtered = it.replace(',', '.')
+                                        precipitationText = filtered
+                                        filtered.toFloatOrNull()?.let { value ->
                                             if (value in 0f..20f) {
-                                                precipitationThreshold = value
+                                                precipitationThreshold = String.format("%.2f", value).toFloat()
+                                                precipitationText = String.format("%.2f", value)
                                             }
                                         }
                                     },
@@ -422,9 +430,10 @@ fun SettingsPopup(
                             Spacer(modifier = Modifier.height(8.dp))
                             Slider(
                                 value = precipitationThreshold,
-                                onValueChange = { 
-                                    precipitationThreshold = it
-                                    precipitationText = String.format("%.1f", it)
+                                onValueChange = {
+                                    val rounded = String.format("%.2f", it).toFloat()
+                                    precipitationThreshold = rounded
+                                    precipitationText = String.format("%.2f", rounded)
                                 },
                                 valueRange = 0f..20f,
                                 colors = SliderDefaults.colors(
@@ -461,11 +470,13 @@ fun SettingsPopup(
                                 Spacer(modifier = Modifier.width(8.dp))
                                 OutlinedTextField(
                                     value = waveHeightText,
-                                    onValueChange = { 
-                                        waveHeightText = it
-                                        it.toFloatOrNull()?.let { value ->
+                                    onValueChange = {
+                                        val filtered = it.replace(',', '.')
+                                        waveHeightText = filtered
+                                        filtered.toFloatOrNull()?.let { value ->
                                             if (value in 0f..10f) {
-                                                waveHeightThreshold = value
+                                                waveHeightThreshold = String.format("%.2f", value).toFloat()
+                                                waveHeightText = String.format("%.2f", value)
                                             }
                                         }
                                     },
@@ -483,9 +494,10 @@ fun SettingsPopup(
                             Spacer(modifier = Modifier.height(8.dp))
                             Slider(
                                 value = waveHeightThreshold,
-                                onValueChange = { 
-                                    waveHeightThreshold = it
-                                    waveHeightText = String.format("%.1f", it)
+                                onValueChange = {
+                                    val rounded = String.format("%.2f", it).toFloat()
+                                    waveHeightThreshold = rounded
+                                    waveHeightText = String.format("%.2f", rounded)
                                 },
                                 valueRange = 0f..10f,
                                 colors = SliderDefaults.colors(

@@ -20,11 +20,6 @@ import org.json.JSONObject
 import org.json.JSONArray
 
 object GribOverlayManager {
-    private val iconMap = mapOf(
-        "wave" to R.drawable.wave,
-        "rain" to R.drawable.rain
-    )
-
     fun addOrUpdateGribOverlay(context: Context, style: Style, geoJson: String, isDarkMode: Boolean) {
         Log.d("GribOverlayManager", "Starting to add/update GRIB overlay")
         Log.d("GribOverlayManager", "GeoJSON: $geoJson")
@@ -101,10 +96,10 @@ object GribOverlayManager {
                 val spatialGrid = SpatialGrid(minDistanceKm)
 
                 if (windPoints.isNotEmpty()) {
-                    WindOverlay.addOrUpdate(context, style, windPoints, spatialGrid)
+                    WindOverlay.addOrUpdate(context, style, windPoints, spatialGrid, isDarkMode)
                 }
                 if (currentPoints.isNotEmpty()) {
-                    CurrentOverlay.addOrUpdate(context, style, currentPoints, spatialGrid)
+                    CurrentOverlay.addOrUpdate(context, style, currentPoints, spatialGrid, isDarkMode)
                 }
                 if (wavePoints.isNotEmpty()) {
                     WaveOverlay.addOrUpdate(context, style, wavePoints, spatialGrid, isDarkMode)
