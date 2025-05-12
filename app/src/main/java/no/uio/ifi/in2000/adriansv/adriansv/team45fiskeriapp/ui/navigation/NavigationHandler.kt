@@ -58,7 +58,7 @@ fun NavigationHandler() {
 
     // Værdata
     val weatherViewModel: WeatherViewModel = viewModel(
-        factory = WeatherViewModelFactory(WeatherRepository(WeatherDataSource()))
+        factory = WeatherViewModelFactory(WeatherRepository.WeatherRepositoryImpl(WeatherDataSource()))
     )
     val weatherUiState by weatherViewModel.uiState.collectAsStateWithLifecycle()
 

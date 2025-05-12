@@ -33,11 +33,31 @@ fun WeatherNow(weather: LocationWeather?) {
 
     // Dynamisk valg av animasjon basert på vær
     val weatherAnimation = when (weather.symbolCode) {
-        "clearsky_day" -> "lottie_weather_files/weather_sun.json" // Solskinn
-        "rainy_day", "09d", "10d", "11d" -> "lottie_weather_files/weather_rain.json" // Regn
-        "cloudy_day" -> "lottie_weather_files/weather_cloudy.json" // Skyet
-        "fair_day" -> "lottie_weather_files/weather_fair.json" // Delvis skyet
-        "partlycloudy" -> "lottie_weather_files/weather_fair.json" // Delvis skyet
+
+        // Klart vær
+        "clearsky_day" -> "lottie_weather_files/weather_sun.json"
+        "clearsky_night" -> "lottie_weather_files/weather_night.json"
+
+        // Delvis skyet
+        "fair_day", "partlycloudy_day" -> "lottie_weather_files/weather_fair.json"
+        "fair_night", "partlycloudy_night", "cloudy_night" -> "lottie_weather_files/weather_cloudynight.json"
+
+        // Skyet
+        "cloudy_day" -> "lottie_weather_files/weather_cloudy.json"
+
+        // Regn
+        "rain_day", "lightrain_day", "heavyrain_day" -> "lottie_weather_files/weather_rain.json"
+
+        // Torden
+        "lightning_day", "lightning_night" -> "lottie_weather_files/weather_lightning.json"
+        "heavyrainandthunder_day", "heavyrainandthunder_night" -> "lottie_weather_files/weather_thunderandrain.json"
+
+        // Snø
+        "snow_day", "heavysnow_day", "snow_night", "heavysnow_night" -> "lottie_weather_files/weather_snow.json"
+
+        // Tåke
+        "fog_day" -> "lottie_weather_files/weather_fog.json"
+
         else -> "lottie_weather_files/weather_cloudy.json" // Standard til skyet
     }
     // Last animasjonen fra assets
@@ -52,11 +72,29 @@ fun WeatherNow(weather: LocationWeather?) {
 
     // Dynamisk bakgrunnsfarge basert på vær
     val backgroundColor = when (weather.symbolCode) {
-        "clearsky_day" -> Color(0xFF87CEEB) // Blå himmel for klart vær
-        "cloudy_day" -> Color(0xFFB0BEC5) // Grå himmel for overskyet vær
-        "rainy_day" -> Color(0xFF607D8B) // Mørkere gråblå for regn
-        "snowy_day" -> Color(0xFF80DEEA) // Lys blå for snø
-        else -> Color(0xFF87CEEB) // Standard blå bakgrunn
+
+        "clearsky_day" -> Color(0xFF87CEEB) // Lys blå (klar himmel)
+        "clearsky_night" -> Color(0xFF0D1B2A) // Mørk blåsvart
+
+        "fair_day", "partlycloudy_day" -> Color(0xFFAEDFF7)
+        "fair_night", "partlycloudy_night" -> Color(0xFF1C2D40)
+
+        "cloudy_day" -> Color(0xFFB0BEC5) // Grå
+        "cloudy_night" -> Color(0xFF2F3E46) // Mørk gråblå
+
+        "lightrain_day", "rain_day", "heavyrain_day" -> Color(0xFF607D8B)
+        "lightrain_night", "rain_night", "heavyrain_night" -> Color(0xFF263238)
+
+        "snow_day", "heavysnow_day" -> Color(0xFFECEFF1)
+        "snow_night", "heavysnow_night" -> Color(0xFF90A4AE)
+
+        "fog_day" -> Color(0xFFCFD8DC)
+        "fog_night" -> Color(0xFF37474F)
+
+        "lightning_day", "heavyrainandthunder_day" -> Color(0xFF455A64)
+        "lightning_night", "heavyrainandthunder_night" -> Color(0xFF263238)
+
+        else -> Color(0xFF90CAF9) // Standard blå bakgrunn
     }
 
     Column(
