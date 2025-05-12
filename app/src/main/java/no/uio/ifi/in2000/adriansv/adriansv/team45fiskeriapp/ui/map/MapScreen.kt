@@ -207,7 +207,6 @@ fun MapScreen(
 
     val gribViewModel: GribViewModel = viewModel(
         factory = GribViewModelFactory(
-            context = LocalContext.current,
             gribRepository = gribRepository
         )
     )
