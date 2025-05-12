@@ -29,7 +29,7 @@ object GribOverlayUtil {
     )
 
     // Dynamiske terskelverdier som kan oppdateres
-    private var currentThresholds = defaultThresholds.toMutableMap()
+    var currentThresholds = defaultThresholds.toMutableMap()
 
     // Initialiser med lagrede verdier
     fun initialize(context: Context) {
@@ -110,31 +110,7 @@ object GribOverlayUtil {
         return base + extra
     }
 
-    // Lag GeoJSON FeatureCollection for alle fire typene
-    fun gribPointToFeatureCollection(gribPoint: GribPoint): String {
-        val features = mutableListOf<String>()
-        val lat = gribPoint.latitude
-        val lon = gribPoint.longitude
-        val data = gribPoint.data
-        if (data != null) {
-            val gribTypes = listOf(
-                Triple("wind", data.windSpeed, "wind"),
-                Triple("wave", data.waveHeight, "wave"),
-                Triple("strom", data.currentSpeed, "strom"),
-                Triple("rain", data.precipitation, "rain")
-            )
-            for ((type, value, icon) in gribTypes) {
-                if (value != null && value > (currentThresholds[type] ?: Double.MAX_VALUE)) {
-                    val color = getColor(type, value.toDouble())
-                    val radius = getRadius(type, value.toDouble())
-                    features.add("""
-                        {"type": "Feature", "geometry": {"type": "Point", "coordinates": [$lon, $lat]}, "properties": {"type": "$type", "value": $value, "icon": "$icon", "color": "$color", "radius": $radius}}
-                    """.trimIndent())
-                }
-            }
-        }
-        return """{"type": "FeatureCollection", "features": [${features.joinToString(",")}]}"""
-    }
+
 
     // Hjelpefunksjon for å regne ut avstand mellom to lat/lon-punkter (i km)
     private fun haversine(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
@@ -148,13 +124,6 @@ object GribOverlayUtil {
         return R * c
     }
 
-    // Hjelpefunksjon for å beregne retning fra u og v komponenter
-    private fun calculateDirection(u: Double, v: Double): Double {
-        // Beregn retning i grader (0-360)
-        val direction = Math.toDegrees(atan2(v, u))
-        // Konverter til meteorologisk retning (hvor vinden kommer fra)
-        return (direction + 180) % 360
-    }
 
     fun gribDataToFeatureCollection(
         gribData: GribData,

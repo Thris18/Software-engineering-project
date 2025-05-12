@@ -17,6 +17,7 @@ import org.json.JSONObject
 import org.json.JSONArray
 import org.maplibre.android.style.expressions.Expression
 import org.maplibre.android.style.sources.GeoJsonOptions
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.SpatialGrid
 
 object WindOverlay {
     private const val SOURCE_ID = "wind-source"
@@ -49,7 +50,7 @@ object WindOverlay {
         }
     }
 
-    fun addOrUpdate(context: Context, style: Style, points: List<GribPoint>) {
+    fun addOrUpdate(context: Context, style: Style, points: List<GribPoint>, spatialGrid: SpatialGrid) {
         Log.d("WindOverlay", "Antall punkter som tegnes: ${points.size}")
         // Legg til bilder hvis de ikke allerede er lagt til
         if (style.getImage(WIND_ICON_ID) == null) {
@@ -67,28 +68,34 @@ object WindOverlay {
 
         // Bygg GeoJSON features
         val features = JSONArray()
+        val minDistanceKm = spatialGrid.minDistanceKm
         points.forEach { point ->
             val data = point.data ?: return@forEach
             val speed = data.windSpeed ?: 0f
             val direction = data.windDirection ?: 0f
             val rotation = GribDirectionUtil.calculateWindRotation(direction)
             val roundedSpeed = String.format("%.1f", speed).replace(',', '.').toDouble()
-
-            val feature = JSONObject().apply {
-                put("type", "Feature")
-                put("geometry", JSONObject().apply {
-                    put("type", "Point")
-                    put("coordinates", JSONArray().apply {
-                        put(point.longitude)
-                        put(point.latitude)
+            if (spatialGrid.isFarFromAll(point.latitude, point.longitude)) {
+                Log.d("WindOverlay", "Vindpunkt: ${point.latitude}, ${point.longitude}, speed: $speed (TEGNES)")
+                val feature = JSONObject().apply {
+                    put("type", "Feature")
+                    put("geometry", JSONObject().apply {
+                        put("type", "Point")
+                        put("coordinates", JSONArray().apply {
+                            put(point.longitude)
+                            put(point.latitude)
+                        })
                     })
-                })
-                put("properties", JSONObject().apply {
-                    put("speed", roundedSpeed)
-                    put("rotation", rotation.toDouble())
-                })
+                    put("properties", JSONObject().apply {
+                        put("speed", roundedSpeed)
+                        put("rotation", rotation.toDouble())
+                    })
+                }
+                features.put(feature)
+                spatialGrid.addPoint(point.latitude, point.longitude)
+            } else {
+                Log.d("WindOverlay", "Vindpunkt: ${point.latitude}, ${point.longitude} (IGNORERT pga. avstand)")
             }
-            features.put(feature)
         }
 
         val geoJson = JSONObject().apply {
@@ -175,7 +182,9 @@ object WindOverlay {
                                 Expression.literal(0f),
                                 Expression.literal(10.0), Expression.literal(1f)
                             )
-                        )
+                        ),
+                        textHaloColor("#ffffff"),
+                        textHaloWidth(1.0f)
                     )
             )
         }

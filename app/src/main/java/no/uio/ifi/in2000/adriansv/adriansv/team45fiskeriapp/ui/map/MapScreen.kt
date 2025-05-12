@@ -871,68 +871,68 @@ fun MapScreen(
                                         if (fishLog != null) {
                                             selectedLocation = Pair(fishLog.latitude, fishLog.longitude)
                                             showFishLogDialog = true
-                                                        resetSelections() // Nullstill GRIB-data og andre popups
+                                            resetSelections() // Nullstill GRIB-data og andre popups
                                             return@addOnMapClickListener true
                                         }
                                         
                                         // Check for alerts (prioritert) - kun hvis alerts er aktivert
                                         if (showAlerts) {
-                                            val alertFeatures = map.queryRenderedFeatures(screenPoint, "alert-symbol-layer")
-                                            if (alertFeatures.isNotEmpty()) {
-                                                val feature = alertFeatures[0]
-                                                val properties = feature.properties()
-                                                if (properties != null) {
-                                                    val jsonObject = JSONObject(properties.toString())
-                                                    val id = properties.get("id").asString
-                                                                resetSelections()
-                                                    viewModel.setSelectedAlert(jsonObject)
-                                                    
-                                                    // Vis polygon for dette varselet
-                                                    map.getStyle { style ->
-                                                        updateAlertPolygon(style, id)
-                                                    }
+                                        val alertFeatures = map.queryRenderedFeatures(screenPoint, "alert-symbol-layer")
+                                        if (alertFeatures.isNotEmpty()) {
+                                            val feature = alertFeatures[0]
+                                            val properties = feature.properties()
+                                            if (properties != null) {
+                                                val jsonObject = JSONObject(properties.toString())
+                                                val id = properties.get("id").asString
+                                                resetSelections()
+                                                viewModel.setSelectedAlert(jsonObject)
+                                                
+                                                // Vis polygon for dette varselet
+                                                map.getStyle { style ->
+                                                    updateAlertPolygon(style, id)
                                                 }
-                                                return@addOnMapClickListener true
+                                            }
+                                            return@addOnMapClickListener true
                                             }
                                         }
                                         
                                         // Check for ships - kun hvis ships er aktivert
                                         if (showShips) {
-                                            val shipFeatures = map.queryRenderedFeatures(screenPoint, SHIP_LAYER_ID)
-                                            if (shipFeatures.isNotEmpty()) {
-                                                resetSelections()  // Nullstill alerts og grib-state først
-                                                val feature = shipFeatures[0]
-                                                val properties = feature.properties()
-                                                
-                                                if (properties != null) {
-                                                    val mmsi = properties.get("mmsi")?.asString
-                                                    if (mmsi != null) {
-                                                        selectedShip = shipUiState.ships.find { it.mmsi == mmsi }
-                                                        if (selectedShip != null) {
-                                                            selectedShipScreenPosition = mapLibreMap?.projection?.toScreenLocation(
-                                                                LatLng(selectedShip!!.latitude, selectedShip!!.longitude)
-                                                            )
-                                                        }
+                                        val shipFeatures = map.queryRenderedFeatures(screenPoint, SHIP_LAYER_ID)
+                                        if (shipFeatures.isNotEmpty()) {
+                                            resetSelections()  // Nullstill alerts og grib-state først
+                                            val feature = shipFeatures[0]
+                                            val properties = feature.properties()
+                                            
+                                            if (properties != null) {
+                                                val mmsi = properties.get("mmsi")?.asString
+                                                if (mmsi != null) {
+                                                    selectedShip = shipUiState.ships.find { it.mmsi == mmsi }
+                                                    if (selectedShip != null) {
+                                                        selectedShipScreenPosition = mapLibreMap?.projection?.toScreenLocation(
+                                                            LatLng(selectedShip!!.latitude, selectedShip!!.longitude)
+                                                        )
                                                     }
                                                 }
-                                                
-                                                // Gjem polygon når skip velges
-                                                map.getStyle { style ->
-                                                    updateAlertPolygon(style, null)
-                                                }
-                                                return@addOnMapClickListener true
+                                            }
+                                            
+                                            // Gjem polygon når skip velges
+                                            map.getStyle { style ->
+                                                updateAlertPolygon(style, null)
+                                            }
+                                            return@addOnMapClickListener true
                                             }
                                         }
                                         
-                                                    // Håndter fiskelogg posisjonsvalg før GRIB-data
-                                                    if (showLocationSelectionDialog) {
-                                                        selectedLocationForFish = Pair(point.latitude, point.longitude)
-                                                        showLocationSelectionDialog = false
-                                                        showAddFishDialog = true
-                                                        selectedLocation = Pair(point.latitude, point.longitude)
+                                        // Håndter fiskelogg posisjonsvalg før GRIB-data
+                                        if (showLocationSelectionDialog) {
+                                            selectedLocationForFish = Pair(point.latitude, point.longitude)
+                                            showLocationSelectionDialog = false
+                                            showAddFishDialog = true
+                                            selectedLocation = Pair(point.latitude, point.longitude)
                                             return@addOnMapClickListener true
                                         }
-                                        
+
                                         false
                                     }
 
@@ -1214,14 +1214,14 @@ fun MapScreen(
 
             // Show ship info card if a ship is selected
             selectedShip?.let { ship ->
-                ShipInfoCard(
-                    ship = ship,
-                    onDismiss = {
-                        selectedShip = null
-                        selectedShipScreenPosition = null
-                    },
+                    ShipInfoCard(
+                        ship = ship,
+                        onDismiss = {
+                            selectedShip = null
+                            selectedShipScreenPosition = null
+                        },
                     shipScreenPosition = selectedShipScreenPosition
-                )
+                    )
             }
 
             // Vis farevarsel-popup hvis et farevarsel er valgt
@@ -1356,7 +1356,7 @@ fun MapScreen(
                     )
                     mapLibreMap!!.getStyle { style ->
                         Log.d("GRIB", "GeoJSON: $geoJson")
-                        GribOverlayManager.addOrUpdateGribOverlay(context, style, geoJson)
+                        GribOverlayManager.addOrUpdateGribOverlay(context, style, geoJson, isDarkMode)
                         gribOverlayLoading = false
                     }
                 } else if (mapLibreMap != null && !showGrib) {
@@ -1586,4 +1586,4 @@ private fun saveMapScreenshot(context: Context, bitmap: Bitmap): Uri? {
         Log.e(TAG, "Failed to save map screenshot: ${e.message}")
         null
     }
-}
+} 
