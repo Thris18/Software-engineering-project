@@ -19,9 +19,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.text.input.KeyboardType
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.GribOverlayUtil
+import android.content.Context
 
 @Composable
 fun SettingsPopup(
+    context: Context,
     isDarkMode: Boolean,
     showGrib: Boolean,
     showAlerts: Boolean,
@@ -32,17 +35,31 @@ fun SettingsPopup(
     onShipsFilterChanged: (Boolean) -> Unit,
     onDismiss: () -> Unit
 ) {
+    // Hent lagrede terskelverdier
+    val prefs = context.getSharedPreferences("GribThresholds", Context.MODE_PRIVATE)
+    
     // Terskelverdier for varsler
-    var windThreshold by remember { mutableStateOf(10f) }
-    var currentThreshold by remember { mutableStateOf(2f) }
-    var precipitationThreshold by remember { mutableStateOf(5f) }
-    var waveHeightThreshold by remember { mutableStateOf(2f) }
+    var windThreshold by remember { mutableStateOf(prefs.getFloat("wind_threshold", 10f)) }
+    var currentThreshold by remember { mutableStateOf(prefs.getFloat("current_threshold", 2f)) }
+    var precipitationThreshold by remember { mutableStateOf(prefs.getFloat("rain_threshold", 5f)) }
+    var waveHeightThreshold by remember { mutableStateOf(prefs.getFloat("wave_threshold", 2f)) }
 
     // Tekstfelt for manuell input
     var windText by remember { mutableStateOf(windThreshold.toString()) }
     var currentText by remember { mutableStateOf(currentThreshold.toString()) }
     var precipitationText by remember { mutableStateOf(precipitationThreshold.toString()) }
     var waveHeightText by remember { mutableStateOf(waveHeightThreshold.toString()) }
+
+    // Oppdater GribOverlayUtil når terskelverdiene endres
+    LaunchedEffect(windThreshold, currentThreshold, precipitationThreshold, waveHeightThreshold) {
+        GribOverlayUtil.updateThresholds(
+            context = context,
+            windThreshold = windThreshold,
+            waveThreshold = waveHeightThreshold,
+            currentThreshold = currentThreshold,
+            precipitationThreshold = precipitationThreshold
+        )
+    }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -77,13 +94,21 @@ fun SettingsPopup(
                     }
                 }
 
-                Divider(modifier = Modifier.padding(vertical = 16.dp))
+                HorizontalDivider()
+
+
 
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
                 ) {
+                    Text(
+                        text = "Bytt modus",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.padding(bottom = 20.dp, top = 15.dp)
+                    )
                     // Dark Mode Switch
                     Surface(
                         modifier = Modifier
@@ -139,7 +164,7 @@ fun SettingsPopup(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "GRIB Data",
+                                text = "Værvarsler",
                                 style = MaterialTheme.typography.bodyLarge
                             )
                             Switch(
@@ -253,11 +278,13 @@ fun SettingsPopup(
                                 Spacer(modifier = Modifier.width(8.dp))
                                 OutlinedTextField(
                                     value = windText,
-                                    onValueChange = { 
-                                        windText = it
-                                        it.toFloatOrNull()?.let { value ->
+                                    onValueChange = {
+                                        val filtered = it.replace(',', '.')
+                                        windText = filtered
+                                        filtered.toFloatOrNull()?.let { value ->
                                             if (value in 0f..30f) {
-                                                windThreshold = value
+                                                windThreshold = String.format("%.2f", value).toFloat()
+                                                windText = String.format("%.2f", value)
                                             }
                                         }
                                     },
@@ -275,9 +302,10 @@ fun SettingsPopup(
                             Spacer(modifier = Modifier.height(8.dp))
                             Slider(
                                 value = windThreshold,
-                                onValueChange = { 
-                                    windThreshold = it
-                                    windText = String.format("%.1f", it)
+                                onValueChange = {
+                                    val rounded = String.format("%.2f", it).toFloat()
+                                    windThreshold = rounded
+                                    windText = String.format("%.2f", rounded)
                                 },
                                 valueRange = 0f..30f,
                                 colors = SliderDefaults.colors(
@@ -314,11 +342,13 @@ fun SettingsPopup(
                                 Spacer(modifier = Modifier.width(8.dp))
                                 OutlinedTextField(
                                     value = currentText,
-                                    onValueChange = { 
-                                        currentText = it
-                                        it.toFloatOrNull()?.let { value ->
+                                    onValueChange = {
+                                        val filtered = it.replace(',', '.')
+                                        currentText = filtered
+                                        filtered.toFloatOrNull()?.let { value ->
                                             if (value in 0f..5f) {
-                                                currentThreshold = value
+                                                currentThreshold = String.format("%.2f", value).toFloat()
+                                                currentText = String.format("%.2f", value)
                                             }
                                         }
                                     },
@@ -336,9 +366,10 @@ fun SettingsPopup(
                             Spacer(modifier = Modifier.height(8.dp))
                             Slider(
                                 value = currentThreshold,
-                                onValueChange = { 
-                                    currentThreshold = it
-                                    currentText = String.format("%.1f", it)
+                                onValueChange = {
+                                    val rounded = String.format("%.2f", it).toFloat()
+                                    currentThreshold = rounded
+                                    currentText = String.format("%.2f", rounded)
                                 },
                                 valueRange = 0f..5f,
                                 colors = SliderDefaults.colors(
@@ -375,11 +406,13 @@ fun SettingsPopup(
                                 Spacer(modifier = Modifier.width(8.dp))
                                 OutlinedTextField(
                                     value = precipitationText,
-                                    onValueChange = { 
-                                        precipitationText = it
-                                        it.toFloatOrNull()?.let { value ->
+                                    onValueChange = {
+                                        val filtered = it.replace(',', '.')
+                                        precipitationText = filtered
+                                        filtered.toFloatOrNull()?.let { value ->
                                             if (value in 0f..20f) {
-                                                precipitationThreshold = value
+                                                precipitationThreshold = String.format("%.2f", value).toFloat()
+                                                precipitationText = String.format("%.2f", value)
                                             }
                                         }
                                     },
@@ -397,9 +430,10 @@ fun SettingsPopup(
                             Spacer(modifier = Modifier.height(8.dp))
                             Slider(
                                 value = precipitationThreshold,
-                                onValueChange = { 
-                                    precipitationThreshold = it
-                                    precipitationText = String.format("%.1f", it)
+                                onValueChange = {
+                                    val rounded = String.format("%.2f", it).toFloat()
+                                    precipitationThreshold = rounded
+                                    precipitationText = String.format("%.2f", rounded)
                                 },
                                 valueRange = 0f..20f,
                                 colors = SliderDefaults.colors(
@@ -436,11 +470,13 @@ fun SettingsPopup(
                                 Spacer(modifier = Modifier.width(8.dp))
                                 OutlinedTextField(
                                     value = waveHeightText,
-                                    onValueChange = { 
-                                        waveHeightText = it
-                                        it.toFloatOrNull()?.let { value ->
+                                    onValueChange = {
+                                        val filtered = it.replace(',', '.')
+                                        waveHeightText = filtered
+                                        filtered.toFloatOrNull()?.let { value ->
                                             if (value in 0f..10f) {
-                                                waveHeightThreshold = value
+                                                waveHeightThreshold = String.format("%.2f", value).toFloat()
+                                                waveHeightText = String.format("%.2f", value)
                                             }
                                         }
                                     },
@@ -458,9 +494,10 @@ fun SettingsPopup(
                             Spacer(modifier = Modifier.height(8.dp))
                             Slider(
                                 value = waveHeightThreshold,
-                                onValueChange = { 
-                                    waveHeightThreshold = it
-                                    waveHeightText = String.format("%.1f", it)
+                                onValueChange = {
+                                    val rounded = String.format("%.2f", it).toFloat()
+                                    waveHeightThreshold = rounded
+                                    waveHeightText = String.format("%.2f", rounded)
                                 },
                                 valueRange = 0f..10f,
                                 colors = SliderDefaults.colors(

@@ -21,20 +21,17 @@ data class GribUiState(
 )
 
 class GribViewModel(
-    private val context: Context,
     private val gribRepository: GribRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(GribUiState())
     val uiState: StateFlow<GribUiState> = _uiState.asStateFlow()
 
-    fun loadGribOverlay(mapLibreMap: MapLibreMap?) {
-        if (mapLibreMap == null) return
 
+    fun loadGribOverlayData() {
         viewModelScope.launch {
             try {
                 _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-                
                 val allGrids = gribRepository.getAllWeatherGrids()
                 val geoJson = GribOverlayUtil.mergeFeatureCollections(
                     allGrids["wind"]?.let { GribOverlayUtil.gribDataToFeatureCollection(it, "wind", "wind") } ?: "",
@@ -42,15 +39,10 @@ class GribViewModel(
                     allGrids["strom"]?.let { GribOverlayUtil.gribDataToFeatureCollection(it, "strom", "strom") } ?: "",
                     allGrids["rain"]?.let { GribOverlayUtil.gribDataToFeatureCollection(it, "rain", "rain") } ?: ""
                 )
-
-                mapLibreMap.getStyle { style ->
-                    Log.d(TAG, "Adding GRIB overlay to map")
-                    GribOverlayManager.addOrUpdateGribOverlay(context, style, geoJson)
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        geoJson = geoJson
-                    )
-                }
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    geoJson = geoJson
+                )
             } catch (e: Exception) {
                 Log.e(TAG, "Error loading GRIB overlay", e)
                 _uiState.value = _uiState.value.copy(

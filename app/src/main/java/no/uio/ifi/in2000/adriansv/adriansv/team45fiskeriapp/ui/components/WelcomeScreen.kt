@@ -72,11 +72,11 @@ fun WelcomeScreen(onNavigateToHome: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Øk avstanden fra toppen for å senke alt innhold
-            Spacer(modifier = Modifier.height((screenHeight.value * 0.07f).dp))
+            Spacer(modifier = Modifier.height((screenHeight.value * 0.09f).dp))
 
             // Appnavn med responsiv fontstørrelse
             Text(
-                text = "AppNavn",
+                text = "Sjøspor",
                 style = TextStyle(
                     fontFamily = pirateFont,
                     fontSize = titleSize,
@@ -88,7 +88,7 @@ fun WelcomeScreen(onNavigateToHome: () -> Unit) {
             )
 
             // Beholdt samme mellomrom mellom tittel og maskott
-            Spacer(modifier = Modifier.height((screenHeight.value * 0.01f).dp))
+            Spacer(modifier = Modifier.height((screenHeight.value * 0.05f).dp))
 
             AndroidView(
                 factory = { context ->

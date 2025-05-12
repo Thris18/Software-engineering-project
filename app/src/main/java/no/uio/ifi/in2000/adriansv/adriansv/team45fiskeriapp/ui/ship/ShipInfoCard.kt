@@ -155,7 +155,7 @@ fun ShipInfoCard(
                 Column(
                     modifier = Modifier
                         .padding(16.dp)
-                        .widthIn(max = 300.dp),
+                        .widthIn(max = 260.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     // Header med navn og lukkeknapp

@@ -356,11 +356,15 @@ fun ProfileScreen(
         // Settings Screen
         if (showSettings) {
             SettingsPopup(
+                context = context,
                 isDarkMode = isDarkMode,
                 showGrib = showGrib,
                 showAlerts = showAlerts,
                 showShips = showShips,
-                onDarkModeChange = onDarkModeChange,
+                onDarkModeChange = { newDarkMode ->
+                    onDarkModeChange(newDarkMode)
+                    showSettings = false
+                },
                 onGribFilterChanged = onGribFilterChanged,
                 onAlertsFilterChanged = onAlertsFilterChanged,
                 onShipsFilterChanged = onShipsFilterChanged,

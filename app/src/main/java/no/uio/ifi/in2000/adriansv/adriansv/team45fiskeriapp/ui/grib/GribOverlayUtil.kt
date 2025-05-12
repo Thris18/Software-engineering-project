@@ -10,61 +10,107 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
+import android.content.Context
+import android.content.SharedPreferences
 
 object GribOverlayUtil {
-    // Terskler for de fire typene (økt litt)
-    val thresholds = mapOf(
+    private const val PREFS_NAME = "GribThresholds"
+    private const val KEY_WIND = "wind_threshold"
+    private const val KEY_WAVE = "wave_threshold"
+    private const val KEY_CURRENT = "current_threshold"
+    private const val KEY_RAIN = "rain_threshold"
+
+    // Standard terskelverdier som fallback
+    private val defaultThresholds = mapOf(
         "wind" to 2.0,
         "wave" to 0.3,
         "strom" to 0.1,
         "rain" to 0.5
     )
 
+    // Dynamiske terskelverdier som kan oppdateres
+    var currentThresholds = defaultThresholds.toMutableMap()
+
+    // Initialiser med lagrede verdier
+    fun initialize(context: Context) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        currentThresholds["wind"] = prefs.getFloat(KEY_WIND, defaultThresholds["wind"]!!.toFloat()).toDouble()
+        currentThresholds["wave"] = prefs.getFloat(KEY_WAVE, defaultThresholds["wave"]!!.toFloat()).toDouble()
+        currentThresholds["strom"] = prefs.getFloat(KEY_CURRENT, defaultThresholds["strom"]!!.toFloat()).toDouble()
+        currentThresholds["rain"] = prefs.getFloat(KEY_RAIN, defaultThresholds["rain"]!!.toFloat()).toDouble()
+    }
+
+    // Funksjon for å oppdatere terskelverdier
+    fun updateThresholds(
+        context: Context,
+        windThreshold: Float,
+        waveThreshold: Float,
+        currentThreshold: Float,
+        precipitationThreshold: Float
+    ) {
+        currentThresholds["wind"] = windThreshold.toDouble()
+        currentThresholds["wave"] = waveThreshold.toDouble()
+        currentThresholds["strom"] = currentThreshold.toDouble()
+        currentThresholds["rain"] = precipitationThreshold.toDouble()
+
+        // Lagre verdiene
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit().apply {
+            putFloat(KEY_WIND, windThreshold)
+            putFloat(KEY_WAVE, waveThreshold)
+            putFloat(KEY_CURRENT, currentThreshold)
+            putFloat(KEY_RAIN, precipitationThreshold)
+            apply()
+        }
+    }
+
     // Farge basert på hvor mye verdien overstiger terskelen
-    fun getColor(type: String, value: Double): String {
-        val threshold = thresholds[type] ?: return "#888888"
-        val ratio = ((value - threshold) / (threshold.takeIf { it > 0 } ?: 1.0)).coerceAtLeast(0.0)
-        return when {
-            ratio > 1.5 -> "#D32F2F" // Rød
-            ratio > 0.5 -> "#F57C00" // Oransje
-            ratio > 0.0 -> "#FBC02D" // Gul
-            else -> "#66FBC02D" // Lys gul (nesten usynlig)
+    fun getColor(type: String, value: Double): Int {
+        val threshold = currentThresholds[type] ?: defaultThresholds[type] ?: 0.0
+        val normalizedValue = (value - threshold).coerceAtLeast(0.0)
+        val maxValue = when (type) {
+            "wind" -> 30.0
+            "wave" -> 10.0
+            "strom" -> 5.0
+            "rain" -> 20.0
+            else -> 1.0
+        }
+        val normalizedThreshold = maxValue - threshold
+        val intensity = (normalizedValue / normalizedThreshold).coerceIn(0.0, 1.0)
+
+        return when (type) {
+            "wind" -> {
+                val red = (255 * intensity).toInt()
+                val green = (255 * (1 - intensity)).toInt()
+                Color.rgb(red, green, 0)
+            }
+            "wave" -> {
+                val blue = (255 * intensity).toInt()
+                val green = (255 * (1 - intensity)).toInt()
+                Color.rgb(0, green, blue)
+            }
+            "strom" -> {
+                val red = (255 * intensity).toInt()
+                val blue = (255 * (1 - intensity)).toInt()
+                Color.rgb(red, 0, blue)
+            }
+            "rain" -> {
+                val blue = (255 * intensity).toInt()
+                val red = (255 * (1 - intensity)).toInt()
+                Color.rgb(red, 0, blue)
+            }
+            else -> Color.TRANSPARENT
         }
     }
 
     // Radius for tåke (i pixels, for MapLibre)
     fun getRadius(type: String, value: Double): Double {
-        val threshold = thresholds[type] ?: return 12.0
+        val threshold = currentThresholds[type] ?: defaultThresholds[type] ?: return 12.0
         val base = 12.0
         val extra = ((value - threshold) * 2.0).coerceAtLeast(0.0)
         return base + extra
     }
 
-    // Lag GeoJSON FeatureCollection for alle fire typene
-    fun gribPointToFeatureCollection(gribPoint: GribPoint): String {
-        val features = mutableListOf<String>()
-        val lat = gribPoint.latitude
-        val lon = gribPoint.longitude
-        val data = gribPoint.data
-        if (data != null) {
-            val gribTypes = listOf(
-                Triple("wind", data.windSpeed, "wind"),
-                Triple("wave", data.waveHeight, "wave"),
-                Triple("strom", data.currentSpeed, "strom"),
-                Triple("rain", data.precipitation, "rain")
-            )
-            for ((type, value, icon) in gribTypes) {
-                if (value != null && value > (thresholds[type] ?: Double.MAX_VALUE)) {
-                    val color = getColor(type, value.toDouble())
-                    val radius = getRadius(type, value.toDouble())
-                    features.add("""
-                        {"type": "Feature", "geometry": {"type": "Point", "coordinates": [$lon, $lat]}, "properties": {"type": "$type", "value": $value, "icon": "$icon", "color": "$color", "radius": $radius}}
-                    """.trimIndent())
-                }
-            }
-        }
-        return """{"type": "FeatureCollection", "features": [${features.joinToString(",")}]}"""
-    }
+
 
     // Hjelpefunksjon for å regne ut avstand mellom to lat/lon-punkter (i km)
     private fun haversine(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
@@ -78,13 +124,6 @@ object GribOverlayUtil {
         return R * c
     }
 
-    // Hjelpefunksjon for å beregne retning fra u og v komponenter
-    private fun calculateDirection(u: Double, v: Double): Double {
-        // Beregn retning i grader (0-360)
-        val direction = Math.toDegrees(atan2(v, u))
-        // Konverter til meteorologisk retning (hvor vinden kommer fra)
-        return (direction + 180) % 360
-    }
 
     fun gribDataToFeatureCollection(
         gribData: GribData,
@@ -93,7 +132,7 @@ object GribOverlayUtil {
         minDistanceKm: Double = 10.0 // Juster radius etter behov
     ): String {
         val features = mutableListOf<String>()
-        val threshold = thresholds[type] ?: 0.0
+        val threshold = currentThresholds[type] ?: 0.0
         val width = gribData.width
         val height = gribData.height
         var lastLat = Double.NaN

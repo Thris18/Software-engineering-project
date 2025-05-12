@@ -20,29 +20,7 @@ import org.json.JSONObject
 import org.json.JSONArray
 
 object GribOverlayManager {
-    private val iconMap = mapOf(
-        "wave" to R.drawable.wave,
-        "rain" to R.drawable.rain
-    )
-
-    // Hjelpefunksjon for å konvertere vector drawable til bitmap
-    private fun getBitmapFromVectorDrawable(context: Context, drawableId: Int): Bitmap? {
-        val drawable: Drawable = ContextCompat.getDrawable(context, drawableId) ?: return null
-        if (drawable is BitmapDrawable) {
-            return drawable.bitmap
-        }
-        val bitmap = Bitmap.createBitmap(
-            drawable.intrinsicWidth.takeIf { it > 0 } ?: 64,
-            drawable.intrinsicHeight.takeIf { it > 0 } ?: 64,
-            Bitmap.Config.ARGB_8888
-        )
-        val canvas = Canvas(bitmap)
-        drawable.setBounds(0, 0, canvas.width, canvas.height)
-        drawable.draw(canvas)
-        return bitmap
-    }
-
-    fun addOrUpdateGribOverlay(context: Context, style: Style, geoJson: String) {
+    fun addOrUpdateGribOverlay(context: Context, style: Style, geoJson: String, isDarkMode: Boolean) {
         Log.d("GribOverlayManager", "Starting to add/update GRIB overlay")
         Log.d("GribOverlayManager", "GeoJSON: $geoJson")
         
@@ -113,17 +91,21 @@ object GribOverlayManager {
                 Log.d("GribOverlayManager", "Antall bølgepunkter: ${wavePoints.size}, regnpunkter: ${rainPoints.size}")
                 wavePoints.forEach { Log.d("GribOverlayManager", "Bølgepunkt: ${it.latitude}, ${it.longitude}, verdi: ${it.data?.waveHeight}") }
                 rainPoints.forEach { Log.d("GribOverlayManager", "Regnpunkt: ${it.latitude}, ${it.longitude}, verdi: ${it.data?.precipitation}") }
+
+                val minDistanceKm = 6.5
+                val spatialGrid = SpatialGrid(minDistanceKm)
+
                 if (windPoints.isNotEmpty()) {
-                    WindOverlay.addOrUpdate(context, style, windPoints)
+                    WindOverlay.addOrUpdate(context, style, windPoints, spatialGrid, isDarkMode)
                 }
                 if (currentPoints.isNotEmpty()) {
-                    CurrentOverlay.addOrUpdate(context, style, currentPoints)
+                    CurrentOverlay.addOrUpdate(context, style, currentPoints, spatialGrid, isDarkMode)
                 }
                 if (wavePoints.isNotEmpty()) {
-                    WaveOverlay.addOrUpdate(context, style, wavePoints)
+                    WaveOverlay.addOrUpdate(context, style, wavePoints, spatialGrid, isDarkMode)
                 }
                 if (rainPoints.isNotEmpty()) {
-                    RainOverlay.addOrUpdate(context, style, rainPoints)
+                    RainOverlay.addOrUpdate(context, style, rainPoints, spatialGrid, isDarkMode)
                 }
             }
         } catch (e: Exception) {

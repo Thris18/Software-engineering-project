@@ -6,14 +6,13 @@ import androidx.lifecycle.ViewModelProvider
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.grib.GribRepository
 
 class GribViewModelFactory(
-    private val context: Context,
     private val gribRepository: GribRepository
 ) : ViewModelProvider.Factory {
     
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(GribViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return GribViewModel(context, gribRepository) as T
+            return GribViewModel(gribRepository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
