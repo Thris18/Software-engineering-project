@@ -18,6 +18,7 @@ import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.layers.SymbolLayer
 import org.maplibre.android.style.sources.GeoJsonOptions
 import org.maplibre.android.style.sources.GeoJsonSource
+import java.util.Locale
 
 object WindOverlay {
     private const val SOURCE_ID = "wind-source"
@@ -73,7 +74,7 @@ object WindOverlay {
             val speed = data.windSpeed ?: 0f
             val direction = data.windDirection ?: 0f
             val rotation = CalculateUtil.calculateWindRotation(direction)
-            val roundedSpeed = String.format("%.1f", speed).replace(',', '.').toDouble()
+            val roundedSpeed = String.format(Locale.US, "%.2f", speed).replace(',', '.').toDouble()
             if (spatialGrid.isFarFromAll(point.latitude, point.longitude)) {
                 Log.d("WindOverlay", "Vindpunkt: ${point.latitude}, ${point.longitude}, speed: $speed (TEGNES)")
                 val feature = JSONObject().apply {

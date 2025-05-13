@@ -18,6 +18,7 @@ import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.layers.SymbolLayer
 import org.maplibre.android.style.sources.GeoJsonOptions
 import org.maplibre.android.style.sources.GeoJsonSource
+import java.util.Locale
 
 object CurrentOverlay {
     private const val SOURCE_ID = "current-source"
@@ -73,7 +74,7 @@ object CurrentOverlay {
             val speed = data.currentSpeed ?: 0f
             val direction = data.currentDirection ?: 0f
             val rotation = CalculateUtil.calculateCurrentRotation(direction)
-            val roundedSpeed = String.format("%.1f", speed).replace(',', '.').toDouble()
+            val roundedSpeed = String.format(Locale.US, "%.2f", speed).replace(',', '.').toDouble()
             if (spatialGrid.isFarFromAll(point.latitude, point.longitude)) {
                 Log.d("CurrentOverlay", "Strømpunkt: ${point.latitude}, ${point.longitude}, speed: $speed (TEGNES)")
                 val feature = JSONObject().apply {
