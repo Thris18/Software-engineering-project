@@ -72,7 +72,7 @@ class TutorialManager {
             title = "Klar for å bruke Sjøspor!",
             description = "Nå har du lært det viktigste - god tur!",
             targetTag = "",
-            mascotResourceId = R.drawable.presenting,
+            mascotResourceId = R.drawable.waving_mascot,
             mascotPlacement = MascotPlacement.RIGHT,
             isLastStep = true
         )
