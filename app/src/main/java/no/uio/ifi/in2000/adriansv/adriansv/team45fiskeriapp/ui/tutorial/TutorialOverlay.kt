@@ -167,7 +167,7 @@ fun getMascotPosition(
     )
 
     when (step.title) {
-        "Velkommen til appen!" -> {
+        "Velkommen til Sjøspor!" -> {
             return MascotPosition(
                 alignment = Alignment.Center,
                 offset = androidx.compose.ui.unit.DpOffset(screenWidth * 0.35f, 0.dp),
@@ -175,7 +175,7 @@ fun getMascotPosition(
             )
         }
 
-        "Kartvisning" -> {
+        "Utforsk kartet" -> {
             return MascotPosition(
                 alignment = Alignment.BottomStart,
                 offset = androidx.compose.ui.unit.DpOffset(
@@ -186,7 +186,7 @@ fun getMascotPosition(
             )
         }
 
-        "Profilsiden" -> {
+        "Profilsiden din" -> {
             return MascotPosition(
                 alignment = Alignment.BottomEnd,
                 offset = androidx.compose.ui.unit.DpOffset(
@@ -197,7 +197,7 @@ fun getMascotPosition(
             )
         }
 
-        "Søkefunksjonen" -> {
+        "Finn et sted" -> {
             return MascotPosition(
                 alignment = Alignment.TopCenter,
                 offset = androidx.compose.ui.unit.DpOffset(
@@ -241,7 +241,7 @@ fun getMascotPosition(
             )
         }
 
-        "Fisketuren" -> {
+        "Start en fisketur" -> {
             return MascotPosition(
                 alignment = Alignment.BottomEnd,
                 offset = androidx.compose.ui.unit.DpOffset(
@@ -252,7 +252,7 @@ fun getMascotPosition(
             )
         }
 
-        "Da er du klar !" -> {
+        "Klar for å bruke Sjøspor!" -> {
             return MascotPosition(
                 alignment = Alignment.Center,
                 offset = androidx.compose.ui.unit.DpOffset(

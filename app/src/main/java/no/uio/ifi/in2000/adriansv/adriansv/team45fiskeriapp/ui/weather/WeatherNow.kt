@@ -122,7 +122,7 @@ fun WeatherNow(weather: LocationWeather?) {
             InfoLine("Føles som", "${weather.temperature.toInt()}°")
             InfoLine(
                 "Vind",
-                "${weather.windSpeed} m/s fra ${weather.windDirection}° " + when (weather.windDirection.toInt()) {
+                "${weather.windSpeed} m/s " + when (weather.windDirection.toInt()) {
                     in 0..44 -> "↓"
                     in 45..89 -> "↙"
                     in 90..134 -> "←"
