@@ -1047,6 +1047,9 @@ fun MapScreen(
                     alertData = alert,
                     onDismiss = {
                         viewModel.setSelectedAlert(null)
+                        mapLibreMap?.getStyle { style ->
+                            AlertUtils.updateAlertPolygon(style, null)
+                        }
                     },
                     modifier = Modifier
                         .align(Alignment.BottomCenter)

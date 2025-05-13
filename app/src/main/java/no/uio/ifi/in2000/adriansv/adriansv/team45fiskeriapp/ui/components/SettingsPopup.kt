@@ -273,7 +273,7 @@ fun SettingsPopup(
                                 Slider(
                                     value = windThreshold,
                                     onValueChange = {
-                                        val rounded = (Math.round(it * 100) / 100f)
+                                        val rounded = (Math.round(it * 10) / 10f)
                                         windThreshold = rounded
                                     },
                                     valueRange = 0f..10f,
@@ -286,7 +286,7 @@ fun SettingsPopup(
                                     )
                                 )
                                 OutlinedTextField(
-                                    value = String.format("%.2f", windThreshold),
+                                    value = String.format("%.1f", windThreshold),
                                     onValueChange = {},
                                     readOnly = true,
                                     label = { Text("Verdi") },
