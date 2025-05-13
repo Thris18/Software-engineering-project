@@ -16,6 +16,7 @@ import java.util.Date
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.Image
 import androidx.compose.ui.layout.ContentScale
@@ -29,6 +30,22 @@ import java.io.IOException
 import android.widget.Toast
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.Card
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.foundation.layout.PaddingValues
 
 @Composable
 fun AddFishDialog(
@@ -150,19 +167,6 @@ fun AddFishDialog(
         galleryLauncher.launch("image/*")
     }
 
-    // Vis bilde hvis det er valgt
-    if (imageUri != null) {
-        Image(
-            painter = rememberAsyncImagePainter(imageUri),
-            contentDescription = "Valgt bilde",
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .padding(vertical = 8.dp),
-            contentScale = ContentScale.Fit
-        )
-    }
-
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Legg til fisk") },
@@ -239,14 +243,58 @@ fun AddFishDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Posisjonsknapp
+                Button(
+                    onClick = onSelectLocation,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(40.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = "Velg posisjon",
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Velg posisjon",
+                            style = MaterialTheme.typography.labelLarge,
+                            maxLines = 1
+                        )
+                    }
+                }
+
                 // Vis koordinater kun hvis brukeren har valgt et punkt gjennom kartet
                 if (latitude != 0.0 && longitude != 0.0 && selectedLocationForFish != null) {
-                    Text(
-                        text = "Valgt posisjon: ${String.format("%.4f", latitude)}, ${String.format("%.4f", longitude)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Text(
+                            text = "Valgt posisjon: ${String.format("%.4f", latitude)}, ${String.format("%.4f", longitude)}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(12.dp)
+                        )
+                    }
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 // Bildeknapper
                 Row(
