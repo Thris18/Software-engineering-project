@@ -16,7 +16,7 @@ import org.maplibre.android.style.expressions.Expression.get
 import androidx.appcompat.content.res.AppCompatResources
 import org.maplibre.android.style.expressions.Expression
 import org.maplibre.android.style.sources.GeoJsonOptions
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.SpatialGrid
+import java.util.Locale
 
 object RainOverlay {
     private const val SOURCE_ID = "rain-source"
@@ -68,7 +68,7 @@ object RainOverlay {
         points.forEach { point ->
             val data = point.data ?: return@forEach
             val value = data.precipitation ?: 0f
-            val roundedValue = String.format("%.1f", value).replace(',', '.').toDouble()
+            val roundedValue = String.format(Locale.US, "%.2f", value).replace(',', '.').toDouble()
             val threshold = GribOverlayUtil.currentThresholds["rain"] ?: 0.5
             val fog = RainOverlayUtil.getFogImageName(value.toDouble(), threshold)
             val ratio = value / threshold
@@ -194,17 +194,4 @@ object RainOverlay {
         }
     }
 
-    fun remove(style: Style) {
-        try {
-            style.getLayer(ICON_LAYER_ID)?.let { style.removeLayer(it) }
-            style.getLayer(FOG_LAYER_ID)?.let { style.removeLayer(it) }
-            style.getSource(SOURCE_ID)?.let { style.removeSource(it) }
-            style.removeImage(RAIN_ICON_ID)
-            style.removeImage("blue")
-            style.removeImage("yellow")
-            style.removeImage("red")
-        } catch (e: Exception) {
-            Log.e("RainOverlay", "Error removing rain overlay: ${e.message}")
-        }
-    }
 } 

@@ -44,11 +44,6 @@ fun SettingsPopup(
     var precipitationThreshold by remember { mutableStateOf(prefs.getFloat("rain_threshold", 5f)) }
     var waveHeightThreshold by remember { mutableStateOf(prefs.getFloat("wave_threshold", 2f)) }
 
-    // Tekstfelt for manuell input
-    var windText by remember { mutableStateOf(windThreshold.toString()) }
-    var currentText by remember { mutableStateOf(currentThreshold.toString()) }
-    var precipitationText by remember { mutableStateOf(precipitationThreshold.toString()) }
-    var waveHeightText by remember { mutableStateOf(waveHeightThreshold.toString()) }
 
     // Oppdater GribOverlayUtil når terskelverdiene endres
     LaunchedEffect(windThreshold, currentThreshold, precipitationThreshold, waveHeightThreshold) {
@@ -276,26 +271,8 @@ fun SettingsPopup(
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                OutlinedTextField(
-                                    value = windText,
-                                    onValueChange = {
-                                        val filtered = it.replace(',', '.')
-                                        windText = filtered
-                                        filtered.toFloatOrNull()?.let { value ->
-                                            if (value in 0f..30f) {
-                                                windThreshold = String.format("%.2f", value).toFloat()
-                                                windText = String.format("%.2f", value)
-                                            }
-                                        }
-                                    },
-                                    modifier = Modifier.width(70.dp),
-                                    textStyle = MaterialTheme.typography.bodyMedium,
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                    singleLine = true
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "m/s",
+                                    text = String.format("%.2f m/s", windThreshold),
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                             }
@@ -303,11 +280,11 @@ fun SettingsPopup(
                             Slider(
                                 value = windThreshold,
                                 onValueChange = {
-                                    val rounded = String.format("%.2f", it).toFloat()
+                                    val rounded = (Math.round(it * 100) / 100f)
                                     windThreshold = rounded
-                                    windText = String.format("%.2f", rounded)
                                 },
-                                valueRange = 0f..30f,
+                                valueRange = 0f..10f,
+                                steps = 999,
                                 colors = SliderDefaults.colors(
                                     thumbColor = MaterialTheme.colorScheme.primary,
                                     activeTrackColor = MaterialTheme.colorScheme.primary,
@@ -340,26 +317,8 @@ fun SettingsPopup(
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                OutlinedTextField(
-                                    value = currentText,
-                                    onValueChange = {
-                                        val filtered = it.replace(',', '.')
-                                        currentText = filtered
-                                        filtered.toFloatOrNull()?.let { value ->
-                                            if (value in 0f..5f) {
-                                                currentThreshold = String.format("%.2f", value).toFloat()
-                                                currentText = String.format("%.2f", value)
-                                            }
-                                        }
-                                    },
-                                    modifier = Modifier.width(70.dp),
-                                    textStyle = MaterialTheme.typography.bodyMedium,
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                    singleLine = true
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "m/s",
+                                    text = String.format("%.2f m/s", currentThreshold),
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                             }
@@ -367,11 +326,11 @@ fun SettingsPopup(
                             Slider(
                                 value = currentThreshold,
                                 onValueChange = {
-                                    val rounded = String.format("%.2f", it).toFloat()
+                                    val rounded = (Math.round(it * 100) / 100f)
                                     currentThreshold = rounded
-                                    currentText = String.format("%.2f", rounded)
                                 },
                                 valueRange = 0f..5f,
+                                steps = 499,
                                 colors = SliderDefaults.colors(
                                     thumbColor = MaterialTheme.colorScheme.primary,
                                     activeTrackColor = MaterialTheme.colorScheme.primary,
@@ -404,26 +363,8 @@ fun SettingsPopup(
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                OutlinedTextField(
-                                    value = precipitationText,
-                                    onValueChange = {
-                                        val filtered = it.replace(',', '.')
-                                        precipitationText = filtered
-                                        filtered.toFloatOrNull()?.let { value ->
-                                            if (value in 0f..20f) {
-                                                precipitationThreshold = String.format("%.2f", value).toFloat()
-                                                precipitationText = String.format("%.2f", value)
-                                            }
-                                        }
-                                    },
-                                    modifier = Modifier.width(70.dp),
-                                    textStyle = MaterialTheme.typography.bodyMedium,
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                    singleLine = true
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "mm/time",
+                                    text = String.format("%.2f mm/time", precipitationThreshold),
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                             }
@@ -431,11 +372,11 @@ fun SettingsPopup(
                             Slider(
                                 value = precipitationThreshold,
                                 onValueChange = {
-                                    val rounded = String.format("%.2f", it).toFloat()
+                                    val rounded = (Math.round(it * 100) / 100f)
                                     precipitationThreshold = rounded
-                                    precipitationText = String.format("%.2f", rounded)
                                 },
-                                valueRange = 0f..20f,
+                                valueRange = 0f..3f,
+                                steps = 299,
                                 colors = SliderDefaults.colors(
                                     thumbColor = MaterialTheme.colorScheme.primary,
                                     activeTrackColor = MaterialTheme.colorScheme.primary,
@@ -468,26 +409,8 @@ fun SettingsPopup(
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                OutlinedTextField(
-                                    value = waveHeightText,
-                                    onValueChange = {
-                                        val filtered = it.replace(',', '.')
-                                        waveHeightText = filtered
-                                        filtered.toFloatOrNull()?.let { value ->
-                                            if (value in 0f..10f) {
-                                                waveHeightThreshold = String.format("%.2f", value).toFloat()
-                                                waveHeightText = String.format("%.2f", value)
-                                            }
-                                        }
-                                    },
-                                    modifier = Modifier.width(70.dp),
-                                    textStyle = MaterialTheme.typography.bodyMedium,
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                    singleLine = true
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "m",
+                                    text = String.format("%.2f m", waveHeightThreshold),
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                             }
@@ -495,11 +418,11 @@ fun SettingsPopup(
                             Slider(
                                 value = waveHeightThreshold,
                                 onValueChange = {
-                                    val rounded = String.format("%.2f", it).toFloat()
+                                    val rounded = (Math.round(it * 100) / 100f)
                                     waveHeightThreshold = rounded
-                                    waveHeightText = String.format("%.2f", rounded)
                                 },
-                                valueRange = 0f..10f,
+                                valueRange = 0f..5f,
+                                steps = 499,
                                 colors = SliderDefaults.colors(
                                     thumbColor = MaterialTheme.colorScheme.primary,
                                     activeTrackColor = MaterialTheme.colorScheme.primary,

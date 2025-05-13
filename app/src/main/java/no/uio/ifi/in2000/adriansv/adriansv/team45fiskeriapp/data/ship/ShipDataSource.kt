@@ -69,8 +69,7 @@ class ShipDataSource {
                     val jsonArray = JSONArray(response)
                     val ships = mutableListOf<Ship>()
                     
-                    var shipsWithName = 0
-                    var shipsWithoutName = 0
+
 
                     for (i in 0 until jsonArray.length()) {
                         val shipJson = jsonArray.getJSONObject(i)

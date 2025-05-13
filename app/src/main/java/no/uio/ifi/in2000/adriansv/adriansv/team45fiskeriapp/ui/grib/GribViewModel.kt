@@ -1,6 +1,5 @@
 package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib
 
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -9,8 +8,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.grib.GribRepository
-import org.maplibre.android.maps.MapLibreMap
-import org.maplibre.android.maps.Style
 
 private const val TAG = "GribViewModel"
 
@@ -51,9 +48,5 @@ class GribViewModel(
                 )
             }
         }
-    }
-
-    fun clearError() {
-        _uiState.value = _uiState.value.copy(error = null)
     }
 } 

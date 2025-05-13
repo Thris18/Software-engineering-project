@@ -1,17 +1,15 @@
 package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib
 
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.grib.GribPoint
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.grib.GribData
 import android.graphics.Color
-import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
+import android.content.Context
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
-import android.content.Context
-import android.content.SharedPreferences
+
 
 object GribOverlayUtil {
     private const val PREFS_NAME = "GribThresholds"
@@ -64,7 +62,7 @@ object GribOverlayUtil {
     }
 
     // Farge basert på hvor mye verdien overstiger terskelen
-    fun getColor(type: String, value: Double): Int {
+    private fun getColor(type: String, value: Double): Int {
         val threshold = currentThresholds[type] ?: defaultThresholds[type] ?: 0.0
         val normalizedValue = (value - threshold).coerceAtLeast(0.0)
         val maxValue = when (type) {
@@ -103,7 +101,7 @@ object GribOverlayUtil {
     }
 
     // Radius for tåke (i pixels, for MapLibre)
-    fun getRadius(type: String, value: Double): Double {
+    private fun getRadius(type: String, value: Double): Double {
         val threshold = currentThresholds[type] ?: defaultThresholds[type] ?: return 12.0
         val base = 12.0
         val extra = ((value - threshold) * 2.0).coerceAtLeast(0.0)
@@ -114,14 +112,14 @@ object GribOverlayUtil {
 
     // Hjelpefunksjon for å regne ut avstand mellom to lat/lon-punkter (i km)
     private fun haversine(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
-        val R = 6371.0 // Radius of Earth in km
+        val r = 6371.0 // Radius of Earth in km
         val dLat = Math.toRadians(lat2 - lat1)
         val dLon = Math.toRadians(lon2 - lon1)
-        val a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
-                Math.sin(dLon / 2) * Math.sin(dLon / 2)
-        val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-        return R * c
+        val a = sin(dLat / 2) * sin(dLat / 2) +
+                cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
+                sin(dLon / 2) * sin(dLon / 2)
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+        return r * c
     }
 
 
@@ -138,17 +136,6 @@ object GribOverlayUtil {
         var lastLat = Double.NaN
         var lastLon = Double.NaN
 
-        // Hent u- og v-komponenter basert på type
-        val uComponent = when (type) {
-            "wind" -> "u-component_of_wind_height_above_ground"
-            "strom" -> "u-component_of_current_depth_below_sea"
-            else -> null
-        }
-        val vComponent = when (type) {
-            "wind" -> "v-component_of_wind_height_above_ground"
-            "strom" -> "v-component_of_current_depth_below_sea"
-            else -> null
-        }
 
         for (y in 0 until height) {
             for (x in 0 until width) {

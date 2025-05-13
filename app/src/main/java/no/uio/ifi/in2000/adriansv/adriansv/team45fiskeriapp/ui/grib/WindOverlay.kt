@@ -9,7 +9,6 @@ import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.R
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.grib.GribPoint
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.layers.Property
-import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.layers.SymbolLayer
 import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.android.style.layers.PropertyFactory.*
@@ -17,7 +16,7 @@ import org.json.JSONObject
 import org.json.JSONArray
 import org.maplibre.android.style.expressions.Expression
 import org.maplibre.android.style.sources.GeoJsonOptions
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.SpatialGrid
+import java.util.Locale
 
 object WindOverlay {
     private const val SOURCE_ID = "wind-source"
@@ -73,7 +72,7 @@ object WindOverlay {
             val speed = data.windSpeed ?: 0f
             val direction = data.windDirection ?: 0f
             val rotation = GribDirectionUtil.calculateWindRotation(direction)
-            val roundedSpeed = String.format("%.1f", speed).replace(',', '.').toDouble()
+            val roundedSpeed = String.format(Locale.US, "%.2f", speed).replace(',', '.').toDouble()
             if (spatialGrid.isFarFromAll(point.latitude, point.longitude)) {
                 Log.d("WindOverlay", "Vindpunkt: ${point.latitude}, ${point.longitude}, speed: $speed (TEGNES)")
                 val feature = JSONObject().apply {
@@ -206,19 +205,6 @@ object WindOverlay {
                         textAnchor(Property.TEXT_ANCHOR_CENTER)
                     )
             )
-        }
-    }
-
-    fun remove(style: Style) {
-        try {
-            style.getLayer(TEXT_LAYER_ID)?.let { style.removeLayer(it) }
-            style.getLayer(ICON_LAYER_ID)?.let { style.removeLayer(it) }
-            style.getLayer(ARROW_LAYER_ID)?.let { style.removeLayer(it) }
-            style.getSource(SOURCE_ID)?.let { style.removeSource(it) }
-            style.removeImage(WIND_ICON_ID)
-            style.removeImage(ARROW_ICON_ID)
-        } catch (e: Exception) {
-            Log.e("WindOverlay", "Error removing wind overlay: ${e.message}")
         }
     }
 } 

@@ -1,23 +1,12 @@
 package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.Drawable
 import android.util.Log
-import androidx.core.content.ContextCompat
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.R
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.grib.GribData
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.grib.GribPoint
 import org.maplibre.android.maps.Style
-import org.maplibre.android.style.layers.PropertyFactory.*
-import org.maplibre.android.style.layers.SymbolLayer
-import org.maplibre.android.style.layers.CircleLayer
-import org.maplibre.android.style.sources.GeoJsonSource
-import org.maplibre.android.style.expressions.Expression.*
 import org.json.JSONObject
-import org.json.JSONArray
+
 
 object GribOverlayManager {
     fun addOrUpdateGribOverlay(context: Context, style: Style, geoJson: String, isDarkMode: Boolean) {
@@ -113,18 +102,5 @@ object GribOverlayManager {
         }
     }
 
-    fun removeGribOverlay(style: Style) {
-        // Fjern standard overlay
-        val standardSourceId = "grib-standard-source"
-        val standardSymbolLayerId = "grib-standard-symbol-layer"
-        val standardCircleLayerId = "grib-standard-circle-layer"
-        style.removeLayer(standardSymbolLayerId)
-        style.removeLayer(standardCircleLayerId)
-        style.removeSource(standardSourceId)
-        // Fjern alle overlays
-        WindOverlay.remove(style)
-        CurrentOverlay.remove(style)
-        WaveOverlay.remove(style)
-        RainOverlay.remove(style)
-    }
+
 }
