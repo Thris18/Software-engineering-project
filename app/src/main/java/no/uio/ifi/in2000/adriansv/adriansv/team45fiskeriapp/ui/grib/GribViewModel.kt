@@ -69,6 +69,7 @@ class GribViewModel(
     }
 
     fun loadGribOverlayData() {
+        Log.d(TAG, "loadGribOverlayData() called. Terskler: wind=${GribOverlayUtil.currentThresholds["wind"]}, wave=${GribOverlayUtil.currentThresholds["wave"]}, strom=${GribOverlayUtil.currentThresholds["strom"]}, rain=${GribOverlayUtil.currentThresholds["rain"]}")
         viewModelScope.launch {
             try {
                 _uiState.value = _uiState.value.copy(isLoading = true, error = null)
@@ -79,6 +80,7 @@ class GribViewModel(
                     allGrids["strom"]?.let { GribOverlayUtil.gribDataToFeatureCollection(it, "strom", "strom") } ?: "",
                     allGrids["rain"]?.let { GribOverlayUtil.gribDataToFeatureCollection(it, "rain", "rain") } ?: ""
                 )
+                Log.d(TAG, "geoJson oppdatert. Lengde: ${geoJson.length}")
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     geoJson = geoJson

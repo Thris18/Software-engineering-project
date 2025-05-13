@@ -28,6 +28,8 @@ import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.Profil
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.SettingsPopup
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.YourInformationScreen
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTripsScreen
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.GribViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun ProfileScreen(
@@ -60,6 +62,7 @@ fun ProfileScreen(
     var showFishingTripDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val sharedPreferences = remember { context.getSharedPreferences("user_info", Context.MODE_PRIVATE) }
+    val gribViewModel: GribViewModel = viewModel()
 
     // Last inn lagret informasjon når skjermen åpnes
     LaunchedEffect(Unit) {
@@ -361,13 +364,12 @@ fun ProfileScreen(
                 showGrib = showGrib,
                 showAlerts = showAlerts,
                 showShips = showShips,
-                onDarkModeChange = { newDarkMode ->
-                    onDarkModeChange(newDarkMode)
-                },
+                onDarkModeChange = onDarkModeChange,
                 onGribFilterChanged = onGribFilterChanged,
                 onAlertsFilterChanged = onAlertsFilterChanged,
                 onShipsFilterChanged = onShipsFilterChanged,
-                onDismiss = { showSettings = false }
+                onDismiss = { showSettings = false },
+                gribViewModel = gribViewModel
             )
         }
 

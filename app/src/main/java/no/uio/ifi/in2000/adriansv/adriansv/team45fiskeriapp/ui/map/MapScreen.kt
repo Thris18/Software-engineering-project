@@ -1010,7 +1010,8 @@ fun MapScreen(
                     onGribFilterChanged = onGribFilterChanged,
                     onAlertsFilterChanged = onAlertsFilterChanged,
                     onShipsFilterChanged = onShipsFilterChanged,
-                    onDismiss = { showFilterMenu = false }
+                    onDismiss = { showFilterMenu = false },
+                    gribViewModel = gribViewModel
                 )
             }
 
@@ -1050,12 +1051,12 @@ fun MapScreen(
                         mapLibreMap?.getStyle { style ->
                             AlertUtils.updateAlertPolygon(style, null)
                         }
-                    },
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(16.dp)
-                )
-            }
+                        },
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(16.dp)
+                    )
+                }
 
             // Update ship positions when they change
             LaunchedEffect(shipUiState.ships) {

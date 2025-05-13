@@ -52,6 +52,7 @@ object CurrentOverlay {
     }
 
     fun addOrUpdate(context: Context, style: Style, points: List<GribPoint>, spatialGrid: SpatialGrid, isDarkMode: Boolean) {
+        Log.d("CurrentOverlay", "addOrUpdate() called. Antall punkter: ${points.size}")
         Log.d("CurrentOverlay", "Antall punkter som tegnes: ${points.size}")
         // Legg til bilder hvis de ikke allerede er lagt til
         if (style.getImage(CURRENT_ICON_ID) == null) {
@@ -216,6 +217,8 @@ object CurrentOverlay {
                     )
             )
         }
+
+        Log.d("CurrentOverlay", "Antall features som faktisk tegnes: ${features.length()}")
     }
 
     fun remove(style: Style) {

@@ -18,6 +18,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.text.input.KeyboardType
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.utils.GribOverlayUtil
 import android.content.Context
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.GribViewModel
 
 @Composable
 fun SettingsPopup(
@@ -30,7 +31,8 @@ fun SettingsPopup(
     onGribFilterChanged: (Boolean) -> Unit,
     onAlertsFilterChanged: (Boolean) -> Unit,
     onShipsFilterChanged: (Boolean) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    gribViewModel: GribViewModel
 ) {
     // Hent lagrede terskelverdier
     val prefs = context.getSharedPreferences("GribThresholds", Context.MODE_PRIVATE)
@@ -56,6 +58,8 @@ fun SettingsPopup(
             currentThreshold = currentThreshold,
             precipitationThreshold = precipitationThreshold
         )
+        // Oppdater overlays umiddelbart
+        gribViewModel.loadGribOverlayData()
     }
 
     Dialog(
