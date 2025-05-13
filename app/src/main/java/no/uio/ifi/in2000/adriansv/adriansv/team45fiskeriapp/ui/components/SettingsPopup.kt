@@ -93,8 +93,6 @@ fun SettingsPopup(
 
                 HorizontalDivider()
 
-
-
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -264,53 +262,41 @@ fun SettingsPopup(
                                 .fillMaxWidth()
                                 .padding(24.dp)
                         ) {
+                            Text(
+                                text = "Vindhastighet:",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = "Vindhastighet:",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                OutlinedTextField(
-                                    value = windText,
+                                Slider(
+                                    value = windThreshold,
                                     onValueChange = {
-                                        val filtered = it.replace(',', '.')
-                                        windText = filtered
-                                        filtered.toFloatOrNull()?.let { value ->
-                                            if (value in 0f..30f) {
-                                                windThreshold = String.format("%.2f", value).toFloat()
-                                                windText = String.format("%.2f", value)
-                                            }
-                                        }
+                                        val rounded = (Math.round(it * 10) / 10f)
+                                        windThreshold = rounded
                                     },
-                                    modifier = Modifier.width(70.dp),
-                                    textStyle = MaterialTheme.typography.bodyMedium,
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                    singleLine = true
+                                    valueRange = 0f..10f,
+                                    steps = 99,
+                                    modifier = Modifier.weight(1f),
+                                    colors = SliderDefaults.colors(
+                                        thumbColor = MaterialTheme.colorScheme.primary,
+                                        activeTrackColor = MaterialTheme.colorScheme.primary,
+                                        inactiveTrackColor = MaterialTheme.colorScheme.primaryContainer
+                                    )
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "m/s",
-                                    style = MaterialTheme.typography.bodyMedium
+                                OutlinedTextField(
+                                    value = String.format("%.1f", windThreshold),
+                                    onValueChange = {},
+                                    readOnly = true,
+                                    label = { Text("Verdi") },
+                                    modifier = Modifier
+                                        .width(80.dp)
+                                        .padding(start = 8.dp),
+                                    singleLine = true,
+                                    enabled = false
                                 )
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Slider(
-                                value = windThreshold,
-                                onValueChange = {
-                                    val rounded = String.format("%.2f", it).toFloat()
-                                    windThreshold = rounded
-                                    windText = String.format("%.2f", rounded)
-                                },
-                                valueRange = 0f..30f,
-                                colors = SliderDefaults.colors(
-                                    thumbColor = MaterialTheme.colorScheme.primary,
-                                    activeTrackColor = MaterialTheme.colorScheme.primary,
-                                    inactiveTrackColor = MaterialTheme.colorScheme.primaryContainer
-                                )
-                            )
                         }
                     }
 
@@ -328,53 +314,41 @@ fun SettingsPopup(
                                 .fillMaxWidth()
                                 .padding(24.dp)
                         ) {
+                            Text(
+                                text = "Strømhastighet:",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = "Strømhastighet:",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                OutlinedTextField(
-                                    value = currentText,
+                                Slider(
+                                    value = currentThreshold,
                                     onValueChange = {
-                                        val filtered = it.replace(',', '.')
-                                        currentText = filtered
-                                        filtered.toFloatOrNull()?.let { value ->
-                                            if (value in 0f..5f) {
-                                                currentThreshold = String.format("%.2f", value).toFloat()
-                                                currentText = String.format("%.2f", value)
-                                            }
-                                        }
+                                        val rounded = (Math.round(it * 100) / 100f)
+                                        currentThreshold = rounded
                                     },
-                                    modifier = Modifier.width(70.dp),
-                                    textStyle = MaterialTheme.typography.bodyMedium,
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                    singleLine = true
+                                    valueRange = 0f..5f,
+                                    steps = 499,
+                                    modifier = Modifier.weight(1f),
+                                    colors = SliderDefaults.colors(
+                                        thumbColor = MaterialTheme.colorScheme.primary,
+                                        activeTrackColor = MaterialTheme.colorScheme.primary,
+                                        inactiveTrackColor = MaterialTheme.colorScheme.primaryContainer
+                                    )
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "m/s",
-                                    style = MaterialTheme.typography.bodyMedium
+                                OutlinedTextField(
+                                    value = String.format("%.2f", currentThreshold),
+                                    onValueChange = {},
+                                    readOnly = true,
+                                    label = { Text("Verdi") },
+                                    modifier = Modifier
+                                        .width(80.dp)
+                                        .padding(start = 8.dp),
+                                    singleLine = true,
+                                    enabled = false
                                 )
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Slider(
-                                value = currentThreshold,
-                                onValueChange = {
-                                    val rounded = String.format("%.2f", it).toFloat()
-                                    currentThreshold = rounded
-                                    currentText = String.format("%.2f", rounded)
-                                },
-                                valueRange = 0f..5f,
-                                colors = SliderDefaults.colors(
-                                    thumbColor = MaterialTheme.colorScheme.primary,
-                                    activeTrackColor = MaterialTheme.colorScheme.primary,
-                                    inactiveTrackColor = MaterialTheme.colorScheme.primaryContainer
-                                )
-                            )
                         }
                     }
 
@@ -392,53 +366,41 @@ fun SettingsPopup(
                                 .fillMaxWidth()
                                 .padding(24.dp)
                         ) {
+                            Text(
+                                text = "Nedbør:",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = "Nedbør:",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                OutlinedTextField(
-                                    value = precipitationText,
+                                Slider(
+                                    value = precipitationThreshold,
                                     onValueChange = {
-                                        val filtered = it.replace(',', '.')
-                                        precipitationText = filtered
-                                        filtered.toFloatOrNull()?.let { value ->
-                                            if (value in 0f..20f) {
-                                                precipitationThreshold = String.format("%.2f", value).toFloat()
-                                                precipitationText = String.format("%.2f", value)
-                                            }
-                                        }
+                                        val rounded = (Math.round(it * 100) / 100f)
+                                        precipitationThreshold = rounded
                                     },
-                                    modifier = Modifier.width(70.dp),
-                                    textStyle = MaterialTheme.typography.bodyMedium,
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                    singleLine = true
+                                    valueRange = 0f..3f,
+                                    steps = 299,
+                                    modifier = Modifier.weight(1f),
+                                    colors = SliderDefaults.colors(
+                                        thumbColor = MaterialTheme.colorScheme.primary,
+                                        activeTrackColor = MaterialTheme.colorScheme.primary,
+                                        inactiveTrackColor = MaterialTheme.colorScheme.primaryContainer
+                                    )
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "mm/time",
-                                    style = MaterialTheme.typography.bodyMedium
+                                OutlinedTextField(
+                                    value = String.format("%.2f", precipitationThreshold),
+                                    onValueChange = {},
+                                    readOnly = true,
+                                    label = { Text("Verdi") },
+                                    modifier = Modifier
+                                        .width(80.dp)
+                                        .padding(start = 8.dp),
+                                    singleLine = true,
+                                    enabled = false
                                 )
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Slider(
-                                value = precipitationThreshold,
-                                onValueChange = {
-                                    val rounded = String.format("%.2f", it).toFloat()
-                                    precipitationThreshold = rounded
-                                    precipitationText = String.format("%.2f", rounded)
-                                },
-                                valueRange = 0f..20f,
-                                colors = SliderDefaults.colors(
-                                    thumbColor = MaterialTheme.colorScheme.primary,
-                                    activeTrackColor = MaterialTheme.colorScheme.primary,
-                                    inactiveTrackColor = MaterialTheme.colorScheme.primaryContainer
-                                )
-                            )
                         }
                     }
 
@@ -456,53 +418,41 @@ fun SettingsPopup(
                                 .fillMaxWidth()
                                 .padding(24.dp)
                         ) {
+                            Text(
+                                text = "Bølgehøyde:",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = "Bølgehøyde:",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                OutlinedTextField(
-                                    value = waveHeightText,
+                                Slider(
+                                    value = waveHeightThreshold,
                                     onValueChange = {
-                                        val filtered = it.replace(',', '.')
-                                        waveHeightText = filtered
-                                        filtered.toFloatOrNull()?.let { value ->
-                                            if (value in 0f..10f) {
-                                                waveHeightThreshold = String.format("%.2f", value).toFloat()
-                                                waveHeightText = String.format("%.2f", value)
-                                            }
-                                        }
+                                        val rounded = (Math.round(it * 100) / 100f)
+                                        waveHeightThreshold = rounded
                                     },
-                                    modifier = Modifier.width(70.dp),
-                                    textStyle = MaterialTheme.typography.bodyMedium,
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                    singleLine = true
+                                    valueRange = 0f..5f,
+                                    steps = 499,
+                                    modifier = Modifier.weight(1f),
+                                    colors = SliderDefaults.colors(
+                                        thumbColor = MaterialTheme.colorScheme.primary,
+                                        activeTrackColor = MaterialTheme.colorScheme.primary,
+                                        inactiveTrackColor = MaterialTheme.colorScheme.primaryContainer
+                                    )
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "m",
-                                    style = MaterialTheme.typography.bodyMedium
+                                OutlinedTextField(
+                                    value = String.format("%.2f", waveHeightThreshold),
+                                    onValueChange = {},
+                                    readOnly = true,
+                                    label = { Text("Verdi") },
+                                    modifier = Modifier
+                                        .width(80.dp)
+                                        .padding(start = 8.dp),
+                                    singleLine = true,
+                                    enabled = false
                                 )
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Slider(
-                                value = waveHeightThreshold,
-                                onValueChange = {
-                                    val rounded = String.format("%.2f", it).toFloat()
-                                    waveHeightThreshold = rounded
-                                    waveHeightText = String.format("%.2f", rounded)
-                                },
-                                valueRange = 0f..10f,
-                                colors = SliderDefaults.colors(
-                                    thumbColor = MaterialTheme.colorScheme.primary,
-                                    activeTrackColor = MaterialTheme.colorScheme.primary,
-                                    inactiveTrackColor = MaterialTheme.colorScheme.primaryContainer
-                                )
-                            )
                         }
                     }
 

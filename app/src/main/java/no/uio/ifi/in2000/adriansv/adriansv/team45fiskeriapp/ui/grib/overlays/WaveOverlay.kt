@@ -18,12 +18,13 @@ import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.layers.SymbolLayer
 import org.maplibre.android.style.sources.GeoJsonOptions
 import org.maplibre.android.style.sources.GeoJsonSource
+import java.util.Locale
 
 object WaveOverlay {
     private const val SOURCE_ID = "wave-source"
     private const val FOG_LAYER_ID = "wave-fog-layer"
     private const val ICON_LAYER_ID = "wave-icon-layer"
-    private const val WAVE_ICON_ID = "wave_icon"
+    private const val WAVE_ICON_ID = "wave-icon"
     private const val TEXT_LAYER_ID = "wave-text-layer"
     private const val CLUSTER_LAYER_ID = "wave-cluster-layer"
 
@@ -55,14 +56,19 @@ object WaveOverlay {
             val bmp = getBitmapFromVectorDrawable(context, R.drawable.red)
             if (bmp != null) style.addImage("red", bmp)
         }
+    }
+
+    private fun addWaveIcons(context: Context, style: Style, isDarkMode: Boolean) {
         if (style.getImage(WAVE_ICON_ID) == null) {
-            val bmp = getBitmapFromVectorDrawable(context, R.drawable.wave)
+            val drawableId = if (isDarkMode) R.drawable.dark_wave else R.drawable.wave
+            val bmp = getBitmapFromVectorDrawable(context, drawableId)
             if (bmp != null) style.addImage(WAVE_ICON_ID, bmp)
         }
     }
 
     fun addOrUpdate(context: Context, style: Style, points: List<GribPoint>, spatialGrid: SpatialGrid, isDarkMode: Boolean) {
         addFogImages(context, style)
+        addWaveIcons(context, style, isDarkMode)
         val features = JSONArray()
         Log.d("WaveOverlay", "Antall punkter til overlay: ${points.size}")
         Log.d("WaveOverlay", "Antall punkter som tegnes: ${points.size}")
@@ -70,7 +76,7 @@ object WaveOverlay {
         points.forEach { point ->
             val data = point.data ?: return@forEach
             val value = data.waveHeight ?: 0f
-            val roundedValue = String.format("%.1f", value).replace(',', '.').toDouble()
+            val roundedValue = String.format(Locale.US, "%.2f", value).replace(',', '.').toDouble()
             val threshold = GribOverlayUtil.currentThresholds["wave"] ?: 0.3
             val fog = WaveOverlayUtil.getFogImageName(value.toDouble(), threshold)
             val ratio = value / threshold

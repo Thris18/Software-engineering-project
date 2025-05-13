@@ -18,6 +18,7 @@ import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.layers.SymbolLayer
 import org.maplibre.android.style.sources.GeoJsonOptions
 import org.maplibre.android.style.sources.GeoJsonSource
+import java.util.Locale
 
 object RainOverlay {
     private const val SOURCE_ID = "rain-source"
@@ -69,7 +70,7 @@ object RainOverlay {
         points.forEach { point ->
             val data = point.data ?: return@forEach
             val value = data.precipitation ?: 0f
-            val roundedValue = String.format("%.1f", value).replace(',', '.').toDouble()
+            val roundedValue = String.format(Locale.US, "%.2f", value).replace(',', '.').toDouble()
             val threshold = GribOverlayUtil.currentThresholds["rain"] ?: 0.5
             val fog = RainOverlayUtil.getFogImageName(value.toDouble(), threshold)
             val ratio = value / threshold

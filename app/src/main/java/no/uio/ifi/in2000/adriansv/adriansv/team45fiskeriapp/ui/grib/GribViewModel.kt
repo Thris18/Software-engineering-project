@@ -72,7 +72,7 @@ class GribViewModel(
         viewModelScope.launch {
             try {
                 _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-                val allGrids = _uiState.value.gribData
+                val allGrids = gribRepository.getAllWeatherGrids()
                 val geoJson = GribOverlayUtil.mergeFeatureCollections(
                     allGrids["wind"]?.let { GribOverlayUtil.gribDataToFeatureCollection(it, "wind", "wind") } ?: "",
                     allGrids["wave"]?.let { GribOverlayUtil.gribDataToFeatureCollection(it, "wave", "wave") } ?: "",
