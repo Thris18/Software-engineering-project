@@ -13,64 +13,64 @@ class TutorialManager {
 
     private val privateSteps = listOf(
         TutorialStep(
-            title = "Velkommen til SjøSpor!",
-            description = "Her er en rask introduksjon som hjelper deg å forstå SjøSpor.",
+            title = "Velkommen til Sjøspor!",
+            description = "Her er en rask innføring, så du enkelt kommer i gang med appen!",
             targetTag = "",
             mascotResourceId = R.drawable.presenting,
             mascotPlacement = MascotPlacement.RIGHT
         ),
         TutorialStep(
-            title = "Kartvisning",
+            title = "Utforsk kartet",
             description = "På kartet kan du utforske steder å fiske, få en oversikt over fartøy, og se informasjon om fare- og værvarsel.",
             targetTag = "kart_button",
             mascotResourceId = R.drawable.nedvenstre,
             mascotPlacement = MascotPlacement.LEFT
         ),
         TutorialStep(
-            title = "Profilsiden",
-            description = "Her kan du lage din profil, endre dine innstillinger og loggføre dine favorittfangster!",
+            title = "Profilsiden din",
+            description = "Her kan du tilpasse profilen din, endre dine innstillinger og loggføre dine fangster.",
             targetTag = "profile_button",
             mascotResourceId = R.drawable.nedhoyre,
             mascotPlacement = MascotPlacement.RIGHT
         ),
         TutorialStep(
-            title = "Søkefunksjonen",
-            description = "Bruk søkefunksjonen for å finne steder!",
+            title = "Finn et sted",
+            description = "Bruk søkefeltet til å finne steder du vil fiske eller utforske.",
             targetTag = "search_bar",
             mascotResourceId = R.drawable.pekopp,
             mascotPlacement = MascotPlacement.BOTTOM
         ),
         TutorialStep(
             title = "Lyst til å sjekke værmeldingen?",
-            description = "Bruk værvarselssiden for 10 dagers varsel",
+            description = "Hold deg oppdatert med 10-dagers varsel for området du er i.",
             targetTag = "weather_button",
             mascotResourceId = R.drawable.nedhoyre,
             mascotPlacement = MascotPlacement.LEFT
         ),
         TutorialStep(
             title = "Båtvettregler",
-            description = "Før du ferder på sjøen, er det viktig å vite om reglene!",
+            description = "Før du ferder på sjøen, er det viktig å vite om båtvettreglene!",
             targetTag = "boat_rules_button",
             mascotResourceId = R.drawable.tilhoyre,
             mascotPlacement = MascotPlacement.BOTTOM
         ),
         TutorialStep(
             title = "Fiskeloggen",
-            description = "I Fiskeloggen kan du lagre dine fisker og plassere de på kartet der du fikk de!",
+            description = "I Fiskeloggen kan du lagre dine fangster og markere de på kartet der du fikk de.",
             targetTag = "fish_log_button",
             mascotResourceId = R.drawable.tilhoyre,
             mascotPlacement = MascotPlacement.BOTTOM
         ),
         TutorialStep(
-            title = "Fisketuren",
-            description = "Trykk her for å starte en ny tur! Appen holder styr på tid og fangstene dine, som du ser igjen i Min Profil!",
+            title = "Start en fisketur",
+            description = "Trykk her for å starte en ny tur! Appen logger ruten og fangstene automatisk for deg!",
             targetTag = "fishing_trip_button",
             mascotResourceId = R.drawable.tilhoyre,
             mascotPlacement = MascotPlacement.BOTTOM
         ),
         TutorialStep(
-            title = "Da er du klar !",
-            description = "Nå vet du det mest grunnleggende for SjøSpor!",
+            title = "Klar for å bruke Sjøspor!",
+            description = "Nå har du lært det viktigste - god tur!",
             targetTag = "",
             mascotResourceId = R.drawable.presenting,
             mascotPlacement = MascotPlacement.RIGHT,
