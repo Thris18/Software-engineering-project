@@ -363,7 +363,6 @@ fun ProfileScreen(
                 showShips = showShips,
                 onDarkModeChange = { newDarkMode ->
                     onDarkModeChange(newDarkMode)
-                    showSettings = false
                 },
                 onGribFilterChanged = onGribFilterChanged,
                 onAlertsFilterChanged = onAlertsFilterChanged,
