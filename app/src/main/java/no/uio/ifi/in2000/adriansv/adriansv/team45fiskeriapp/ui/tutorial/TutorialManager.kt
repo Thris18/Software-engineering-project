@@ -2,42 +2,26 @@ package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.tutorial
 
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.DpOffset
-import androidx.compose.ui.unit.dp
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.R
 
 class TutorialManager {
     var tutorialState by mutableStateOf(TutorialState())
         private set
 
-    // For bakoverkompatibilitet
     val isCompleted: Boolean
         get() = tutorialState.isCompleted
 
-    val isVisible: Boolean
-        get() = tutorialState.isVisible
-
-    val currentStep: Int
-        get() = tutorialState.currentStepIndex
-
-    val steps: List<TutorialStep>
-        get() = privateSteps.toList()
-
-    fun getCurrentStep(): TutorialStep? = tutorialState.currentStepData
-
-    fun isLastStep(): Boolean = tutorialState.currentStepIndex >= privateSteps.size - 1
-
     private val privateSteps = listOf(
         TutorialStep(
-            title = "Velkommen til appen!",
-            description = "Dette er en rask introduksjon som hjelper deg å forstå appen.",
+            title = "Velkommen til SjøSpor!",
+            description = "Her er en rask introduksjon som hjelper deg å forstå SjøSpor.",
             targetTag = "",
             mascotResourceId = R.drawable.presenting,
             mascotPlacement = MascotPlacement.RIGHT
         ),
         TutorialStep(
             title = "Kartvisning",
-            description = "Her på kartet kan du utforske fiskesteder, interagere med andre fartøy, og bli varslet om fare- og værvarsel.",
+            description = "På kartet kan du utforske steder å fiske, få en oversikt over fartøy, og se informasjon om fare- og værvarsel.",
             targetTag = "kart_button",
             mascotResourceId = R.drawable.nedvenstre,
             mascotPlacement = MascotPlacement.LEFT
@@ -51,7 +35,7 @@ class TutorialManager {
         ),
         TutorialStep(
             title = "Søkefunksjonen",
-            description = "Bruk søkefunksjonen for å finne steder og andre fiskere!",
+            description = "Bruk søkefunksjonen for å finne steder!",
             targetTag = "search_bar",
             mascotResourceId = R.drawable.pekopp,
             mascotPlacement = MascotPlacement.BOTTOM
@@ -72,7 +56,7 @@ class TutorialManager {
         ),
         TutorialStep(
             title = "Fiskeloggen",
-            description = "I Fiske oggen kan du lagre dine fisker og plassere de på kartet der du fikk de!",
+            description = "I Fiskeloggen kan du lagre dine fisker og plassere de på kartet der du fikk de!",
             targetTag = "fish_log_button",
             mascotResourceId = R.drawable.tilhoyre,
             mascotPlacement = MascotPlacement.BOTTOM
@@ -86,7 +70,7 @@ class TutorialManager {
         ),
         TutorialStep(
             title = "Da er du klar !",
-            description = "Nå vet du det mest grunnleggende for Fiske-appen!",
+            description = "Nå vet du det mest grunnleggende for SjøSpor!",
             targetTag = "",
             mascotResourceId = R.drawable.presenting,
             mascotPlacement = MascotPlacement.RIGHT,

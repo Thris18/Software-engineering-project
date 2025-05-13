@@ -16,7 +16,6 @@ import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.weather.TimeSe
 import org.threeten.bp.LocalDate
 import org.threeten.bp.format.DateTimeFormatter
 import java.util.*
-import com.google.android.gms.maps.model.LatLng
 
 @Composable
 fun WeatherForecast(weather: LocationWeather?) {
@@ -36,7 +35,7 @@ fun WeatherForecast(weather: LocationWeather?) {
     ) {
         // Går gjennom hver dag og viser et kort for hver dag
         groupedByDay.forEach { (date, entries) ->
-            val isExpanded = expandedDays[date] ?: false
+            val isExpanded = expandedDays[date] == true
 
             // Hvis dagen er utvidet, vises alle timene, ellers filtreres hovedperiodene
             val filtered = if (isExpanded) entries else filterByMainPeriods(entries)

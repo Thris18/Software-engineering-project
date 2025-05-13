@@ -1,4 +1,6 @@
-package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib
+package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.utils
+
+import android.util.Log
 
 object WaveOverlayUtil {
     fun getFogImageName(value: Double, threshold: Double): String {
@@ -8,7 +10,7 @@ object WaveOverlayUtil {
             ratio < 1.9 -> "yellow"
             else -> "red"
         }
-        android.util.Log.d("WaveOverlayUtil", "Bølgehøyde: $value, threshold: $threshold, ratio: $ratio, bilde: $fog")
+        Log.d("WaveOverlayUtil", "Bølgehøyde: $value, threshold: $threshold, ratio: $ratio, bilde: $fog")
         return fog
     }
-} 
+}

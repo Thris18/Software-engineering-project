@@ -9,30 +9,70 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.grib.GribRepository
-import org.maplibre.android.maps.MapLibreMap
-import org.maplibre.android.maps.Style
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.utils.GribOverlayUtil
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.grib.GribData
 
 private const val TAG = "GribViewModel"
 
 data class GribUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
-    val geoJson: String? = null
+    val geoJson: String? = null,
+    val gribData: Map<String, GribData?> = emptyMap()
 )
 
 class GribViewModel(
-    private val gribRepository: GribRepository
+    private val gribRepository: GribRepository,
+    private val context: Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(GribUiState())
     val uiState: StateFlow<GribUiState> = _uiState.asStateFlow()
 
+    init {
+        initializeGribOverlay()
+    }
+
+    private fun initializeGribOverlay() {
+        viewModelScope.launch {
+            try {
+                GribOverlayUtil.initialize(context)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error initializing GRIB overlay", e)
+                _uiState.value = _uiState.value.copy(
+                    error = e.message ?: "Unknown error initializing GRIB overlay"
+                )
+            }
+        }
+    }
+
+    fun updateGribVisibility(showGrib: Boolean) {
+        viewModelScope.launch {
+            try {
+                val newGribData = if (showGrib) {
+                    gribRepository.getAllWeatherGrids()
+                } else {
+                    emptyMap()
+                }
+                _uiState.value = _uiState.value.copy(gribData = newGribData)
+                
+                if (showGrib) {
+                    loadGribOverlayData()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error updating GRIB visibility", e)
+                _uiState.value = _uiState.value.copy(
+                    error = e.message ?: "Unknown error updating GRIB visibility"
+                )
+            }
+        }
+    }
 
     fun loadGribOverlayData() {
         viewModelScope.launch {
             try {
                 _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-                val allGrids = gribRepository.getAllWeatherGrids()
+                val allGrids = _uiState.value.gribData
                 val geoJson = GribOverlayUtil.mergeFeatureCollections(
                     allGrids["wind"]?.let { GribOverlayUtil.gribDataToFeatureCollection(it, "wind", "wind") } ?: "",
                     allGrids["wave"]?.let { GribOverlayUtil.gribDataToFeatureCollection(it, "wave", "wave") } ?: "",
@@ -51,9 +91,5 @@ class GribViewModel(
                 )
             }
         }
-    }
-
-    fun clearError() {
-        _uiState.value = _uiState.value.copy(error = null)
     }
 } 

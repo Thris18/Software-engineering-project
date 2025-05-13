@@ -1,7 +1,7 @@
-package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.farevarsel
+package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.alerts
 
+import android.annotation.SuppressLint
 import android.content.Context
-import android.location.Geocoder
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,16 +12,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.farevarsel.GeoJsonRepository
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.alerts.GeoJsonRepository
 import org.json.JSONObject
 import org.maplibre.android.geometry.LatLng
-import java.util.Locale
 import java.net.URL
 import java.net.URLEncoder
-import org.json.JSONArray
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import java.io.IOException
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 private const val TAG = "GeoJsonViewModel"
 private const val MAPTILER_API_KEY = "oMZQoq4zniKOHeMvi7oA"
@@ -44,7 +43,6 @@ data class SearchSuggestion(
 
 class GeoJsonViewModel(private val applicationContext: Context) : ViewModel() {
     private val repository = GeoJsonRepository.GeoJsonRepositoryImpl()
-    private val httpClient = OkHttpClient()
 
     private val _uiState = MutableStateFlow(MapUiState(isLoading = true))
     val uiState: StateFlow<MapUiState> = _uiState.asStateFlow()
@@ -173,14 +171,15 @@ class GeoJsonViewModel(private val applicationContext: Context) : ViewModel() {
 
         val latDistance = Math.toRadians(lat2 - lat1)
         val lonDistance = Math.toRadians(lon2 - lon1)
-        val a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2) +
-                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
-                Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2)
-        val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+        val a = sin(latDistance / 2) * sin(latDistance / 2) +
+                cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
+                sin(lonDistance / 2) * sin(lonDistance / 2)
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
 
         return r * c
     }
 
+    @SuppressLint("DefaultLocale")
     private fun formatDistance(distance: Double): String {
         return when {
             distance < 1 -> "${(distance * 1000).toInt()} m"
@@ -197,7 +196,5 @@ class GeoJsonViewModel(private val applicationContext: Context) : ViewModel() {
         _uiState.update { it.copy(selectedAlert = alert) }
     }
 
-    fun retry() {
-        loadGeoJsonData()
-    }
+
 }

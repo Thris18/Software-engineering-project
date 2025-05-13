@@ -6,7 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.grib.GribData
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.grib.GribPoint
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.GribDirectionUtil
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.core.utils.CalculateUtil
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.sqrt
@@ -282,8 +282,8 @@ interface GribRepository {
                 windU.copy(
                     uValues = windU.values,
                     vValues = windV.values,
-                    windSpeed = GribDirectionUtil.calculateSpeedFromUV(windU.values[0].toDouble(), windV.values[0].toDouble()),
-                    windDirection = GribDirectionUtil.calculateDirectionFromUV(windU.values[0].toDouble(), windV.values[0].toDouble())
+                    windSpeed = CalculateUtil.calculateSpeedFromUV(windU.values[0].toDouble(), windV.values[0].toDouble()),
+                    windDirection = CalculateUtil.calculateDirectionFromUV(windU.values[0].toDouble(), windV.values[0].toDouble())
                 )
             } else null
 
@@ -294,8 +294,8 @@ interface GribRepository {
                 currentU.copy(
                     uValues = currentU.values,
                     vValues = currentV.values,
-                    currentSpeed = GribDirectionUtil.calculateSpeedFromUV(currentU.values[0].toDouble(), currentV.values[0].toDouble()),
-                    currentDirection = GribDirectionUtil.calculateDirectionFromUV(currentU.values[0].toDouble(), currentV.values[0].toDouble())
+                    currentSpeed = CalculateUtil.calculateSpeedFromUV(currentU.values[0].toDouble(), currentV.values[0].toDouble()),
+                    currentDirection = CalculateUtil.calculateDirectionFromUV(currentU.values[0].toDouble(), currentV.values[0].toDouble())
                 )
             } else null
 

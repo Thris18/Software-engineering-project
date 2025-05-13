@@ -2,7 +2,6 @@ package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.navigation
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -26,7 +25,6 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherScreen
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.tutorial.rememberTutorialManager
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.tutorial.TutorialManager
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -79,9 +77,6 @@ fun NavigationHandler() {
     var description by remember { mutableStateOf("") }
     var weight by remember { mutableStateOf("") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
-
-    // State for å styre visning av popup-er
-    var showSettingsPopup by remember { mutableStateOf(false) }
 
     // Tema
     Team45FiskeriAppTheme(darkTheme = isDarkMode) {

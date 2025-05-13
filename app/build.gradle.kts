@@ -100,7 +100,8 @@ dependencies {
     implementation(libs.play.services.maps)
     implementation(libs.androidx.appcompat.resources) // Required by NetCDF
     implementation(libs.play.services.maps)
-    implementation(libs.androidx.animation.graphics.android) // Required by NetCDF
+    implementation(libs.androidx.animation.graphics.android)
+    implementation(libs.androidx.exifinterface) // Required by NetCDF
 
     // Testing
     testImplementation("junit:junit:4.13.2")

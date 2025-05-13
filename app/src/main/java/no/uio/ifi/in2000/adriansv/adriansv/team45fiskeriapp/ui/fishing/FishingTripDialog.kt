@@ -10,7 +10,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import java.time.Duration
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.delay
 import android.Manifest
 import android.content.Context
@@ -22,7 +21,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import android.location.Location
 import android.location.LocationManager
-import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.location.LocationRequest
@@ -47,7 +45,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.fish.FishLogRepository
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish.FishLogStorage
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.fish.FishLog
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish.FishLogViewModel
 import java.util.Date
@@ -91,7 +89,7 @@ fun FishingTripDialog(
     val context = LocalContext.current
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
     val locationManager = remember { context.getSystemService(Context.LOCATION_SERVICE) as LocationManager }
-    val fishLogRepository = remember { FishLogRepository(context) }
+    val fishLogRepository = remember { FishLogStorage(context) }
     val fishLogs by fishLogRepository.fishLogs.collectAsState(initial = emptyList())
     
     val cameraLauncher = rememberLauncherForActivityResult(

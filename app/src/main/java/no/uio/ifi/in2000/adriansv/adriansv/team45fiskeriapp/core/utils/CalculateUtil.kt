@@ -1,9 +1,9 @@
-package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib
+package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.core.utils
 
-import java.lang.Math.toDegrees
 import kotlin.math.atan2
+import kotlin.math.sqrt
 
-object GribDirectionUtil {
+object CalculateUtil {
 
     fun calculateWindRotation(windDirection: Float): Float {
         // Konverter meteorologisk retning (hvor vinden kommer fra) til pilrotasjon
@@ -11,23 +11,19 @@ object GribDirectionUtil {
         return (windDirection + 180) % 360
     }
 
-
     fun calculateCurrentRotation(currentDirection: Float): Float {
         // Strømretning er allerede hvor strømmen går, så vi trenger ikke å justere
         return currentDirection
     }
 
-
     fun calculateDirectionFromUV(u: Double, v: Double): Float {
         // Beregn retning i grader (0-360)
-        val direction = toDegrees(atan2(v, u))
+        val direction = Math.toDegrees(atan2(v, u))
         // Konverter til positiv vinkel
         return ((direction + 360) % 360).toFloat()
     }
 
-
-
     fun calculateSpeedFromUV(u: Double, v: Double): Float {
-        return kotlin.math.sqrt(u * u + v * v).toFloat()
+        return sqrt(u * u + v * v).toFloat()
     }
-} 
+}

@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.fish.FishLogRepository
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish.FishLogStorage
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.fish.FishLog
 import java.io.File
 import java.io.FileOutputStream
@@ -23,7 +23,7 @@ data class FishLogUiState(
 )
 
 class FishLogViewModel(context: Context) : ViewModel() {
-    private val repository = FishLogRepository(context)
+    private val repository = FishLogStorage(context)
     private val _uiState = MutableStateFlow(FishLogUiState())
     val uiState: StateFlow<FishLogUiState> = _uiState.asStateFlow()
     private val appContext = context.applicationContext

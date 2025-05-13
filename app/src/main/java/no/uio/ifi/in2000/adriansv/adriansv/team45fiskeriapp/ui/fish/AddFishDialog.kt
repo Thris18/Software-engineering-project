@@ -16,12 +16,10 @@ import java.util.Date
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.PhotoLibrary
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.Image
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.rememberAsyncImagePainter
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.ImeAction
 import androidx.core.content.ContextCompat
@@ -240,21 +238,6 @@ fun AddFishDialog(
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
-
-                // Posisjonsknapp
-                Button(
-                    onClick = onSelectLocation,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.LocationOn,
-                        contentDescription = "Velg posisjon"
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Velg posisjon på kartet")
-                }
 
                 // Vis koordinater kun hvis brukeren har valgt et punkt gjennom kartet
                 if (latitude != 0.0 && longitude != 0.0 && selectedLocationForFish != null) {

@@ -1,17 +1,11 @@
-package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib
+package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.utils
 
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.grib.GribPoint
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.grib.GribData
+import android.content.Context
 import android.graphics.Color
-import android.util.Log
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.core.utils.CalculateUtil
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.grib.GribData
 import org.json.JSONArray
 import org.json.JSONObject
-import kotlin.math.atan2
-import kotlin.math.cos
-import kotlin.math.sin
-import kotlin.math.sqrt
-import android.content.Context
-import android.content.SharedPreferences
 
 object GribOverlayUtil {
     private const val PREFS_NAME = "GribThresholds"
@@ -167,8 +161,8 @@ object GribOverlayUtil {
                         val properties = if (type in listOf("wind", "strom")) {
                             val u = gribData.uValues?.get(index)?.toDouble() ?: 0.0
                             val v = gribData.vValues?.get(index)?.toDouble() ?: 0.0
-                            val speed = GribDirectionUtil.calculateSpeedFromUV(u, v)
-                            val direction = GribDirectionUtil.calculateDirectionFromUV(u, v)
+                            val speed = CalculateUtil.calculateSpeedFromUV(u, v)
+                            val direction = CalculateUtil.calculateDirectionFromUV(u, v)
                             """{"type": "$type", "value": $speed, "icon": "$icon", "color": "$color", "radius": $radius, "u": $u, "v": $v, "direction": $direction}"""
                         } else {
                             """{"type": "$type", "value": $value, "icon": "$icon", "color": "$color", "radius": $radius}"""
@@ -206,4 +200,4 @@ object GribOverlayUtil {
         merged.put("features", allFeatures)
         return merged.toString()
     }
-} 
+}

@@ -1,4 +1,4 @@
-package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib
+package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.overlays
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -7,17 +7,17 @@ import android.util.Log
 import androidx.appcompat.content.res.AppCompatResources
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.R
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.grib.GribPoint
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.core.utils.CalculateUtil
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.SpatialGrid
+import org.json.JSONArray
+import org.json.JSONObject
 import org.maplibre.android.maps.Style
+import org.maplibre.android.style.expressions.Expression
 import org.maplibre.android.style.layers.Property
 import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.layers.SymbolLayer
-import org.maplibre.android.style.sources.GeoJsonSource
-import org.maplibre.android.style.layers.PropertyFactory.*
-import org.json.JSONObject
-import org.json.JSONArray
-import org.maplibre.android.style.expressions.Expression
 import org.maplibre.android.style.sources.GeoJsonOptions
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.SpatialGrid
+import org.maplibre.android.style.sources.GeoJsonSource
 
 object CurrentOverlay {
     private const val SOURCE_ID = "current-source"
@@ -72,7 +72,7 @@ object CurrentOverlay {
             val data = point.data ?: return@forEach
             val speed = data.currentSpeed ?: 0f
             val direction = data.currentDirection ?: 0f
-            val rotation = GribDirectionUtil.calculateCurrentRotation(direction)
+            val rotation = CalculateUtil.calculateCurrentRotation(direction)
             val roundedSpeed = String.format("%.1f", speed).replace(',', '.').toDouble()
             if (spatialGrid.isFarFromAll(point.latitude, point.longitude)) {
                 Log.d("CurrentOverlay", "Strømpunkt: ${point.latitude}, ${point.longitude}, speed: $speed (TEGNES)")
@@ -107,11 +107,13 @@ object CurrentOverlay {
         if (source != null) {
             source.setGeoJson(geoJson)
         } else {
-            style.addSource(GeoJsonSource(
-                SOURCE_ID,
-                geoJson,
-                GeoJsonOptions().withCluster(true).withClusterRadius(50)
-            ))
+            style.addSource(
+                GeoJsonSource(
+                    SOURCE_ID,
+                    geoJson,
+                    GeoJsonOptions().withCluster(true).withClusterRadius(50)
+                )
+            )
         }
 
         // Legg til/oppdater lag
@@ -119,20 +121,22 @@ object CurrentOverlay {
             style.addLayer(
                 SymbolLayer(ARROW_LAYER_ID, SOURCE_ID)
                     .withProperties(
-                        iconImage(ARROW_ICON_ID),
-                        iconSize(Expression.interpolate(
-                            Expression.linear(), Expression.zoom(),
-                            Expression.stop(5, 0.02f),
-                            Expression.stop(10, 0.04f),
-                            Expression.stop(15, 0.08f)
-                        )),
-                        iconAllowOverlap(true),
-                        iconIgnorePlacement(true),
-                        iconRotate(Expression.get("rotation")),
-                        iconTranslate(arrayOf(0f, 20f)),
-                        iconTranslateAnchor(Property.ICON_TRANSLATE_ANCHOR_VIEWPORT),
-                        iconAnchor(Property.ICON_ANCHOR_CENTER),
-                        iconOpacity(
+                        PropertyFactory.iconImage(ARROW_ICON_ID),
+                        PropertyFactory.iconSize(
+                            Expression.interpolate(
+                                Expression.linear(), Expression.zoom(),
+                                Expression.stop(5, 0.02f),
+                                Expression.stop(10, 0.04f),
+                                Expression.stop(15, 0.08f)
+                            )
+                        ),
+                        PropertyFactory.iconAllowOverlap(true),
+                        PropertyFactory.iconIgnorePlacement(true),
+                        PropertyFactory.iconRotate(Expression.get("rotation")),
+                        PropertyFactory.iconTranslate(arrayOf(0f, 20f)),
+                        PropertyFactory.iconTranslateAnchor(Property.ICON_TRANSLATE_ANCHOR_VIEWPORT),
+                        PropertyFactory.iconAnchor(Property.ICON_ANCHOR_CENTER),
+                        PropertyFactory.iconOpacity(
                             Expression.step(
                                 Expression.zoom(),
                                 Expression.literal(0f),
@@ -148,11 +152,11 @@ object CurrentOverlay {
                 SymbolLayer(ICON_LAYER_ID, SOURCE_ID)
                     .withFilter(Expression.not(Expression.has("point_count")))
                     .withProperties(
-                        iconImage(CURRENT_ICON_ID),
-                        iconSize(0.5f),
-                        iconAllowOverlap(true),
-                        iconIgnorePlacement(true),
-                        iconAnchor(Property.ICON_ANCHOR_CENTER)
+                        PropertyFactory.iconImage(CURRENT_ICON_ID),
+                        PropertyFactory.iconSize(0.5f),
+                        PropertyFactory.iconAllowOverlap(true),
+                        PropertyFactory.iconIgnorePlacement(true),
+                        PropertyFactory.iconAnchor(Property.ICON_ANCHOR_CENTER)
                     )
             )
         }
@@ -161,29 +165,33 @@ object CurrentOverlay {
             style.addLayer(
                 SymbolLayer(TEXT_LAYER_ID, SOURCE_ID)
                     .withProperties(
-                        textField(Expression.concat(
-                            Expression.toString(Expression.get("speed")),
-                            Expression.literal(" m/s")
-                        )),
-                        textSize(Expression.interpolate(
-                            Expression.linear(), Expression.zoom(),
-                            Expression.stop(5, 8f),
-                            Expression.stop(10, 12f),
-                            Expression.stop(15, 16f)
-                        )),
-                        textAllowOverlap(true),
-                        textIgnorePlacement(true),
-                        textOffset(arrayOf(0f, 3.5f)),
-                        textAnchor(Property.TEXT_ANCHOR_CENTER),
-                        textOpacity(
+                        PropertyFactory.textField(
+                            Expression.concat(
+                                Expression.toString(Expression.get("speed")),
+                                Expression.literal(" m/s")
+                            )
+                        ),
+                        PropertyFactory.textSize(
+                            Expression.interpolate(
+                                Expression.linear(), Expression.zoom(),
+                                Expression.stop(5, 8f),
+                                Expression.stop(10, 12f),
+                                Expression.stop(15, 16f)
+                            )
+                        ),
+                        PropertyFactory.textAllowOverlap(true),
+                        PropertyFactory.textIgnorePlacement(true),
+                        PropertyFactory.textOffset(arrayOf(0f, 3.5f)),
+                        PropertyFactory.textAnchor(Property.TEXT_ANCHOR_CENTER),
+                        PropertyFactory.textOpacity(
                             Expression.step(
                                 Expression.zoom(),
                                 Expression.literal(0f),
                                 Expression.literal(7.0), Expression.literal(1f)
                             )
                         ),
-                        textHaloColor("#ffffff"),
-                        textHaloWidth(1.0f)
+                        PropertyFactory.textHaloColor("#ffffff"),
+                        PropertyFactory.textHaloWidth(1.0f)
                     )
             )
         }
@@ -194,16 +202,16 @@ object CurrentOverlay {
                 SymbolLayer("current-cluster-layer", SOURCE_ID)
                     .withFilter(Expression.has("point_count"))
                     .withProperties(
-                        iconImage(CURRENT_ICON_ID),
-                        iconSize(0.6f),
-                        iconAllowOverlap(true),
-                        iconIgnorePlacement(true),
-                        textField(Expression.get("point_count")),
-                        textSize(14f),
-                        textColor("#000000"),
-                        textHaloColor("#ffffff"),
-                        textHaloWidth(2.0f),
-                        textAnchor(Property.TEXT_ANCHOR_CENTER)
+                        PropertyFactory.iconImage(CURRENT_ICON_ID),
+                        PropertyFactory.iconSize(0.6f),
+                        PropertyFactory.iconAllowOverlap(true),
+                        PropertyFactory.iconIgnorePlacement(true),
+                        PropertyFactory.textField(Expression.get("point_count")),
+                        PropertyFactory.textSize(14f),
+                        PropertyFactory.textColor("#000000"),
+                        PropertyFactory.textHaloColor("#ffffff"),
+                        PropertyFactory.textHaloWidth(2.0f),
+                        PropertyFactory.textAnchor(Property.TEXT_ANCHOR_CENTER)
                     )
             )
         }
@@ -221,4 +229,4 @@ object CurrentOverlay {
             Log.e("CurrentOverlay", "Error removing current overlay: ${e.message}")
         }
     }
-} 
+}

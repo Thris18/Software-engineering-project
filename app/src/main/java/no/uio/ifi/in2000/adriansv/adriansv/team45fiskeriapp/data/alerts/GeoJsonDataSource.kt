@@ -1,4 +1,4 @@
-package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.farevarsel
+package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.alerts
 
 import android.util.Log
 import org.json.JSONArray
