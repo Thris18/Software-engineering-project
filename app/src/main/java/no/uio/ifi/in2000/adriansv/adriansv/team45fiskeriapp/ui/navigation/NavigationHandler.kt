@@ -23,36 +23,33 @@ import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherVi
 import android.net.Uri
 import android.os.Build
 import androidx.annotation.RequiresApi
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.map.AppViewModel
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherScreen
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.tutorial.rememberTutorialManager
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NavigationHandler() {
-    // Delte tilstander
-    var currentRoute by remember { mutableStateOf("welcome") } // Starter med velkomstskjerm
-    var isDarkMode by remember { mutableStateOf(false) }
-    var showGrib by remember { mutableStateOf(true) }
-    var showAlerts by remember { mutableStateOf(true) }
-    var showShips by remember { mutableStateOf(true) }
+    val appViewModel: AppViewModel = viewModel()
     
-    // Holder styr på om navigasjon kommer fra welcome screen
-    var isComingFromWelcome by remember { mutableStateOf(false) }
-    
-    // Holder styr på om tutorialen er vist (persisteres gjennom recomposition)
-    var hasTutorialBeenShown by remember { mutableStateOf(false) }
+    // Collect state from ViewModel
+    val currentRoute by appViewModel.currentRoute.collectAsStateWithLifecycle()
+    val isDarkMode by appViewModel.isDarkMode.collectAsStateWithLifecycle()
+    val showGrib by appViewModel.showGrib.collectAsStateWithLifecycle()
+    val showAlerts by appViewModel.showAlerts.collectAsStateWithLifecycle()
+    val showShips by appViewModel.showShips.collectAsStateWithLifecycle()
+    val isComingFromWelcome by appViewModel.isComingFromWelcome.collectAsStateWithLifecycle()
+    val hasTutorialBeenShown by appViewModel.hasTutorialBeenShown.collectAsStateWithLifecycle()
+    val showSettings by appViewModel.showSettings.collectAsStateWithLifecycle()
+    val showYourInfo by appViewModel.showYourInfo.collectAsStateWithLifecycle()
+    val firstName by appViewModel.firstName.collectAsStateWithLifecycle()
+    val lastName by appViewModel.lastName.collectAsStateWithLifecycle()
+    val phoneNumber by appViewModel.phoneNumber.collectAsStateWithLifecycle()
+    val email by appViewModel.email.collectAsStateWithLifecycle()
+    val profileImageUri by appViewModel.profileImageUri.collectAsStateWithLifecycle()
     
     // Tutorial manager for å håndtere tutorial for værknappen
     val tutorialManager = rememberTutorialManager()
-
-    // Profil-tilstander
-    var showSettings by remember { mutableStateOf(false) }
-    var showYourInfo by remember { mutableStateOf(false) }
-    var firstName by remember { mutableStateOf("") }
-    var lastName by remember { mutableStateOf("") }
-    var phoneNumber by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var profileImageUri by remember { mutableStateOf<String?>(null) }
 
     // Værdata
     val weatherViewModel: WeatherViewModel = viewModel(
@@ -82,56 +79,53 @@ fun NavigationHandler() {
     Team45FiskeriAppTheme(darkTheme = isDarkMode) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
-
                 // Innholdsområde
                 Box(modifier = Modifier.weight(1f)) {
                     when (currentRoute) {
                         "welcome" -> WelcomeScreen(
                             onNavigateToHome = { 
-                                currentRoute = "kart"
-                                // Kun sett flagget hvis tutorialen ikke er vist tidligere
-                                isComingFromWelcome = !hasTutorialBeenShown
+                                appViewModel.updateCurrentRoute("kart")
+                                appViewModel.updateIsComingFromWelcome(!hasTutorialBeenShown)
                             }
                         )
                         "kart" -> MapScreen(
                             onNavigateToProfile = { 
-                                currentRoute = "profil"
-                                isComingFromWelcome = false  // Reset flagg når vi navigerer videre
+                                appViewModel.updateCurrentRoute("profil")
+                                appViewModel.updateIsComingFromWelcome(false)
                             },
                             currentRoute = currentRoute,
                             onNavigate = { route -> 
-                                currentRoute = route
-                                isComingFromWelcome = false  // Reset flagg ved navigasjon
+                                appViewModel.updateCurrentRoute(route)
+                                appViewModel.updateIsComingFromWelcome(false)
                             },
                             isDarkMode = isDarkMode,
                             showGrib = showGrib,
                             showAlerts = showAlerts,
                             showShips = showShips,
                             onGribFilterChanged = { newValue ->
-                                showGrib = newValue
-                                currentRoute = currentRoute
+                                appViewModel.updateShowGrib(newValue)
+                                appViewModel.updateCurrentRoute(currentRoute)
                             },
                             onAlertsFilterChanged = { newValue ->
-                                showAlerts = newValue
-                                currentRoute = currentRoute
+                                appViewModel.updateShowAlerts(newValue)
+                                appViewModel.updateCurrentRoute(currentRoute)
                             },
                             onShipsFilterChanged = { newValue ->
-                                showShips = newValue
-                                currentRoute = currentRoute
+                                appViewModel.updateShowShips(newValue)
+                                appViewModel.updateCurrentRoute(currentRoute)
                             },
                             onLocationSelected = if (previousRoute == "fiskelog") { lat, lon, location ->
                                 selectedLatitude = lat
                                 selectedLongitude = lon
                                 selectedLocation = location
-                                previousRoute?.let { currentRoute = it }
+                                previousRoute?.let { appViewModel.updateCurrentRoute(it) }
                                 showAddFishDialog = true
                                 previousRoute = null
                             } else null,
                             isComingFromWelcome = isComingFromWelcome && !hasTutorialBeenShown,
-                            // Når tutorialen er ferdig
                             onTutorialComplete = {
-                                hasTutorialBeenShown = true
-                                isComingFromWelcome = false
+                                appViewModel.updateHasTutorialBeenShown(true)
+                                appViewModel.updateIsComingFromWelcome(false)
                             }
                         )
                         "profil" -> ProfileScreen(
@@ -140,37 +134,37 @@ fun NavigationHandler() {
                             phoneNumber = phoneNumber,
                             email = email,
                             profileImageUri = profileImageUri,
-                            onFirstNameChange = { firstName = it },
-                            onLastNameChange = { lastName = it },
-                            onPhoneNumberChange = { phoneNumber = it },
-                            onEmailChange = { email = it },
-                            onProfileImageChange = { profileImageUri = it },
-                            onSettingsClick = { showSettings = true },
+                            onFirstNameChange = { appViewModel.updateFirstName(it) },
+                            onLastNameChange = { appViewModel.updateLastName(it) },
+                            onPhoneNumberChange = { appViewModel.updatePhoneNumber(it) },
+                            onEmailChange = { appViewModel.updateEmail(it) },
+                            onProfileImageChange = { appViewModel.updateProfileImageUri(it) },
+                            onSettingsClick = { appViewModel.updateShowSettings(true) },
                             isDarkMode = isDarkMode,
                             showGrib = showGrib,
                             showAlerts = showAlerts,
                             showShips = showShips,
                             onDarkModeChange = { newValue ->
-                                isDarkMode = newValue
-                                currentRoute = currentRoute
+                                appViewModel.updateDarkMode(newValue)
+                                appViewModel.updateCurrentRoute(currentRoute)
                             },
                             onGribFilterChanged = { newValue ->
-                                showGrib = newValue
-                                currentRoute = currentRoute
+                                appViewModel.updateShowGrib(newValue)
+                                appViewModel.updateCurrentRoute(currentRoute)
                             },
                             onAlertsFilterChanged = { newValue ->
-                                showAlerts = newValue
-                                currentRoute = currentRoute
+                                appViewModel.updateShowAlerts(newValue)
+                                appViewModel.updateCurrentRoute(currentRoute)
                             },
                             onShipsFilterChanged = { newValue ->
-                                showShips = newValue
-                                currentRoute = currentRoute
+                                appViewModel.updateShowShips(newValue)
+                                appViewModel.updateCurrentRoute(currentRoute)
                             },
-                            onFishLogClick = { currentRoute = "fiskelog" }
+                            onFishLogClick = { appViewModel.updateCurrentRoute("fiskelog") }
                         )
                         "fiskelog" -> FishLogScreen(
                             fishLogs = fishLogUiState.fishLogs,
-                            onBackClick = { currentRoute = "profil" },
+                            onBackClick = { appViewModel.updateCurrentRoute("profil") },
                             onAddFish = { 
                                 showAddFishDialog = true
                                 previousRoute = currentRoute
@@ -187,7 +181,7 @@ fun NavigationHandler() {
                 if (currentRoute != "welcome") {
                     NavigationBar(
                         currentRoute = currentRoute,
-                        onNavigate = { route -> currentRoute = route },
+                        onNavigate = { route -> appViewModel.updateCurrentRoute(route) },
                         weather = weatherUiState.weather,
                         weatherState = weatherUiState,
                         tutorialManager = tutorialManager
@@ -204,22 +198,21 @@ fun NavigationHandler() {
                     showAlerts = showAlerts,
                     showShips = showShips,
                     onDarkModeChange = { newDarkMode ->
-                        isDarkMode = newDarkMode
-                        currentRoute = currentRoute
+                        appViewModel.updateDarkMode(newDarkMode)
                     },
                     onGribFilterChanged = { newValue ->
-                        showGrib = newValue
-                        currentRoute = currentRoute
+                        appViewModel.updateShowGrib(newValue)
+                        appViewModel.updateCurrentRoute(currentRoute)
                     },
                     onAlertsFilterChanged = { newValue ->
-                        showAlerts = newValue
-                        currentRoute = currentRoute
+                        appViewModel.updateShowAlerts(newValue)
+                        appViewModel.updateCurrentRoute(currentRoute)
                     },
                     onShipsFilterChanged = { newValue ->
-                        showShips = newValue
-                        currentRoute = currentRoute
+                        appViewModel.updateShowShips(newValue)
+                        appViewModel.updateCurrentRoute(currentRoute)
                     },
-                    onDismiss = { showSettings = false }
+                    onDismiss = { appViewModel.updateShowSettings(false) }
                 )
             }
 
@@ -230,11 +223,11 @@ fun NavigationHandler() {
                     lastName = lastName,
                     phoneNumber = phoneNumber,
                     email = email,
-                    onFirstNameChange = { firstName = it },
-                    onLastNameChange = { lastName = it },
-                    onPhoneNumberChange = { phoneNumber = it },
-                    onEmailChange = { email = it },
-                    onBackClick = { showYourInfo = false }
+                    onFirstNameChange = { appViewModel.updateFirstName(it) },
+                    onLastNameChange = { appViewModel.updateLastName(it) },
+                    onPhoneNumberChange = { appViewModel.updatePhoneNumber(it) },
+                    onEmailChange = { appViewModel.updateEmail(it) },
+                    onBackClick = { appViewModel.updateShowYourInfo(false) }
                 )
             }
 
@@ -264,7 +257,7 @@ fun NavigationHandler() {
                     longitude = selectedLongitude,
                     onSelectLocation = {
                         previousRoute = currentRoute
-                        currentRoute = "kart"
+                        appViewModel.updateCurrentRoute("kart")
                         showAddFishDialog = false
                     },
                     selectedLocationForFish = selectedLocation,
