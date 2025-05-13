@@ -1,4 +1,4 @@
-package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.fish
+package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish
 
 import android.content.Context
 import android.util.Log
@@ -11,9 +11,8 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
-import kotlinx.coroutines.launch
 
-class FishLogRepository(private val context: Context) {
+class FishLogStorage(private val context: Context) {
     private val TAG = "FishLogRepository"
     private val _fishLogs = MutableStateFlow<List<FishLog>>(emptyList())
     val fishLogs: Flow<List<FishLog>> = _fishLogs.asStateFlow()
@@ -68,4 +67,4 @@ class FishLogRepository(private val context: Context) {
         _fishLogs.value = currentLogs
         saveFishLogs()
     }
-} 
+}

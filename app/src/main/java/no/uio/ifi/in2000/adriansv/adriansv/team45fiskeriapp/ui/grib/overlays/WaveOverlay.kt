@@ -1,24 +1,23 @@
-package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib
+package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.overlays
 
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.util.Log
+import androidx.appcompat.content.res.AppCompatResources
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.R
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.grib.GribPoint
-import org.maplibre.android.maps.Style
-import org.maplibre.android.style.layers.SymbolLayer
-import org.maplibre.android.style.sources.GeoJsonSource
-import org.maplibre.android.style.layers.PropertyFactory.*
-import org.json.JSONObject
-import org.json.JSONArray
-import org.maplibre.android.style.expressions.Expression.get
-import androidx.appcompat.content.res.AppCompatResources
-import org.maplibre.android.style.expressions.Expression
-import org.maplibre.android.style.sources.GeoJsonOptions
-import org.maplibre.android.style.expressions.Expression.not
-import org.maplibre.android.style.expressions.Expression.has
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.SpatialGrid
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.utils.WaveOverlayUtil
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.utils.GribOverlayUtil
+import org.json.JSONArray
+import org.json.JSONObject
+import org.maplibre.android.maps.Style
+import org.maplibre.android.style.expressions.Expression
+import org.maplibre.android.style.layers.PropertyFactory
+import org.maplibre.android.style.layers.SymbolLayer
+import org.maplibre.android.style.sources.GeoJsonOptions
+import org.maplibre.android.style.sources.GeoJsonSource
 
 object WaveOverlay {
     private const val SOURCE_ID = "wave-source"
@@ -116,17 +115,19 @@ object WaveOverlay {
         if (style.getLayer(FOG_LAYER_ID) == null) {
             style.addLayer(
                 SymbolLayer(FOG_LAYER_ID, SOURCE_ID)
-                    .withFilter(not(has("point_count")))
+                    .withFilter(Expression.not(Expression.has("point_count")))
                     .withProperties(
-                        iconImage(get("fog")),
-                        iconSize(1.5f),
-                        iconAllowOverlap(true),
-                        iconIgnorePlacement(true),
-                        iconOpacity(
+                        PropertyFactory.iconImage(Expression.get("fog")),
+                        PropertyFactory.iconSize(1.5f),
+                        PropertyFactory.iconAllowOverlap(true),
+                        PropertyFactory.iconIgnorePlacement(true),
+                        PropertyFactory.iconOpacity(
                             Expression.match(
-                                get("fog"),
-                                Expression.literal("blue"), Expression.literal(if (isDarkMode) 0.4f else 1f),
-                                Expression.literal("yellow"), Expression.literal(if (isDarkMode) 0.25f else 0.5f),
+                                Expression.get("fog"),
+                                Expression.literal("blue"),
+                                Expression.literal(if (isDarkMode) 0.4f else 1f),
+                                Expression.literal("yellow"),
+                                Expression.literal(if (isDarkMode) 0.25f else 0.5f),
                                 Expression.literal(if (isDarkMode) 0.25f else 0.4f) // default (red)
                             )
                         )
@@ -136,12 +137,12 @@ object WaveOverlay {
         if (style.getLayer(ICON_LAYER_ID) == null) {
             style.addLayer(
                 SymbolLayer(ICON_LAYER_ID, SOURCE_ID)
-                    .withFilter(not(has("point_count")))
+                    .withFilter(Expression.not(Expression.has("point_count")))
                     .withProperties(
-                        iconImage(WAVE_ICON_ID),
-                        iconSize(0.5f),
-                        iconAllowOverlap(true),
-                        iconIgnorePlacement(true)
+                        PropertyFactory.iconImage(WAVE_ICON_ID),
+                        PropertyFactory.iconSize(0.5f),
+                        PropertyFactory.iconAllowOverlap(true),
+                        PropertyFactory.iconIgnorePlacement(true)
                     )
             )
         }
@@ -149,47 +150,51 @@ object WaveOverlay {
             style.addLayer(
                 SymbolLayer(TEXT_LAYER_ID, SOURCE_ID)
                     .withProperties(
-                        textField(Expression.concat(
-                            Expression.toString(get("value")),
-                            Expression.literal(" m")
-                        )),
-                        textSize(Expression.interpolate(
-                            Expression.linear(), Expression.zoom(),
-                            Expression.stop(5, 8f),
-                            Expression.stop(10, 12f),
-                            Expression.stop(15, 16f)
-                        )),
-                        textAllowOverlap(true),
-                        textIgnorePlacement(true),
-                        textOffset(arrayOf(0f, 2f)),
-                        textAnchor("center"),
-                        textOpacity(
+                        PropertyFactory.textField(
+                            Expression.concat(
+                                Expression.toString(Expression.get("value")),
+                                Expression.literal(" m")
+                            )
+                        ),
+                        PropertyFactory.textSize(
+                            Expression.interpolate(
+                                Expression.linear(), Expression.zoom(),
+                                Expression.stop(5, 8f),
+                                Expression.stop(10, 12f),
+                                Expression.stop(15, 16f)
+                            )
+                        ),
+                        PropertyFactory.textAllowOverlap(true),
+                        PropertyFactory.textIgnorePlacement(true),
+                        PropertyFactory.textOffset(arrayOf(0f, 2f)),
+                        PropertyFactory.textAnchor("center"),
+                        PropertyFactory.textOpacity(
                             Expression.step(
                                 Expression.zoom(),
                                 Expression.literal(0f),
                                 Expression.literal(10.0), Expression.literal(1f)
                             )
                         ),
-                        textHaloColor("#ffffff"),
-                        textHaloWidth(1.0f)
+                        PropertyFactory.textHaloColor("#ffffff"),
+                        PropertyFactory.textHaloWidth(1.0f)
                     )
             )
         }
         if (style.getLayer(CLUSTER_LAYER_ID) == null) {
             style.addLayer(
                 SymbolLayer(CLUSTER_LAYER_ID, SOURCE_ID)
-                    .withFilter(has("point_count"))
+                    .withFilter(Expression.has("point_count"))
                     .withProperties(
-                        iconImage(WAVE_ICON_ID),
-                        iconSize(0.6f),
-                        iconAllowOverlap(true),
-                        iconIgnorePlacement(true),
-                        textField(get("point_count")),
-                        textSize(14f),
-                        textColor("#000000"),
-                        textHaloColor("#ffffff"),
-                        textHaloWidth(2.0f),
-                        textAnchor("center")
+                        PropertyFactory.iconImage(WAVE_ICON_ID),
+                        PropertyFactory.iconSize(0.6f),
+                        PropertyFactory.iconAllowOverlap(true),
+                        PropertyFactory.iconIgnorePlacement(true),
+                        PropertyFactory.textField(Expression.get("point_count")),
+                        PropertyFactory.textSize(14f),
+                        PropertyFactory.textColor("#000000"),
+                        PropertyFactory.textHaloColor("#ffffff"),
+                        PropertyFactory.textHaloWidth(2.0f),
+                        PropertyFactory.textAnchor("center")
                     )
             )
         }
@@ -208,4 +213,4 @@ object WaveOverlay {
             Log.e("WaveOverlay", "Error removing wave overlay: ${e.message}")
         }
     }
-} 
+}

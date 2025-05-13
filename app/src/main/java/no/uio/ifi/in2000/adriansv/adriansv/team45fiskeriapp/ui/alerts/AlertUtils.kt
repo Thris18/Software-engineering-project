@@ -1,4 +1,4 @@
-package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.farevarsel
+package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.alerts
 
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.expressions.Expression

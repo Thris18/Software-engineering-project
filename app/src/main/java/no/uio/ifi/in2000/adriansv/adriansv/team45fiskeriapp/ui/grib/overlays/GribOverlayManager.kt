@@ -1,29 +1,19 @@
-package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib
+package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.overlays
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.Drawable
 import android.util.Log
-import androidx.core.content.ContextCompat
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.R
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.grib.GribData
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.grib.GribPoint
-import org.maplibre.android.maps.Style
-import org.maplibre.android.style.layers.PropertyFactory.*
-import org.maplibre.android.style.layers.SymbolLayer
-import org.maplibre.android.style.layers.CircleLayer
-import org.maplibre.android.style.sources.GeoJsonSource
-import org.maplibre.android.style.expressions.Expression.*
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.core.utils.CalculateUtil
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.SpatialGrid
 import org.json.JSONObject
-import org.json.JSONArray
+import org.maplibre.android.maps.Style
 
 object GribOverlayManager {
     fun addOrUpdateGribOverlay(context: Context, style: Style, geoJson: String, isDarkMode: Boolean) {
         Log.d("GribOverlayManager", "Starting to add/update GRIB overlay")
         Log.d("GribOverlayManager", "GeoJSON: $geoJson")
-        
+
         try {
             val obj = JSONObject(geoJson)
             val features = obj.optJSONArray("features")
@@ -41,15 +31,15 @@ object GribOverlayManager {
                     val value = props?.optDouble("value")?.toFloat()
                     val geometry = feature.optJSONObject("geometry")
                     val coordinates = geometry?.optJSONArray("coordinates")
-                    
+
                     if (coordinates != null && coordinates.length() >= 2) {
                         val u = props?.optDouble("u")?.toFloat() ?: 0f
                         val v = props?.optDouble("v")?.toFloat() ?: 0f
-                        
+
                         // Beregn retning og hastighet fra u- og v-komponenter
-                        val direction = GribDirectionUtil.calculateDirectionFromUV(u.toDouble(), v.toDouble())
-                        val speed = GribDirectionUtil.calculateSpeedFromUV(u.toDouble(), v.toDouble())
-                        
+                        val direction = CalculateUtil.calculateDirectionFromUV(u.toDouble(), v.toDouble())
+                        val speed = CalculateUtil.calculateSpeedFromUV(u.toDouble(), v.toDouble())
+
                         val point = GribPoint(
                             latitude = coordinates.getDouble(1),
                             longitude = coordinates.getDouble(0),

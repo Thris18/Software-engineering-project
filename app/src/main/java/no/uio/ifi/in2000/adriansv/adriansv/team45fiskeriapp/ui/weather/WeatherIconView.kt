@@ -29,7 +29,7 @@ fun WeatherIconView(weatherIcon: WeatherIcon, size: Dp) {
                 </body>
             </html>
             """.trimIndent()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
 
             // Hvis det oppstår en feil, vises feilmelding
             "<html><body>Ikon mangler</body></html>"

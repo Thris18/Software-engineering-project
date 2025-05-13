@@ -230,7 +230,7 @@ fun ProfileScreen(
                         )
                         Column(modifier = Modifier.padding(start = 16.dp)) {
                             Text(
-                                text = "Fiskelog",
+                                text = "Fiskelogg",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )

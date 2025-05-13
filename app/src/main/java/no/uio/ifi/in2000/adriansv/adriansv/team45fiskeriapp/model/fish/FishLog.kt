@@ -1,6 +1,5 @@
 package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.fish
 
-import java.io.Serializable
 import java.util.Date
 
 data class FishLog(
@@ -13,4 +12,4 @@ data class FishLog(
     val latitude: Double,
     val longitude: Double,
     val timestamp: Date = Date()
-) : Serializable 
+)

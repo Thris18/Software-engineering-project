@@ -1,4 +1,4 @@
-package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.farevarsel
+package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.alerts
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
