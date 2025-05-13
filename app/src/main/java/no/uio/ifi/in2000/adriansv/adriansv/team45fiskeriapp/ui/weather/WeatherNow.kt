@@ -120,7 +120,19 @@ fun WeatherNow(weather: LocationWeather?) {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             InfoLine("Føles som", "${weather.temperature.toInt()}°")
-            InfoLine("Vind", "${weather.windSpeed} m/s fra ${weather.windDirection}°")
+            InfoLine(
+                "Vind",
+                "${weather.windSpeed} m/s fra ${weather.windDirection}° " + when (weather.windDirection.toInt()) {
+                    in 0..44 -> "↓"
+                    in 45..89 -> "↙"
+                    in 90..134 -> "←"
+                    in 135..179 -> "↖"
+                    in 180..224 -> "↑"
+                    in 225..269 -> "↗"
+                    in 270..314 -> "→"
+                    else -> "↘"
+                }
+            )
             InfoLine("Nedbør neste time", "${weather.precipitationAmount} mm")
         }
 
