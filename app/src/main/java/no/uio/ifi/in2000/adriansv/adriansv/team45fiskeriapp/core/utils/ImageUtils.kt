@@ -2,7 +2,7 @@ package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.core.utils
 
 import android.graphics.Bitmap
 import android.graphics.Matrix
-import android.media.ExifInterface
+import androidx.exifinterface.media.ExifInterface
 
 object ImageUtils {
     fun rotateBitmap(bitmap: Bitmap, orientation: Int): Bitmap {

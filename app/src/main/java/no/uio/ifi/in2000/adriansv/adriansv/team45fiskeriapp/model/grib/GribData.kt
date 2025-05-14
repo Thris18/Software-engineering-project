@@ -26,8 +26,8 @@ data class GribData(
     val lon: Float? = null,
     val time: String? = null,
     val reftime: String? = null,
-    val height_above_ground: Float? = null,
-    val height_above_ground1: Float? = null
+    val heightAboveGround: Float? = null,
+    val heightAboveGround1: Float? = null
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -66,8 +66,8 @@ data class GribData(
         if (lon != other.lon) return false
         if (time != other.time) return false
         if (reftime != other.reftime) return false
-        if (height_above_ground != other.height_above_ground) return false
-        if (height_above_ground1 != other.height_above_ground1) return false
+        if (heightAboveGround != other.heightAboveGround) return false
+        if (heightAboveGround1 != other.heightAboveGround1) return false
 
         return true
     }
@@ -98,8 +98,8 @@ data class GribData(
         result = 31 * result + (lon?.hashCode() ?: 0)
         result = 31 * result + (time?.hashCode() ?: 0)
         result = 31 * result + (reftime?.hashCode() ?: 0)
-        result = 31 * result + (height_above_ground?.hashCode() ?: 0)
-        result = 31 * result + (height_above_ground1?.hashCode() ?: 0)
+        result = 31 * result + (heightAboveGround?.hashCode() ?: 0)
+        result = 31 * result + (heightAboveGround1?.hashCode() ?: 0)
         return result
     }
 }

@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish.FishLogStorage
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.fish.FishLog
 import java.io.File
 import java.io.FileOutputStream

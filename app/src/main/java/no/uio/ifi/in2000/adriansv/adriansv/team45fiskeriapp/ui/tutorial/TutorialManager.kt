@@ -106,7 +106,7 @@ class TutorialManager {
         completeTutorial()
     }
     
-    fun completeTutorial() {
+    private fun completeTutorial() {
         tutorialState = tutorialState.copy(
             isVisible = false,
             isCompleted = true
@@ -124,10 +124,7 @@ fun rememberTutorialManager(): TutorialManager {
  * Gjør ingenting funksjonelt men bevarer API-kompatibilitet.
  */
 @Composable
-fun Modifier.tutorialTarget(
-    tag: String,
-    tutorialManager: TutorialManager
-): Modifier {
+fun Modifier.tutorialTarget(): Modifier {
     // Denne versjonen gjør ingenting, men holder API-et kompatibelt
     return this
 } 

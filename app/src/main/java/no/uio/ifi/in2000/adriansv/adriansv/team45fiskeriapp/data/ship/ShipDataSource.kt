@@ -22,15 +22,33 @@ class ShipDataSource {
             val clientId = "aayanali492@gmail.com:aayanklient"
             val clientSecret = "hemmeligheten"
 
-            val connection = URL(TOKEN_URL).openConnection() as HttpURLConnection
+            val connection = withContext(Dispatchers.IO) {
+                URL(TOKEN_URL).openConnection()
+            } as HttpURLConnection
             connection.requestMethod = "POST"
             connection.doOutput = true
             connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
 
-            val postData = URLEncoder.encode("client_id", "UTF-8") + "=" + URLEncoder.encode(clientId, "UTF-8") +
-                    "&" + URLEncoder.encode("scope", "UTF-8") + "=" + URLEncoder.encode("ais", "UTF-8") +
-                    "&" + URLEncoder.encode("client_secret", "UTF-8") + "=" + URLEncoder.encode(clientSecret, "UTF-8") +
-                    "&" + URLEncoder.encode("grant_type", "UTF-8") + "=" + URLEncoder.encode("client_credentials", "UTF-8")
+            val postData = withContext(Dispatchers.IO) {
+                URLEncoder.encode("client_id", "UTF-8")
+            } + "=" + withContext(Dispatchers.IO) {
+                URLEncoder.encode(clientId, "UTF-8")
+            } +
+                    "&" + withContext(Dispatchers.IO) {
+                URLEncoder.encode("scope", "UTF-8")
+            } + "=" + withContext(Dispatchers.IO) {
+                URLEncoder.encode("ais", "UTF-8")
+            } +
+                    "&" + withContext(Dispatchers.IO) {
+                URLEncoder.encode("client_secret", "UTF-8")
+            } + "=" + withContext(Dispatchers.IO) {
+                URLEncoder.encode(clientSecret, "UTF-8")
+            } +
+                    "&" + withContext(Dispatchers.IO) {
+                URLEncoder.encode("grant_type", "UTF-8")
+            } + "=" + withContext(Dispatchers.IO) {
+                URLEncoder.encode("client_credentials", "UTF-8")
+            }
 
             connection.outputStream.use { it.write(postData.toByteArray()) }
 
@@ -38,9 +56,9 @@ class ShipDataSource {
                 val response = connection.inputStream.bufferedReader().readText()
                 val jsonObject = JSONObject(response)
                 AccessToken(
-                    access_token = jsonObject.getString("access_token"),
-                    token_type = jsonObject.getString("token_type"),
-                    expires_in = jsonObject.getInt("expires_in")
+                    accessToken = jsonObject.getString("access_token"),
+                    tokenType = jsonObject.getString("token_type"),
+                    expiresIn = jsonObject.getInt("expires_in")
                 )
             } else {
                 val errorResponse = connection.errorStream?.bufferedReader()?.readText()
@@ -61,16 +79,13 @@ class ShipDataSource {
                 )
 
                 val connection = URL(AIS_URL).openConnection() as HttpURLConnection
-                connection.setRequestProperty("Authorization", "Bearer ${token.access_token}")
+                connection.setRequestProperty("Authorization", "Bearer ${token.accessToken}")
                 connection.setRequestProperty("Accept", "application/json")
 
                 if (connection.responseCode == 200) {
                     val response = connection.inputStream.bufferedReader().readText()
                     val jsonArray = JSONArray(response)
                     val ships = mutableListOf<Ship>()
-                    
-                    var shipsWithName = 0
-                    var shipsWithoutName = 0
 
                     for (i in 0 until jsonArray.length()) {
                         val shipJson = jsonArray.getJSONObject(i)

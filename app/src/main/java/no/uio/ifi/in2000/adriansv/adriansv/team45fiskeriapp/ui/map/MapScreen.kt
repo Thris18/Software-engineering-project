@@ -1,87 +1,122 @@
 package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.map
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.Color
+import android.net.Uri
+import android.os.Build
 import android.util.Log
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.toColorInt
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.delay
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.R
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.grib.GribRepository
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.WeatherDataSource
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather.WeatherRepository
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.fish.FishLog
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.grib.GribData
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.ship.Ship
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.alerts.AlertUtils
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.alerts.FarevarselPopup
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.alerts.GeoJsonViewModel
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.BaatvettButton
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.BaatvettOverlay
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.ProfilePopup
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.SettingsPopup
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.SokeKnapp
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.alerts.FarevarselPopup
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.alerts.GeoJsonViewModel
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish.AddFishDialog
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish.FishLogDialog
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish.FishLogViewModel
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish.utils.FishLogImageUtils
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTrip
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTripDialog
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTripStorage
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTripSummaryDialog
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.GribViewModel
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.GribViewModelFactory
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.overlays.GribOverlayManager
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.utils.GribOverlayUtil
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.map.utils.LocationTrackingUtils
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.map.utils.MapScreenshotUtils
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.map.utils.WarningIconUtils
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.ship.ShipInfoCard
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.ship.ShipViewModel
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.ship.setupShipLayer
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.ship.updateShipSource
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.theme.Team45FiskeriAppTheme
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.tutorial.TutorialOverlay
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.tutorial.rememberTutorialManager
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.tutorial.tutorialTarget
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherViewModel
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherViewModelFactory
 import org.json.JSONObject
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
-import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.MapLibreMap
-import org.maplibre.android.maps.OnMapReadyCallback
+import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.expressions.Expression
+import org.maplibre.android.style.layers.CircleLayer
 import org.maplibre.android.style.layers.FillLayer
+import org.maplibre.android.style.layers.LineLayer
 import org.maplibre.android.style.layers.Property
+import org.maplibre.android.style.layers.PropertyFactory.circleColor
+import org.maplibre.android.style.layers.PropertyFactory.circleOpacity
+import org.maplibre.android.style.layers.PropertyFactory.circleRadius
+import org.maplibre.android.style.layers.PropertyFactory.circleStrokeColor
+import org.maplibre.android.style.layers.PropertyFactory.circleStrokeWidth
+import org.maplibre.android.style.layers.PropertyFactory.fillColor
+import org.maplibre.android.style.layers.PropertyFactory.fillOpacity
+import org.maplibre.android.style.layers.PropertyFactory.fillOutlineColor
+import org.maplibre.android.style.layers.PropertyFactory.iconAllowOverlap
+import org.maplibre.android.style.layers.PropertyFactory.iconAnchor
+import org.maplibre.android.style.layers.PropertyFactory.iconIgnorePlacement
+import org.maplibre.android.style.layers.PropertyFactory.iconImage
+import org.maplibre.android.style.layers.PropertyFactory.iconOffset
+import org.maplibre.android.style.layers.PropertyFactory.iconOpacity
+import org.maplibre.android.style.layers.PropertyFactory.iconSize
+import org.maplibre.android.style.layers.PropertyFactory.lineColor
+import org.maplibre.android.style.layers.PropertyFactory.lineOpacity
+import org.maplibre.android.style.layers.PropertyFactory.lineWidth
+import org.maplibre.android.style.layers.PropertyFactory.symbolPlacement
 import org.maplibre.android.style.layers.SymbolLayer
 import org.maplibre.android.style.sources.GeoJsonSource
-import org.maplibre.android.style.layers.PropertyFactory.*
-import android.net.Uri
-import androidx.compose.foundation.Image
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish.FishLogViewModel
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish.FishLogDialog
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish.AddFishDialog
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.fish.FishLog
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.layout.ContentScale
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.R
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.tutorial.*
-import kotlinx.coroutines.delay
-import android.Manifest
-import android.content.pm.PackageManager
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import java.time.LocalDateTime
-import java.util.*
-import android.os.Build
-import androidx.annotation.RequiresApi
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTrip
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTripStorage
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTripDialog
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTripSummaryDialog
-import org.maplibre.android.style.layers.CircleLayer
-import org.maplibre.android.style.layers.LineLayer
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.GribViewModel
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.GribViewModelFactory
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.alerts.AlertUtils
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.grib.GribData
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.utils.GribOverlayUtil
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.overlays.GribOverlayManager
-import androidx.core.graphics.toColorInt
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.map.utils.MapScreenshotUtils
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.map.utils.WarningIconUtils
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish.utils.FishLogImageUtils
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.map.utils.LocationTrackingUtils
+import java.util.Date
 
 private const val TAG = "MapScreen"
 private const val SHIP_LAYER_ID = "ship-layer"
@@ -89,7 +124,6 @@ private const val SHIP_LAYER_ID = "ship-layer"
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MapScreen(
-    currentRoute: String,
     onNavigate: (String) -> Unit,
     isDarkMode: Boolean,
     showGrib: Boolean,
@@ -100,8 +134,7 @@ fun MapScreen(
     onShipsFilterChanged: (Boolean) -> Unit,
     onLocationSelected: ((Double, Double, String) -> Unit)? = null,
     isComingFromWelcome: Boolean = false,
-    onTutorialComplete: () -> Unit = {},
-    onNavigateToProfile: () -> Unit
+    onTutorialComplete: () -> Unit = {}
 ) {
     val weatherDataSource = WeatherDataSource()
     val weatherRepository = WeatherRepository.WeatherRepositoryImpl(weatherDataSource)
@@ -134,8 +167,8 @@ fun MapScreen(
     var showProfilePopup by remember { mutableStateOf(false) }
     
     // Brukerinformasjon states
-    var firstName by remember { mutableStateOf("") }
-    var lastName by remember { mutableStateOf("") }
+    val firstName by remember { mutableStateOf("") }
+    val lastName by remember { mutableStateOf("") }
     
     // Sett opp dark mode
     val isDarkTheme = isDarkMode
@@ -194,7 +227,7 @@ fun MapScreen(
     }
 
     // State for GRIB-data
-    var gribData by remember { mutableStateOf<Map<String, GribData?>>(emptyMap()) }
+    val gribData by remember { mutableStateOf<Map<String, GribData?>>(emptyMap()) }
 
     val gribViewModel: GribViewModel = viewModel(
         factory = GribViewModelFactory(
@@ -252,7 +285,7 @@ fun MapScreen(
 
     // Oppdater værvarsel når kartet er lastet
     LaunchedEffect(mapLibreMap) {
-        mapLibreMap?.getStyle { style ->
+        mapLibreMap?.getStyle {
             val osloPosition = LatLng(59.9139, 10.7522)
             val zoom = 9.0
             mapLibreMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(osloPosition, zoom))
@@ -278,7 +311,6 @@ fun MapScreen(
             fishLog = fishLog,
             loadedImages = loadedImages,
             failedImageLoads = failedImageLoads,
-            fishingTripImages = fishingTripImages,
             fishingTripName = fishingTripName,
             isFishingTripActive = isFishingTripActive,
             fishingTripStartTime = fishingTripStartTime,
@@ -493,12 +525,7 @@ fun MapScreen(
                     .align(Alignment.TopCenter)
                     .padding(top = 16.dp, start = 16.dp, end = 16.dp)
                     .zIndex(1f)
-                    .tutorialTarget("search_button", tutorialManager),
-                onSearch = { query ->
-                    if (query.isNotEmpty()) {
-                    viewModel.searchAndMoveToLocation(query)
-                    }
-                },
+                    .tutorialTarget(),
                 onQueryChange = { query ->
                     viewModel.getSearchSuggestions(query)
                 },
@@ -527,359 +554,453 @@ fun MapScreen(
 
                             // Sett opp async map loading med bedre error handling
                             try {
-                            view.getMapAsync(OnMapReadyCallback { map ->
-                                    try {
-                                        Log.d(TAG, "Map is ready, setting up style and layers")
-                                mapLibreMap = map
+                            view.getMapAsync { map ->
+                                try {
+                                    Log.d(TAG, "Map is ready, setting up style and layers")
+                                    mapLibreMap = map
 
-                                        // Velg stil basert på dark mode
-                                        val styleUrl = if (isDarkMode) {
-                                            "https://api.maptiler.com/maps/streets-v2-dark/style.json?key=oMZQoq4zniKOHeMvi7oA"
-                                        } else {
-                                            "https://api.maptiler.com/maps/streets-v2/style.json?key=oMZQoq4zniKOHeMvi7oA"
-                                        }
-                                        map.setStyle(Style.Builder().fromUri(styleUrl)) { style ->
-                                            try {
-                                                // Nullstill timeout siden kartet er lastet
-                                                mapLoadTimeout = false
-
-                                    // Set initial camera position to Oslo Fjord
-                                    val osloPosition = LatLng(59.9139, 10.7522)
-                                    val position = CameraPosition.Builder()
-                                        .target(osloPosition)
-                                        .zoom(9.0)
-                                        .build()
-                                    map.moveCamera(CameraUpdateFactory.newCameraPosition(position))
-
-                                    // Add camera movement listener for weather updates
-                                    map.addOnCameraIdleListener {
-                                        val center = map.cameraPosition.target
-                                        val zoom = map.cameraPosition.zoom
-                                        if (center != null) {
-                                            weatherViewModel.updateWeather(
-                                                latitude = center.latitude,
-                                                longitude = center.longitude,
-                                                zoomLevel = zoom
-                                            )
-                                        }
+                                    // Velg stil basert på dark mode
+                                    val styleUrl = if (isDarkMode) {
+                                        "https://api.maptiler.com/maps/streets-v2-dark/style.json?key=oMZQoq4zniKOHeMvi7oA"
+                                    } else {
+                                        "https://api.maptiler.com/maps/streets-v2/style.json?key=oMZQoq4zniKOHeMvi7oA"
                                     }
+                                    map.setStyle(Style.Builder().fromUri(styleUrl)) { style ->
+                                        try {
+                                            // Nullstill timeout siden kartet er lastet
+                                            mapLoadTimeout = false
 
-                                    // Initial weather update
-                                    weatherViewModel.updateWeather(
-                                        latitude = osloPosition.latitude,
-                                        longitude = osloPosition.longitude,
-                                        zoomLevel = position.zoom
-                                    )
-
-                                    // Load warning icons and setup layers
-                                    WarningIconUtils.loadWarningIcons(context, style)
-                                    setupShipLayer(context, style)
-
-                                    // Add GeoJSON source and layer for alerts
-                                    val source = GeoJsonSource("alerts-source", uiState.geoJsonData)
-                                    style.addSource(source)
-
-                                    val symbolLayer = SymbolLayer("alert-symbol-layer", "alerts-source")
-                                        .withProperties(
-                                            iconImage(
-                                                Expression.match(
-                                                    Expression.get("eventAwarenessName"),
-                                                    Expression.literal("Sterk ising på skip"), Expression.concat(
-                                                        Expression.literal("generic-"),
-                                                        Expression.match(
-                                                            Expression.get("severity"),
-                                                            Expression.literal("Severe"), Expression.literal("red"),
-                                                            Expression.literal("Moderate"), Expression.literal("orange"),
-                                                            Expression.literal("Minor"), Expression.literal("yellow"),
-                                                            Expression.literal("yellow")
-                                                        )
-                                                    ),
-                                                    Expression.literal("Storm"), Expression.concat(
-                                                        Expression.literal("wind-"),
-                                                        Expression.match(
-                                                            Expression.get("severity"),
-                                                            Expression.literal("Severe"), Expression.literal("red"),
-                                                            Expression.literal("Moderate"), Expression.literal("orange"),
-                                                            Expression.literal("Minor"), Expression.literal("yellow"),
-                                                            Expression.literal("yellow")
-                                                        )
-                                                    ),
-                                                    Expression.literal("Kuling"), Expression.concat(
-                                                        Expression.literal("wind-"),
-                                                        Expression.match(
-                                                            Expression.get("severity"),
-                                                            Expression.literal("Severe"), Expression.literal("red"),
-                                                            Expression.literal("Moderate"), Expression.literal("orange"),
-                                                            Expression.literal("Minor"), Expression.literal("yellow"),
-                                                            Expression.literal("yellow")
-                                                        )
-                                                    ),
-                                                    Expression.literal("Kraftige vindkast"), Expression.concat(
-                                                        Expression.literal("wind-"),
-                                                        Expression.match(
-                                                            Expression.get("severity"),
-                                                            Expression.literal("Severe"), Expression.literal("red"),
-                                                            Expression.literal("Moderate"), Expression.literal("orange"),
-                                                            Expression.literal("Minor"), Expression.literal("yellow"),
-                                                            Expression.literal("yellow")
-                                                        )
-                                                    ),
-                                                    Expression.literal("Skogbrannfare"), Expression.concat(
-                                                        Expression.literal("forestfire-"),
-                                                        Expression.match(
-                                                            Expression.get("severity"),
-                                                            Expression.literal("Severe"), Expression.literal("red"),
-                                                            Expression.literal("Moderate"), Expression.literal("orange"),
-                                                            Expression.literal("Minor"), Expression.literal("yellow"),
-                                                            Expression.literal("yellow")
-                                                        )
-                                                    ),
-                                                    Expression.literal("generic-yellow")
+                                            // Set initial camera position to Oslo Fjord
+                                            val osloPosition = LatLng(59.9139, 10.7522)
+                                            val position = CameraPosition.Builder()
+                                                .target(osloPosition)
+                                                .zoom(9.0)
+                                                .build()
+                                            map.moveCamera(
+                                                CameraUpdateFactory.newCameraPosition(
+                                                    position
                                                 )
-                                            ),
-                                            iconSize(0.8f),
-                                            iconAllowOverlap(true),
-                                            iconIgnorePlacement(true),
-                                            iconOffset(arrayOf(0f, -5f)),
-                                            symbolPlacement(Property.SYMBOL_PLACEMENT_POINT),
-                                            iconAnchor(Property.ICON_ANCHOR_CENTER)
-                                        )
-                                    style.addLayer(symbolLayer)
-
-                                    // Legg til polygon-laget under symbol-laget
-                                    val polygonLayer = FillLayer("alert-polygon-layer", "alerts-source")
-                                        .withProperties(
-                                            fillColor(
-                                                Expression.match(
-                                                    Expression.get("severity"),
-                                                    Expression.literal("Severe"), Expression.color("#66D32F2F".toColorInt()),
-                                                    Expression.literal("Moderate"), Expression.color("#66F57C00".toColorInt()),
-                                                    Expression.literal("Minor"), Expression.color("#66FBC02D".toColorInt()),
-                                                    Expression.color("#66FBC02D".toColorInt())
-                                                )
-                                            ),
-                                            fillOpacity(0f),
-                                            fillOutlineColor("#000000".toColorInt())
-                                        )
-                                        .withFilter(
-                                            Expression.any(
-                                                Expression.eq(Expression.geometryType(), Expression.literal("Polygon")),
-                                                Expression.eq(Expression.geometryType(), Expression.literal("MultiPolygon"))
                                             )
-                                        )
 
-                                    style.addLayerBelow(polygonLayer, "alert-symbol-layer")
-
-                                    map.addOnMapClickListener { point ->
-                                        val screenPoint = map.projection.toScreenLocation(point)
-                                        
-                                        // Håndter lokasjonsvalg først hvis vi er i lokasjonsvalg-modus
-                                        if (onLocationSelected != null) {
-                                            onLocationSelected(point.latitude, point.longitude, "Valgt lokasjon")
-                                            return@addOnMapClickListener true
-                                        }
-
-                                        // Check for fish log images first
-                                        val fishFeatures = map.queryRenderedFeatures(screenPoint)
-                                        val fishLog = fishFeatures.find { feature ->
-                                            val properties = feature.properties()
-                                            if (properties != null) {
-                                                val timestamp = properties.get("timestamp")?.asString
-                                                if (timestamp != null) {
-                                                    fishLogUiState.fishLogs.find { it.timestamp.toString() == timestamp } != null
-                                                } else false
-                                            } else false
-                                        }?.let { feature ->
-                                            val properties = feature.properties()
-                                            val timestamp = properties?.get("timestamp")?.asString
-                                            if (timestamp != null) {
-                                                fishLogUiState.fishLogs.find { it.timestamp.toString() == timestamp }
-                                            } else null
-                                        }
-
-                                        if (fishLog != null) {
-                                            selectedLocation = Pair(fishLog.latitude, fishLog.longitude)
-                                            showFishLogDialog = true
-                                            resetSelections() // Nullstill GRIB-data og andre popups
-                                            return@addOnMapClickListener true
-                                        }
-                                        
-                                        // Check for alerts (prioritert) - kun hvis alerts er aktivert
-                                        if (showAlerts) {
-                                        val alertFeatures = map.queryRenderedFeatures(screenPoint, "alert-symbol-layer")
-                                        if (alertFeatures.isNotEmpty()) {
-                                            val feature = alertFeatures[0]
-                                            val properties = feature.properties()
-                                            if (properties != null) {
-                                                val jsonObject = JSONObject(properties.toString())
-                                                val id = properties.get("id").asString
-                                                resetSelections()
-                                                viewModel.setSelectedAlert(jsonObject)
-                                                
-                                                // Vis polygon for dette varselet
-                                                map.getStyle { style ->
-                                                                    AlertUtils.updateAlertPolygon(style, id)
+                                            // Add camera movement listener for weather updates
+                                            map.addOnCameraIdleListener {
+                                                val center = map.cameraPosition.target
+                                                val zoom = map.cameraPosition.zoom
+                                                if (center != null) {
+                                                    weatherViewModel.updateWeather(
+                                                        latitude = center.latitude,
+                                                        longitude = center.longitude,
+                                                        zoomLevel = zoom
+                                                    )
                                                 }
                                             }
-                                            return@addOnMapClickListener true
-                                            }
-                                        }
-                                        
-                                        // Check for ships - kun hvis ships er aktivert
-                                        if (showShips) {
-                                        val shipFeatures = map.queryRenderedFeatures(screenPoint, SHIP_LAYER_ID)
-                                        if (shipFeatures.isNotEmpty()) {
-                                            resetSelections()  // Nullstill alerts og grib-state først
-                                            val feature = shipFeatures[0]
-                                            val properties = feature.properties()
-                                            
-                                            if (properties != null) {
-                                                val mmsi = properties.get("mmsi")?.asString
-                                                if (mmsi != null) {
-                                                    selectedShip = shipUiState.ships.find { it.mmsi == mmsi }
-                                                    if (selectedShip != null) {
-                                                        selectedShipScreenPosition = mapLibreMap?.projection?.toScreenLocation(
-                                                            LatLng(selectedShip!!.latitude, selectedShip!!.longitude)
+
+                                            // Initial weather update
+                                            weatherViewModel.updateWeather(
+                                                latitude = osloPosition.latitude,
+                                                longitude = osloPosition.longitude,
+                                                zoomLevel = position.zoom
+                                            )
+
+                                            // Load warning icons and setup layers
+                                            WarningIconUtils.loadWarningIcons(context, style)
+                                            setupShipLayer(context, style)
+
+                                            // Add GeoJSON source and layer for alerts
+                                            val source =
+                                                GeoJsonSource("alerts-source", uiState.geoJsonData)
+                                            style.addSource(source)
+
+                                            val symbolLayer =
+                                                SymbolLayer("alert-symbol-layer", "alerts-source")
+                                                    .withProperties(
+                                                        iconImage(
+                                                            Expression.match(
+                                                                Expression.get("eventAwarenessName"),
+                                                                Expression.literal("Sterk ising på skip"),
+                                                                Expression.concat(
+                                                                    Expression.literal("generic-"),
+                                                                    Expression.match(
+                                                                        Expression.get("severity"),
+                                                                        Expression.literal("Severe"),
+                                                                        Expression.literal("red"),
+                                                                        Expression.literal("Moderate"),
+                                                                        Expression.literal("orange"),
+                                                                        Expression.literal("Minor"),
+                                                                        Expression.literal("yellow"),
+                                                                        Expression.literal("yellow")
+                                                                    )
+                                                                ),
+                                                                Expression.literal("Storm"),
+                                                                Expression.concat(
+                                                                    Expression.literal("wind-"),
+                                                                    Expression.match(
+                                                                        Expression.get("severity"),
+                                                                        Expression.literal("Severe"),
+                                                                        Expression.literal("red"),
+                                                                        Expression.literal("Moderate"),
+                                                                        Expression.literal("orange"),
+                                                                        Expression.literal("Minor"),
+                                                                        Expression.literal("yellow"),
+                                                                        Expression.literal("yellow")
+                                                                    )
+                                                                ),
+                                                                Expression.literal("Kuling"),
+                                                                Expression.concat(
+                                                                    Expression.literal("wind-"),
+                                                                    Expression.match(
+                                                                        Expression.get("severity"),
+                                                                        Expression.literal("Severe"),
+                                                                        Expression.literal("red"),
+                                                                        Expression.literal("Moderate"),
+                                                                        Expression.literal("orange"),
+                                                                        Expression.literal("Minor"),
+                                                                        Expression.literal("yellow"),
+                                                                        Expression.literal("yellow")
+                                                                    )
+                                                                ),
+                                                                Expression.literal("Kraftige vindkast"),
+                                                                Expression.concat(
+                                                                    Expression.literal("wind-"),
+                                                                    Expression.match(
+                                                                        Expression.get("severity"),
+                                                                        Expression.literal("Severe"),
+                                                                        Expression.literal("red"),
+                                                                        Expression.literal("Moderate"),
+                                                                        Expression.literal("orange"),
+                                                                        Expression.literal("Minor"),
+                                                                        Expression.literal("yellow"),
+                                                                        Expression.literal("yellow")
+                                                                    )
+                                                                ),
+                                                                Expression.literal("Skogbrannfare"),
+                                                                Expression.concat(
+                                                                    Expression.literal("forestfire-"),
+                                                                    Expression.match(
+                                                                        Expression.get("severity"),
+                                                                        Expression.literal("Severe"),
+                                                                        Expression.literal("red"),
+                                                                        Expression.literal("Moderate"),
+                                                                        Expression.literal("orange"),
+                                                                        Expression.literal("Minor"),
+                                                                        Expression.literal("yellow"),
+                                                                        Expression.literal("yellow")
+                                                                    )
+                                                                ),
+                                                                Expression.literal("generic-yellow")
+                                                            )
+                                                        ),
+                                                        iconSize(0.8f),
+                                                        iconAllowOverlap(true),
+                                                        iconIgnorePlacement(true),
+                                                        iconOffset(arrayOf(0f, -5f)),
+                                                        symbolPlacement(Property.SYMBOL_PLACEMENT_POINT),
+                                                        iconAnchor(Property.ICON_ANCHOR_CENTER)
+                                                    )
+                                            style.addLayer(symbolLayer)
+
+                                            // Legg til polygon-laget under symbol-laget
+                                            val polygonLayer =
+                                                FillLayer("alert-polygon-layer", "alerts-source")
+                                                    .withProperties(
+                                                        fillColor(
+                                                            Expression.match(
+                                                                Expression.get("severity"),
+                                                                Expression.literal("Severe"),
+                                                                Expression.color("#66D32F2F".toColorInt()),
+                                                                Expression.literal("Moderate"),
+                                                                Expression.color("#66F57C00".toColorInt()),
+                                                                Expression.literal("Minor"),
+                                                                Expression.color("#66FBC02D".toColorInt()),
+                                                                Expression.color("#66FBC02D".toColorInt())
+                                                            )
+                                                        ),
+                                                        fillOpacity(0f),
+                                                        fillOutlineColor("#000000".toColorInt())
+                                                    )
+                                                    .withFilter(
+                                                        Expression.any(
+                                                            Expression.eq(
+                                                                Expression.geometryType(),
+                                                                Expression.literal("Polygon")
+                                                            ),
+                                                            Expression.eq(
+                                                                Expression.geometryType(),
+                                                                Expression.literal("MultiPolygon")
+                                                            )
                                                         )
+                                                    )
+
+                                            style.addLayerBelow(polygonLayer, "alert-symbol-layer")
+
+                                            map.addOnMapClickListener { point ->
+                                                val screenPoint =
+                                                    map.projection.toScreenLocation(point)
+
+                                                // Håndter lokasjonsvalg først hvis vi er i lokasjonsvalg-modus
+                                                if (onLocationSelected != null) {
+                                                    onLocationSelected(
+                                                        point.latitude,
+                                                        point.longitude,
+                                                        "Valgt lokasjon"
+                                                    )
+                                                    return@addOnMapClickListener true
+                                                }
+
+                                                // Check for fish log images first
+                                                val fishFeatures =
+                                                    map.queryRenderedFeatures(screenPoint)
+                                                val fishLog = fishFeatures.find { feature ->
+                                                    val properties = feature.properties()
+                                                    if (properties != null) {
+                                                        val timestamp =
+                                                            properties.get("timestamp")?.asString
+                                                        if (timestamp != null) {
+                                                            fishLogUiState.fishLogs.find { it.timestamp.toString() == timestamp } != null
+                                                        } else false
+                                                    } else false
+                                                }?.let { feature ->
+                                                    val properties = feature.properties()
+                                                    val timestamp =
+                                                        properties?.get("timestamp")?.asString
+                                                    if (timestamp != null) {
+                                                        fishLogUiState.fishLogs.find { it.timestamp.toString() == timestamp }
+                                                    } else null
+                                                }
+
+                                                if (fishLog != null) {
+                                                    selectedLocation =
+                                                        Pair(fishLog.latitude, fishLog.longitude)
+                                                    showFishLogDialog = true
+                                                    resetSelections() // Nullstill GRIB-data og andre popups
+                                                    return@addOnMapClickListener true
+                                                }
+
+                                                // Check for alerts (prioritert) - kun hvis alerts er aktivert
+                                                if (showAlerts) {
+                                                    val alertFeatures = map.queryRenderedFeatures(
+                                                        screenPoint,
+                                                        "alert-symbol-layer"
+                                                    )
+                                                    if (alertFeatures.isNotEmpty()) {
+                                                        val feature = alertFeatures[0]
+                                                        val properties = feature.properties()
+                                                        if (properties != null) {
+                                                            val jsonObject =
+                                                                JSONObject(properties.toString())
+                                                            val id = properties.get("id").asString
+                                                            resetSelections()
+                                                            viewModel.setSelectedAlert(jsonObject)
+
+                                                            // Vis polygon for dette varselet
+                                                            map.getStyle { style ->
+                                                                AlertUtils.updateAlertPolygon(
+                                                                    style,
+                                                                    id
+                                                                )
+                                                            }
+                                                        }
+                                                        return@addOnMapClickListener true
                                                     }
                                                 }
-                                            }
-                                            
-                                            // Gjem polygon når skip velges
-                                            map.getStyle { style ->
-                                                                AlertUtils.updateAlertPolygon(style, null)
-                                            }
-                                            return@addOnMapClickListener true
-                                            }
-                                        }
-                                        
-                                        // Håndter fiskelogg posisjonsvalg før GRIB-data
-                                        if (showLocationSelectionDialog) {
-                                            selectedLocationForFish = Pair(point.latitude, point.longitude)
-                                            showLocationSelectionDialog = false
-                                            showAddFishDialog = true
-                                            selectedLocation = Pair(point.latitude, point.longitude)
-                                            return@addOnMapClickListener true
-                                        }
 
-                                        false
-                                    }
+                                                // Check for ships - kun hvis ships er aktivert
+                                                if (showShips) {
+                                                    val shipFeatures = map.queryRenderedFeatures(
+                                                        screenPoint,
+                                                        SHIP_LAYER_ID
+                                                    )
+                                                    if (shipFeatures.isNotEmpty()) {
+                                                        resetSelections()  // Nullstill alerts og grib-state først
+                                                        val feature = shipFeatures[0]
+                                                        val properties = feature.properties()
 
-                                    // Update layer visibility based on filters
-                                    style.getLayer("alert-symbol-layer")?.setProperties(
-                                        iconOpacity(Expression.literal(if (showAlerts) 1f else 0f))
-                                    )
-                                    style.getLayer(SHIP_LAYER_ID)?.setProperties(
-                                        iconOpacity(Expression.literal(if (showShips) 1f else 0f))
-                                    )
+                                                        if (properties != null) {
+                                                            val mmsi =
+                                                                properties.get("mmsi")?.asString
+                                                            if (mmsi != null) {
+                                                                selectedShip =
+                                                                    shipUiState.ships.find { it.mmsi == mmsi }
+                                                                if (selectedShip != null) {
+                                                                    selectedShipScreenPosition =
+                                                                        mapLibreMap?.projection?.toScreenLocation(
+                                                                            LatLng(
+                                                                                selectedShip!!.latitude,
+                                                                                selectedShip!!.longitude
+                                                                            )
+                                                                        )
+                                                                }
+                                                            }
+                                                        }
 
-                                                // Legg til GRIB-data hvis aktivert
-                                                if (showGrib) {
-                                                    // Bruk gribData fra state
-                                                    // Legg til vind-data
-                                                    gribData["wind"]?.let { windData ->
-                                                        val windGeoJson = GribOverlayUtil.gribDataToFeatureCollection(
+                                                        // Gjem polygon når skip velges
+                                                        map.getStyle { style ->
+                                                            AlertUtils.updateAlertPolygon(
+                                                                style,
+                                                                null
+                                                            )
+                                                        }
+                                                        return@addOnMapClickListener true
+                                                    }
+                                                }
+
+                                                // Håndter fiskelogg posisjonsvalg før GRIB-data
+                                                if (showLocationSelectionDialog) {
+                                                    selectedLocationForFish =
+                                                        Pair(point.latitude, point.longitude)
+                                                    showLocationSelectionDialog = false
+                                                    showAddFishDialog = true
+                                                    selectedLocation =
+                                                        Pair(point.latitude, point.longitude)
+                                                    return@addOnMapClickListener true
+                                                }
+
+                                                false
+                                            }
+
+                                            // Update layer visibility based on filters
+                                            style.getLayer("alert-symbol-layer")?.setProperties(
+                                                iconOpacity(Expression.literal(if (showAlerts) 1f else 0f))
+                                            )
+                                            style.getLayer(SHIP_LAYER_ID)?.setProperties(
+                                                iconOpacity(Expression.literal(if (showShips) 1f else 0f))
+                                            )
+
+                                            // Legg til GRIB-data hvis aktivert
+                                            if (showGrib) {
+                                                // Bruk gribData fra state
+                                                // Legg til vind-data
+                                                gribData["wind"]?.let { windData ->
+                                                    val windGeoJson =
+                                                        GribOverlayUtil.gribDataToFeatureCollection(
                                                             windData,
                                                             "wind",
                                                             "wind",
                                                             minDistanceKm = 10.0
                                                         )
-                                                        val windSource = GeoJsonSource("wind-source", windGeoJson)
-                                                        style.addSource(windSource)
-                                                        
-                                                        val windLayer = CircleLayer("wind-layer", "wind-source")
+                                                    val windSource =
+                                                        GeoJsonSource("wind-source", windGeoJson)
+                                                    style.addSource(windSource)
+
+                                                    val windLayer =
+                                                        CircleLayer("wind-layer", "wind-source")
                                                             .withProperties(
                                                                 circleRadius(4f),
                                                                 circleColor(Expression.get("color")),
                                                                 circleOpacity(0.8f)
                                                             )
-                                                        style.addLayer(windLayer)
-                                                    }
+                                                    style.addLayer(windLayer)
+                                                }
 
-                                                    // Legg til bølge-data
-                                                    gribData["wave"]?.let { waveData ->
-                                                        val waveGeoJson = GribOverlayUtil.gribDataToFeatureCollection(
+                                                // Legg til bølge-data
+                                                gribData["wave"]?.let { waveData ->
+                                                    val waveGeoJson =
+                                                        GribOverlayUtil.gribDataToFeatureCollection(
                                                             waveData,
                                                             "wave",
                                                             "wave",
                                                             minDistanceKm = 10.0
                                                         )
-                                                        val waveSource = GeoJsonSource("wave-source", waveGeoJson)
-                                                        style.addSource(waveSource)
-                                                        
-                                                        val waveLayer = CircleLayer("wave-layer", "wave-source")
+                                                    val waveSource =
+                                                        GeoJsonSource("wave-source", waveGeoJson)
+                                                    style.addSource(waveSource)
+
+                                                    val waveLayer =
+                                                        CircleLayer("wave-layer", "wave-source")
                                                             .withProperties(
                                                                 circleRadius(4f),
                                                                 circleColor(Expression.get("color")),
                                                                 circleOpacity(0.8f)
                                                             )
-                                                        style.addLayer(waveLayer)
-                                                    }
+                                                    style.addLayer(waveLayer)
+                                                }
 
-                                                    // Legg til strøm-data
-                                                    gribData["strom"]?.let { currentData ->
-                                                        val currentGeoJson = GribOverlayUtil.gribDataToFeatureCollection(
+                                                // Legg til strøm-data
+                                                gribData["strom"]?.let { currentData ->
+                                                    val currentGeoJson =
+                                                        GribOverlayUtil.gribDataToFeatureCollection(
                                                             currentData,
                                                             "strom",
                                                             "strom",
                                                             minDistanceKm = 10.0
                                                         )
-                                                        val currentSource = GeoJsonSource("current-source", currentGeoJson)
-                                                        style.addSource(currentSource)
-                                                        
-                                                        val currentLayer = CircleLayer("current-layer", "current-source")
-                                                            .withProperties(
-                                                                circleRadius(4f),
-                                                                circleColor(Expression.get("color")),
-                                                                circleOpacity(0.8f)
-                                                            )
-                                                        style.addLayer(currentLayer)
-                                                    }
+                                                    val currentSource = GeoJsonSource(
+                                                        "current-source",
+                                                        currentGeoJson
+                                                    )
+                                                    style.addSource(currentSource)
 
-                                                    // Legg til nedbør-data
-                                                    gribData["rain"]?.let { rainData ->
-                                                        val precipitationGeoJson = GribOverlayUtil.gribDataToFeatureCollection(
+                                                    val currentLayer = CircleLayer(
+                                                        "current-layer",
+                                                        "current-source"
+                                                    )
+                                                        .withProperties(
+                                                            circleRadius(4f),
+                                                            circleColor(Expression.get("color")),
+                                                            circleOpacity(0.8f)
+                                                        )
+                                                    style.addLayer(currentLayer)
+                                                }
+
+                                                // Legg til nedbør-data
+                                                gribData["rain"]?.let { rainData ->
+                                                    val precipitationGeoJson =
+                                                        GribOverlayUtil.gribDataToFeatureCollection(
                                                             rainData,
                                                             "rain",
                                                             "rain",
                                                             minDistanceKm = 10.0
                                                         )
-                                                        val precipitationSource = GeoJsonSource("precipitation-source", precipitationGeoJson)
-                                                        style.addSource(precipitationSource)
-                                                        
-                                                        val precipitationLayer = CircleLayer("precipitation-layer", "precipitation-source")
-                                                            .withProperties(
-                                                                circleRadius(4f),
-                                                                circleColor(Expression.get("color")),
-                                                                circleOpacity(0.8f)
-                                                            )
-                                                        style.addLayer(precipitationLayer)
-                                                    }
-                                                } else {
-                                                    // Fjern GRIB-lagene hvis de eksisterer
-                                                    try {
-                                                        style.getLayer("wind-layer")?.let { style.removeLayer(it) }
-                                                        style.getSource("wind-source")?.let { style.removeSource(it) }
-                                                        style.getLayer("wave-layer")?.let { style.removeLayer(it) }
-                                                        style.getSource("wave-source")?.let { style.removeSource(it) }
-                                                        style.getLayer("current-layer")?.let { style.removeLayer(it) }
-                                                        style.getSource("current-source")?.let { style.removeSource(it) }
-                                                        style.getLayer("precipitation-layer")?.let { style.removeLayer(it) }
-                                                        style.getSource("precipitation-source")?.let { style.removeSource(it) }
-                                                    } catch (_: Exception) {
-                                                        // Ignorer feil hvis lagene ikke eksisterer
-                                                    }
+                                                    val precipitationSource = GeoJsonSource(
+                                                        "precipitation-source",
+                                                        precipitationGeoJson
+                                                    )
+                                                    style.addSource(precipitationSource)
+
+                                                    val precipitationLayer = CircleLayer(
+                                                        "precipitation-layer",
+                                                        "precipitation-source"
+                                                    )
+                                                        .withProperties(
+                                                            circleRadius(4f),
+                                                            circleColor(Expression.get("color")),
+                                                            circleOpacity(0.8f)
+                                                        )
+                                                    style.addLayer(precipitationLayer)
                                                 }
-                                            } catch (e: Exception) {
-                                                Log.e(TAG, "Error setting up map layers: ${e.message}")
-                                                // Force en ny render om noe går galt
-                                                map.triggerRepaint()
+                                            } else {
+                                                // Fjern GRIB-lagene hvis de eksisterer
+                                                try {
+                                                    style.getLayer("wind-layer")
+                                                        ?.let { style.removeLayer(it) }
+                                                    style.getSource("wind-source")
+                                                        ?.let { style.removeSource(it) }
+                                                    style.getLayer("wave-layer")
+                                                        ?.let { style.removeLayer(it) }
+                                                    style.getSource("wave-source")
+                                                        ?.let { style.removeSource(it) }
+                                                    style.getLayer("current-layer")
+                                                        ?.let { style.removeLayer(it) }
+                                                    style.getSource("current-source")
+                                                        ?.let { style.removeSource(it) }
+                                                    style.getLayer("precipitation-layer")
+                                                        ?.let { style.removeLayer(it) }
+                                                    style.getSource("precipitation-source")
+                                                        ?.let { style.removeSource(it) }
+                                                } catch (_: Exception) {
+                                                    // Ignorer feil hvis lagene ikke eksisterer
+                                                }
                                             }
+                                        } catch (e: Exception) {
+                                            Log.e(TAG, "Error setting up map layers: ${e.message}")
+                                            // Force en ny render om noe går galt
+                                            map.triggerRepaint()
                                         }
-                                    } catch (e: Exception) {
-                                        Log.e(TAG, "Error setting up map: ${e.message}")
                                     }
-                                })
+                                } catch (e: Exception) {
+                                    Log.e(TAG, "Error setting up map: ${e.message}")
+                                }
+                            }
                             } catch (e: Exception) {
                                 Log.e(TAG, "Error getting map async: ${e.message}")
                             }
@@ -939,7 +1060,7 @@ fun MapScreen(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(bottom = 143.dp)
-                        .tutorialTarget("fishing_trip_button", tutorialManager),
+                        .tutorialTarget(),
                     containerColor = MaterialTheme.colorScheme.surface,
                     contentColor = MaterialTheme.colorScheme.onSurface,
                     shape = MaterialTheme.shapes.medium
@@ -966,7 +1087,7 @@ fun MapScreen(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(bottom = 80.dp)
-                        .tutorialTarget("fish_log_button", tutorialManager),
+                        .tutorialTarget(),
                     containerColor = MaterialTheme.colorScheme.surface,
                     contentColor = MaterialTheme.colorScheme.onSurface,
                     shape = MaterialTheme.shapes.medium
@@ -1003,7 +1124,7 @@ fun MapScreen(
                     showGrib = showGrib,
                     showAlerts = showAlerts,
                     showShips = showShips,
-                    onDarkModeChange = { newDarkMode ->
+                    onDarkModeChange = {
                         // Handle dark mode change
                         onNavigate("kart") // Refresh the screen with new theme
                     },
@@ -1018,8 +1139,7 @@ fun MapScreen(
             if (showProfilePopup) {
                 ProfilePopup(
                     userName = "$firstName $lastName",
-                    onUserNameChange = { /* Handle name change */ },
-                    onSettingsClick = { 
+                    onSettingsClick = {
                         showFilterMenu = true
                         showProfilePopup = false
                     },
@@ -1093,10 +1213,6 @@ fun MapScreen(
                         selectedLocationForFish = null
                     },
                     selectedLocation = selectedLocation,
-                    failedImageLoads = failedImageLoads,
-                    onImageLoadError = { imageId ->
-                        failedImageLoads = failedImageLoads + imageId
-                    },
                     onRemoveFish = { fishLog ->
                         // Fjern fisk fra loggen
                         fishLogViewModel.removeFishLog(fishLog)
@@ -1139,13 +1255,11 @@ fun MapScreen(
                         selectedShipScreenPosition = null
                     },
                     initialFishType = fishType,
-                    initialLocation = location,
                     initialArea = area,
                     initialDescription = description,
                     initialWeight = weight,
                     initialImageUri = imageUri,
                     onFishTypeChange = { fishType = it },
-                    onLocationChange = { location = it },
                     onAreaChange = { area = it },
                     onDescriptionChange = { description = it },
                     onWeightChange = { weight = it },
@@ -1157,7 +1271,6 @@ fun MapScreen(
             // Vis fisketurdialog
             if (showFishingTripDialog) {
                 FishingTripDialog(
-                    onDismiss = { showFishingTripDialog = false },
                     tripName = fishingTripName,
                     onTripNameChange = { fishingTripName = it },
                     isTripActive = isFishingTripActive,
@@ -1193,27 +1306,7 @@ fun MapScreen(
                     },
                     startTime = fishingTripStartTime,
                     onClose = { showFishingTripDialog = false },
-                    onAddCatch = { fishType, weight, uri, location ->
-                        // Legg til fangst i fiskeloggen
-                        val fishLog = FishLog(
-                            fishType = fishType,
-                            weight = try { weight.toFloat() } catch (_: Exception) { null },
-                            timestamp = Date(),
-                            latitude = location.latitude,
-                            longitude = location.longitude,
-                            area = fishingTripName, // Bruk fisketur-navn som område
-                            description = "Fanget under fisketur: $fishingTripName",
-                            imageUri = uri?.toString()
-                        )
-                        fishLogViewModel.addFishLog(fishLog)
 
-                        // Oppdater kartet med den nye fangsten
-                    mapLibreMap?.getStyle { style ->
-                            if (fishLog.imageUri != null) {
-                                loadImage(style, fishLog)
-                            }
-                        }
-                    },
                     fishLogViewModel = fishLogViewModel
                 )
             }
@@ -1251,9 +1344,7 @@ fun MapScreen(
                     tripName = fishingTripName,
                     startTime = fishingTripStartTime!!,
                     endTime = fishingTripEndTime!!,
-                    route = fishingTripRoute,
                     catches = catchesForTrip,
-                    mapView = mapView,
                     mapScreenshot = mapScreenshot
                 )
             }

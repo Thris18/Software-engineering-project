@@ -12,8 +12,6 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.R
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.weather.LocationWeather
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherUiState
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.tutorial.TutorialManager
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.tutorial.tutorialTarget
 
@@ -22,8 +20,6 @@ fun NavigationBar(
     currentRoute: String,
     onNavigate: (String) -> Unit,
     modifier: Modifier = Modifier,
-    weather: LocationWeather? = null,
-    weatherState: WeatherUiState? = null,
     tutorialManager: TutorialManager? = null
 ) {
     Surface(
@@ -55,7 +51,7 @@ fun NavigationBar(
                 label = "Vær",
                 selected = currentRoute == "vaer",
                 onClick = { onNavigate("vaer") },
-                modifier = tutorialManager?.let { Modifier.tutorialTarget("weather_button", it) } ?: Modifier
+                modifier = tutorialManager?.let { Modifier.tutorialTarget() } ?: Modifier
             )
 
             // Profil-knapp

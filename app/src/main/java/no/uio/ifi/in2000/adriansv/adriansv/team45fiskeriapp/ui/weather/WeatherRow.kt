@@ -28,8 +28,8 @@ fun WeatherRow(entry: TimeSeriesEntry) {
         .withZoneSameInstant(ZoneId.of("Europe/Oslo"))
         .format(DateTimeFormatter.ofPattern("HH:mm"))
 
-    val temp = entry.data.instant.details.air_temperature.toInt()
-    val symbolCode = entry.data.next_1_hours?.summary?.symbol_code?.replace("_day", "")?.replace("_night", "") ?: "cloudy"
+    val temp = entry.data.instant.details.airTemperature.toInt()
+    val symbolCode = entry.data.next1hours?.summary?.symbolCode?.replace("_day", "")?.replace("_night", "") ?: "cloudy"
     val hour = ZonedDateTime.parse(entry.time).hour
     val icon = WeatherIcon.fromWeatherCode(symbolCode, hour)
 

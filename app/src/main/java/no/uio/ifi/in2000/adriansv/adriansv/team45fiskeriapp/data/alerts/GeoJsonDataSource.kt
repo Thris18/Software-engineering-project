@@ -5,6 +5,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.Locale
 
 private const val TAG = "GeoJsonDataSource"
 
@@ -51,9 +52,9 @@ class GeoJsonDataSource {
                     val geometry = sample.getJSONObject("geometry")
                     val props = sample.getJSONObject("properties")
                     Log.d(TAG, "Sample feature type: ${geometry.getString("type")}")
-                    Log.d(TAG, "Sample geometry: ${geometry}")
+                    Log.d(TAG, "Sample geometry: $geometry")
                     Log.d(TAG, "Sample properties keys: ${props.keys().asSequence().toList()}")
-                    Log.d(TAG, "Sample properties: ${props}")
+                    Log.d(TAG, "Sample properties: $props")
                     Log.d(TAG, "Sample eventAwarenessName: ${props.optString("eventAwarenessName", "N/A")}")
                     Log.d(TAG, "Sample severity: ${props.optString("severity", "N/A")}")
                 } else {
@@ -86,7 +87,8 @@ class GeoJsonDataSource {
                 properties.put("eventAwarenessName", properties.optString("event_type", "Unknown"))
             }
             if (!properties.has("severity")) {
-                val awarenessLevel = properties.optString("awareness_level", "").toLowerCase()
+                val awarenessLevel = properties.optString("awareness_level", "")
+                    .lowercase(Locale.ROOT)
                 val severity = when {
                     awarenessLevel.contains("severe") -> "Severe"
                     awarenessLevel.contains("moderate") -> "Moderate"

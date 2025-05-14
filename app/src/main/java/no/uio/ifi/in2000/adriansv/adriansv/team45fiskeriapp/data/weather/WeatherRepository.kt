@@ -25,19 +25,19 @@ interface WeatherRepository {
                         ?: throw Exception("No weather data available")
 
                     val instantDetails = firstTimeSeries.data.instant.details
-                    val next1Hours = firstTimeSeries.data.next_1_hours
+                    val next1Hours = firstTimeSeries.data.next1hours
 
                     val locationWeather = LocationWeather(
                         latitude = latitude,
                         longitude = longitude,
-                        temperature = instantDetails.air_temperature,
-                        symbolCode = next1Hours?.summary?.symbol_code ?: "cloudy",
+                        temperature = instantDetails.airTemperature,
+                        symbolCode = next1Hours?.summary?.symbolCode ?: "cloudy",
                         zoomLevel = zoomLevel,
-                        windSpeed = instantDetails.wind_speed,
-                        windDirection = instantDetails.wind_from_direction,
-                        cloudAreaFraction = instantDetails.cloud_area_fraction,
-                        precipitationAmount = next1Hours?.details?.precipitation_amount ?: 0.0,
-                        airPressure = instantDetails.air_pressure_at_sea_level,
+                        windSpeed = instantDetails.windSpeed,
+                        windDirection = instantDetails.windFromDirection,
+                        cloudAreaFraction = instantDetails.cloudAreaFraction,
+                        precipitationAmount = next1Hours?.details?.precipitationAmount ?: 0.0,
+                        airPressure = instantDetails.airPressureAtSeaLevel,
                         timeseries = weatherResponse.properties.timeseries
                     )
                     Log.d(TAG, "Successfully mapped weather data: $locationWeather")

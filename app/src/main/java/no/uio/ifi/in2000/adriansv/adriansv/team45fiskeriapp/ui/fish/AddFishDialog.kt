@@ -1,6 +1,7 @@
 package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -47,6 +48,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.foundation.layout.PaddingValues
 
+@SuppressLint("DefaultLocale")
 @Composable
 fun AddFishDialog(
     onDismiss: () -> Unit,
@@ -55,13 +57,11 @@ fun AddFishDialog(
     longitude: Double,
     onSelectLocation: () -> Unit,
     initialFishType: String = "",
-    initialLocation: String = "",
     initialArea: String = "",
     initialDescription: String = "",
     initialWeight: String = "",
     initialImageUri: Uri? = null,
     onFishTypeChange: (String) -> Unit = {},
-    onLocationChange: (String) -> Unit = {},
     onAreaChange: (String) -> Unit = {},
     onDescriptionChange: (String) -> Unit = {},
     onWeightChange: (String) -> Unit = {},

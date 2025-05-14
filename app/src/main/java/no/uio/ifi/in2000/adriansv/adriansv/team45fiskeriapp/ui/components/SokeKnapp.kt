@@ -16,7 +16,6 @@ import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.alerts.SearchSugg
 @Composable
 fun SokeKnapp(
     modifier: Modifier = Modifier,
-    onSearch: (String) -> Unit,
     onQueryChange: (String) -> Unit,
     suggestions: List<SearchSuggestion>,
     onSuggestionSelected: (SearchSuggestion) -> Unit

@@ -1,5 +1,6 @@
 package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather
 
+import android.annotation.SuppressLint
 import android.webkit.WebView
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -9,6 +10,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.layout.size
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.weather.WeatherIcon
 
+@SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun WeatherIconView(weatherIcon: WeatherIcon, size: Dp) {
 

@@ -13,6 +13,7 @@ import org.maplibre.android.style.layers.Property
 import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.layers.SymbolLayer
 import org.maplibre.android.style.sources.GeoJsonSource
+import java.time.LocalDateTime
 
 private const val TAG = "FishLogImageUtils"
 
@@ -24,10 +25,9 @@ object FishLogImageUtils {
         fishLog: FishLog,
         loadedImages: Set<String>,
         failedImageLoads: Set<String>,
-        fishingTripImages: Set<String>,
         fishingTripName: String,
         isFishingTripActive: Boolean,
-        fishingTripStartTime: java.time.LocalDateTime?,
+        fishingTripStartTime: LocalDateTime?,
         onImageLoaded: (String) -> Unit,
         onImageLoadFailed: (String) -> Unit
     ) {
@@ -44,8 +44,8 @@ object FishLogImageUtils {
                 // Handle EXIF rotation for files
                 val exif = android.media.ExifInterface(uri.path!!)
                 val orientation = exif.getAttributeInt(
-                    android.media.ExifInterface.TAG_ORIENTATION,
-                    android.media.ExifInterface.ORIENTATION_NORMAL
+                    androidx.exifinterface.media.ExifInterface.TAG_ORIENTATION,
+                    androidx.exifinterface.media.ExifInterface.ORIENTATION_NORMAL
                 )
                 val bitmap = BitmapFactory.decodeFile(uri.path)
                 ImageUtils.rotateBitmap(bitmap, orientation)
@@ -54,8 +54,8 @@ object FishLogImageUtils {
                 uri?.let { context.contentResolver.openInputStream(it) }?.use { stream ->
                     val exif = android.media.ExifInterface(stream)
                     val orientation = exif.getAttributeInt(
-                        android.media.ExifInterface.TAG_ORIENTATION,
-                        android.media.ExifInterface.ORIENTATION_NORMAL
+                        androidx.exifinterface.media.ExifInterface.TAG_ORIENTATION,
+                        androidx.exifinterface.media.ExifInterface.ORIENTATION_NORMAL
                     )
                     stream.reset() // Reset stream for bitmap decoding
                     val bitmap = BitmapFactory.decodeStream(stream)

@@ -66,37 +66,36 @@ android {
 dependencies {
 
     // Core Android dependencies
-    implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
-    implementation("androidx.activity:activity-compose:1.8.2")
+    implementation(libs.androidx.core.ktx.v1120)
+    implementation(libs.androidx.lifecycle.runtime.ktx.v270)
+    implementation(libs.androidx.activity.compose.v182)
 
     // Compose dependencies
-    implementation(platform("androidx.compose:compose-bom:2023.08.00"))
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-graphics")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.runtime:runtime-livedata")
-    implementation("androidx.navigation:navigation-compose:2.7.5")
-    implementation("androidx.compose.animation:animation-graphics:1.5.4")
+    implementation(platform(libs.androidx.compose.bom.v20230800))
+    implementation(libs.androidx.compose.ui.ui)
+    implementation(libs.ui.graphics)
+    implementation(libs.ui.tooling.preview)
+    implementation(libs.androidx.compose.material3.material3)
+    implementation(libs.androidx.runtime.livedata)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.animation.graphics)
 
-    // Alternativ mapping bibilotek - bruker OSMDroid istedet for MapBox
-    implementation("org.osmdroid:osmdroid-android:6.1.16")
+
 
     // Lifecycle og LocalLifecycleOwner
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
-    implementation("androidx.lifecycle:lifecycle-common-java8:2.7.0")
+    implementation(libs.androidx.lifecycle.viewmodel.ktx.v270)
+    implementation(libs.androidx.lifecycle.viewmodel.compose.v290)
+    implementation(libs.androidx.lifecycle.runtime.compose.v290)
+    implementation(libs.androidx.lifecycle.common.java8)
 
     // Nettverk
-    implementation("com.squareup.okhttp3:okhttp:4.11.0")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
+    implementation(libs.okhttp.v4110)
+    implementation(libs.logging.interceptor.v4110)
 
     // NetCDF/GRIB parser dependencies
-    implementation("edu.ucar:cdm-core:5.3.3")
-    implementation("edu.ucar:grib:5.3.3")
-    implementation("com.google.guava:guava:32.1.2-android")
+    implementation(libs.cdm.core)
+    implementation(libs.grib)
+    implementation(libs.guava)
     implementation(libs.play.services.maps)
     implementation(libs.androidx.appcompat.resources) // Required by NetCDF
     implementation(libs.play.services.maps)
@@ -104,36 +103,34 @@ dependencies {
     implementation(libs.androidx.exifinterface) // Required by NetCDF
 
     // Testing
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
-    androidTestImplementation(platform("androidx.compose:compose-bom:2023.08.00"))
-    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
-    debugImplementation("androidx.compose.ui:ui-tooling")
-    debugImplementation("androidx.compose.ui:ui-test-manifest")
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
+    debugImplementation(libs.ui.tooling)
+    debugImplementation(libs.ui.test.manifest)
 
     // MapLibre
-    implementation("org.maplibre.gl:android-sdk:11.8.2")
-    implementation("org.maplibre.gl:android-plugin-annotation-v9:1.0.0")
+    implementation(libs.android.sdk)
+    implementation(libs.android.plugin.annotation.v9.v201)
 
     // JSON
-    implementation("org.json:json:20230227")
+    implementation(libs.json)
 
-    implementation("io.coil-kt:coil-compose:2.4.0")
+    implementation(libs.coil.compose)
 
-    implementation("androidx.compose.material:material-icons-extended:1.5.4")
+    implementation(libs.androidx.material.icons.extended)
 
     // Til GIF
-    implementation("io.coil-kt:coil-gif:2.4.0")
+    implementation(libs.coil.gif)
 
 
 
     // Bakoverkompitabel løsning for ZonedTimeDate
-    implementation ("com.jakewharton.threetenabp:threetenabp:1.4.5")
+    implementation (libs.threetenabp)
 
     // Lottie animasjoner
-    implementation ("com.airbnb.android:lottie:6.6.6")
-    implementation ("com.airbnb.android:lottie-compose:6.6.6")
+    implementation (libs.lottie)
+    implementation (libs.lottie.compose)
     implementation(libs.play.services.location)
 
 

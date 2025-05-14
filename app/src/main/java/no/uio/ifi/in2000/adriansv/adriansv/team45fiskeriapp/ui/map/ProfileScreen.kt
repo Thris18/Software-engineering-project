@@ -10,6 +10,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -19,12 +21,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.R
-import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.ProfilePopup
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.SettingsPopup
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.components.YourInformationScreen
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTripsScreen
@@ -43,7 +42,6 @@ fun ProfileScreen(
     onPhoneNumberChange: (String) -> Unit,
     onEmailChange: (String) -> Unit,
     onProfileImageChange: (String) -> Unit,
-    onSettingsClick: () -> Unit,
     isDarkMode: Boolean,
     showGrib: Boolean,
     showAlerts: Boolean,
@@ -59,7 +57,6 @@ fun ProfileScreen(
     var showYourInfo by remember { mutableStateOf(false) }
     var showImagePicker by remember { mutableStateOf(false) }
     var showFishingTrips by remember { mutableStateOf(false) }
-    var showFishingTripDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val sharedPreferences = remember { context.getSharedPreferences("user_info", Context.MODE_PRIVATE) }
     val gribViewModel: GribViewModel = viewModel()
@@ -198,7 +195,7 @@ fun ProfileScreen(
                         }
                     }
                     Icon(
-                        imageVector = Icons.Default.ArrowForward,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = "Gå til Din informasjon",
                         tint = MaterialTheme.colorScheme.primary
                     )
@@ -227,7 +224,7 @@ fun ProfileScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = Icons.Default.List,
+                            imageVector = Icons.AutoMirrored.Filled.List,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary
                         )
@@ -245,7 +242,7 @@ fun ProfileScreen(
                         }
                     }
                     Icon(
-                        imageVector = Icons.Default.ArrowForward,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = "Gå til Fiskelog",
                         tint = MaterialTheme.colorScheme.primary
                     )
@@ -292,7 +289,7 @@ fun ProfileScreen(
                         }
                     }
                     Icon(
-                        imageVector = Icons.Default.ArrowForward,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = "Gå til Mine fisketurer",
                         tint = MaterialTheme.colorScheme.primary
                     )
@@ -333,7 +330,7 @@ fun ProfileScreen(
                         )
                     }
                     Icon(
-                        imageVector = Icons.Default.ArrowForward,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = "Gå til Innstillinger",
                         tint = MaterialTheme.colorScheme.primary
                     )
@@ -382,17 +379,9 @@ fun ProfileScreen(
         // Fishing Trips Screen
         if (showFishingTrips) {
             FishingTripsScreen(
-                onBack = { showFishingTrips = false },
-                onAddTrip = { showFishingTripDialog = true }
+                onBack = { showFishingTrips = false }
             )
             return
-        }
-
-        // Vis Start din fisketur-popup hvis ønsket
-        if (showFishingTripDialog) {
-            // Her må du vise din eksisterende dialog for å starte fisketur
-            // Eksempel:
-            // FishingTripDialog(..., onDismiss = { showFishingTripDialog = false }, ...)
         }
     }
 } 
