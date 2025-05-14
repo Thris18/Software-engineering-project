@@ -1,21 +1,17 @@
 # Appnavn: Sjøspor 
 
-En Android-applikasjon utviklet for fiskere som gir tilgang til værdata, skipsposisjoner, og mulighet for å logge fangster.
+En Android-applikasjon utviklet for fiskere som gir tilgang til værdata, skipsposisjoner, og mulighet for å starte fisketurer og logge fangster.
 
+## CASE-KRAV
+- Case 2 kravlegger: "Nedbør og bølgehøyde er skalarverdier som kan vises med farger, mens vind og strøm er vektorer hvor dere må tegne piler eller på andre måter angi både retning og styrke. Dersom noen av verdiene overstiger en viss terskel (satt av bruker) skal dette markeres i kartet så man kan unngå å ferdes i området."
+
+- Terskler for GRIB-dataen finnes via profil > innstillinger. 
 ## Krav til systemet
 
-- Android 7.0 (API level 24) eller nyere
+- Android 9.0 (API level 28)
 - Internettilkobling
 - GPS/lokasjonstjenester
 - Kamera (valgfritt, for å ta bilder av fangster)
-
-## Installasjon
-1. Klon repositoriet:
-git clone https://github.com/Team45FiskeriApp/Team45FiskeriApp.git
-
-2. Åpne prosjektet i Android Studio
-
-3. Bygg og kjør appen på en emulator eller fysisk enhet
 
 ## Funksjoner
 
@@ -25,6 +21,7 @@ git clone https://github.com/Team45FiskeriApp/Team45FiskeriApp.git
 - Dark og light mode toggle > profil > innstillinger 
 - Profilside med personlig informasjon
 - Kart med ulike lag (vær, skip, farevarsler)
+- Fisketur, bruker kan starte fisketur gjennom knapp på hovedskjermen
 
 ## Brukte biblioteker
 
@@ -40,7 +37,7 @@ git clone https://github.com/Team45FiskeriApp/Team45FiskeriApp.git
 - **Coil**: For bildehåndtering og caching
 
 ### Data og nettverk
-- **OkHttp**: For nettverkskommunikasjon
+- **OkHttp3**: For nettverkskommunikasjon
 - **NetCDF/GRIB**: For å parse værdata og prognoser
 - **JSON**: For datahåndtering
 

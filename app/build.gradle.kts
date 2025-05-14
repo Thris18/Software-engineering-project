@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp"
-        minSdk = 24
+        minSdk = 28
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
