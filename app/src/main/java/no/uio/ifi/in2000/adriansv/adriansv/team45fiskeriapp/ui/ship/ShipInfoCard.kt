@@ -68,12 +68,12 @@ private fun getRelativeTimeString(messageTime: String): String {
             }
             parsedDate = sdf.parse(messageTime)
             if (parsedDate != null) break
-        } catch (_: Exception) { /* prøv neste mønster */ }
+        } catch (_: Exception) {}
     }
 
     if (parsedDate == null) return messageTime  // kunne ikke parse
 
-    // Konverter til norsk tid
+    // Convert to norwegian time
     val norwegianCal = Calendar.getInstance(TimeZone.getTimeZone("Europe/Oslo")).apply {
         time = parsedDate
     }
@@ -132,9 +132,9 @@ fun ShipInfoCard(
         )
     )
 
-    // Start animasjon når kortet vises
+
     LaunchedEffect(Unit) {
-        delay(50) // Kort forsinkelse for å la layouten stabilisere seg
+        delay(50)
         isVisible = true
     }
 

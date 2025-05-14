@@ -20,7 +20,7 @@ import org.threeten.bp.ZoneId
 import org.threeten.bp.ZonedDateTime
 import org.threeten.bp.format.DateTimeFormatter
 
-// Denne funksjonen viser værdata for en spesifikk time, inkludert tid, temperatur, værikon og vindinformasjon, i en horisontal rad
+// This function is responsible for displaying the weather row
 @Composable
 fun WeatherRow(entry: TimeSeriesEntry) {
     // Hent og juster tid til lokal tidssone (Europe/Oslo)
@@ -33,7 +33,6 @@ fun WeatherRow(entry: TimeSeriesEntry) {
     val hour = ZonedDateTime.parse(entry.time).hour
     val icon = WeatherIcon.fromWeatherCode(symbolCode, hour)
 
-    // Lag rad for visning av informasjon
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -48,7 +47,6 @@ fun WeatherRow(entry: TimeSeriesEntry) {
             color = Color.Black
         )
 
-        // Vise ikon og temperatur
         Row(
             modifier = Modifier.weight(2f),
             verticalAlignment = Alignment.CenterVertically
@@ -62,7 +60,6 @@ fun WeatherRow(entry: TimeSeriesEntry) {
             )
         }
 
-        // Vise vindinformasjon
         Text(
             text = formatWind(entry),
             modifier = Modifier.weight(1f),

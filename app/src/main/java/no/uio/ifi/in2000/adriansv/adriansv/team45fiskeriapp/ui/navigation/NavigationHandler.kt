@@ -48,22 +48,18 @@ fun NavigationHandler() {
     val phoneNumber by appViewModel.phoneNumber.collectAsStateWithLifecycle()
     val email by appViewModel.email.collectAsStateWithLifecycle()
     val profileImageUri by appViewModel.profileImageUri.collectAsStateWithLifecycle()
-    
-    // Tutorial manager for å håndtere tutorial for værknappen
+
     val tutorialManager = rememberTutorialManager()
 
-    // Værdata
     val weatherViewModel: WeatherViewModel = viewModel(
         factory = WeatherViewModelFactory(WeatherRepository.WeatherRepositoryImpl(WeatherDataSource()))
     )
     val weatherUiState by weatherViewModel.uiState.collectAsStateWithLifecycle()
 
-    // Fiskelog
     val context = LocalContext.current
     val fishLogViewModel = viewModel { FishLogViewModel(context) }
     val fishLogUiState by fishLogViewModel.uiState.collectAsStateWithLifecycle()
 
-    // AddFishDialog tilstander
     var showAddFishDialog by remember { mutableStateOf(false) }
     var selectedLatitude by remember { mutableStateOf(0.0) }
     var selectedLongitude by remember { mutableStateOf(0.0) }
@@ -76,7 +72,6 @@ fun NavigationHandler() {
     var weight by remember { mutableStateOf("") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
 
-    // Tema
     Team45FiskeriAppTheme(darkTheme = isDarkMode) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
@@ -172,7 +167,6 @@ fun NavigationHandler() {
                     }
                 }
 
-                // Navigasjonsmeny nederst – skjules på velkomstskjermen
                 if (currentRoute != "welcome") {
                     NavigationBar(
                         currentRoute = currentRoute,
@@ -182,7 +176,6 @@ fun NavigationHandler() {
                 }
             }
 
-            // Innstillinger-popup
             if (showSettings) {
                 val gribViewModel: GribViewModel = viewModel()
                 SettingsPopup(
@@ -211,7 +204,6 @@ fun NavigationHandler() {
                 )
             }
 
-            // Brukerinformasjon-popup
             if (showYourInfo) {
                 YourInformationScreen(
                     firstName = firstName,
@@ -226,7 +218,6 @@ fun NavigationHandler() {
                 )
             }
 
-            // AddFishDialog
             if (showAddFishDialog) {
                 AddFishDialog(
                     onDismiss = { 

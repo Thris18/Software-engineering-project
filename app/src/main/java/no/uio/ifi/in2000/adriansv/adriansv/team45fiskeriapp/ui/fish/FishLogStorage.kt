@@ -12,7 +12,7 @@ import java.io.FileOutputStream
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 
-private const val TAG = "FishLogRepository"
+private const val TAG = "FishLogRepository" // For logging..
 
 
 class FishLogStorage(private val context: Context) {

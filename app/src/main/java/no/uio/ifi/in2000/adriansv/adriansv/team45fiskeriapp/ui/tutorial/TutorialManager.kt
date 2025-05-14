@@ -119,12 +119,7 @@ fun rememberTutorialManager(): TutorialManager {
     return remember { TutorialManager() }
 }
 
-/**
- * En dummy modifier for tutorialTarget for å unngå kompileringsfeil i filer som bruker denne.
- * Gjør ingenting funksjonelt men bevarer API-kompatibilitet.
- */
 @Composable
 fun Modifier.tutorialTarget(): Modifier {
-    // Denne versjonen gjør ingenting, men holder API-et kompatibelt
     return this
 } 

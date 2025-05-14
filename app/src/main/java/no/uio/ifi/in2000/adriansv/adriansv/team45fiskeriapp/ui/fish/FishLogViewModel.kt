@@ -36,7 +36,6 @@ class FishLogViewModel(context: Context) : ViewModel() {
     }
 
     fun addFishLog(fishLog: FishLog) {
-        // Kopier bildet til app's interne lagring hvis det finnes
         if (fishLog.imageUri != null) {
             try {
                 val sourceUri = Uri.parse(fishLog.imageUri)
@@ -48,14 +47,12 @@ class FishLogViewModel(context: Context) : ViewModel() {
                         input.copyTo(output)
                     }
                 }
-                
-                // Oppdater imageUri til å peke på den interne filen
+
                 val updatedFishLog = fishLog.copy(
                     imageUri = Uri.fromFile(destinationFile).toString()
                 )
                 repository.addFishLog(updatedFishLog)
             } catch (e: Exception) {
-                Log.e("FishLogViewModel", "Feil ved kopiering av bilde: ${e.message}")
                 repository.addFishLog(fishLog)
             }
         } else {
@@ -64,14 +61,12 @@ class FishLogViewModel(context: Context) : ViewModel() {
     }
 
     fun clearFishLogs() {
-        // Slett alle bilder først
         _uiState.value.fishLogs.forEach { fishLog ->
             if (fishLog.imageUri != null) {
                 try {
                     val imageId = "fish_${fishLog.timestamp}"
                     File(appContext.filesDir, imageId).delete()
                 } catch (e: Exception) {
-                    Log.e("FishLogViewModel", "Feil ved sletting av bilde: ${e.message}")
                 }
             }
         }
@@ -96,10 +91,8 @@ class FishLogViewModel(context: Context) : ViewModel() {
 
     fun removeFishLog(fishLog: FishLog) {
         viewModelScope.launch {
-            // Fjern fisk fra repository
             repository.removeFishLog(fishLog)
-            
-            // Oppdater UI state
+
             _uiState.value = _uiState.value.copy(
                 fishLogs = _uiState.value.fishLogs.filter { it.timestamp != fishLog.timestamp }
             )

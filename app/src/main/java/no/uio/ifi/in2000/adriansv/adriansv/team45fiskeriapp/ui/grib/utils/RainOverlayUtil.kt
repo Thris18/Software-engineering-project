@@ -1,7 +1,5 @@
 package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.utils
 
-import android.util.Log
-
 object RainOverlayUtil {
     fun getFogImageName(value: Double, threshold: Double): String {
         val ratio = value / threshold
@@ -10,7 +8,6 @@ object RainOverlayUtil {
             ratio < 1.9 -> "yellow"
             else -> "red"
         }
-        Log.d("RainOverlayUtil", "Nedbørverdi: $value, threshold: $threshold, ratio: $ratio, bilde: $fog")
         return fog
     }
 }

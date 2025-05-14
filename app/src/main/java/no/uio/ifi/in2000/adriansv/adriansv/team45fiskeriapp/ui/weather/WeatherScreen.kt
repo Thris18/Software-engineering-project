@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.weather.LocationWeather
 
-// Denne funksjonen viser værinformasjon på skjermen, med mulighet til å bytte mellom nåværende vær (WeatherNow) og værprognose (WeatherForecast) ved å bruke en tab.
+// This function is responsible for displaying the weather screen
 @Composable
 fun WeatherScreen(
     weather: LocationWeather?,

@@ -68,7 +68,7 @@ class GeoJsonViewModel(private val applicationContext: Context) : ViewModel() {
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            error = "Error loading weather alerts: ${error.message}"
+                            error = error.message
                         )
                     }
                 }
@@ -76,7 +76,7 @@ class GeoJsonViewModel(private val applicationContext: Context) : ViewModel() {
         }
     }
 
-    // Søkefunksjonalitet
+    // Search functionality
     private val _searchTarget = MutableStateFlow<LatLng?>(null)
     val searchTarget: StateFlow<LatLng?> = _searchTarget
 
@@ -92,7 +92,7 @@ class GeoJsonViewModel(private val applicationContext: Context) : ViewModel() {
                 val features = jsonObject.getJSONArray("features")
                 val suggestions = mutableListOf<SearchSuggestion>()
 
-                // Hent brukerens posisjon fra SharedPreferences
+                // Get user location
                 val prefs = applicationContext.getSharedPreferences("user_location", Context.MODE_PRIVATE)
                 val userLat = prefs.getFloat("latitude", 59.9139f)
                 val userLon = prefs.getFloat("longitude", 10.7522f)
@@ -105,7 +105,7 @@ class GeoJsonViewModel(private val applicationContext: Context) : ViewModel() {
                     val lon = coordinates.getDouble(0)
                     val lat = coordinates.getDouble(1)
 
-                    // Beregn avstand fra brukerens posisjon
+                    // Calculate distance from user location
                     val distance = calculateDistance(userLat.toDouble(), userLon.toDouble(), lat, lon)
                     val formattedDistance = formatDistance(distance)
 
@@ -121,14 +121,13 @@ class GeoJsonViewModel(private val applicationContext: Context) : ViewModel() {
 
                 _uiState.update { it.copy(searchSuggestions = suggestions) }
             } catch (e: Exception) {
-                Log.e("GeoJsonViewModel", "Error fetching search suggestions: ${e.message}")
                 _uiState.update { it.copy(searchSuggestions = emptyList()) }
             }
         }
     }
 
     private fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
-        val r = 6371.0 // Jordens radius i kilometer
+        val r = 6371.0 // Earths radius in kilometers
 
         val latDistance = Math.toRadians(lat2 - lat1)
         val lonDistance = Math.toRadians(lon2 - lon1)

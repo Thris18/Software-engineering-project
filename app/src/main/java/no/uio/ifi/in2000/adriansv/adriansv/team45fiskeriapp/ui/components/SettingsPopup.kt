@@ -58,16 +58,16 @@ fun SettingsPopup(
     onDismiss: () -> Unit,
     gribViewModel: GribViewModel
 ) {
-    // Hent lagrede terskelverdier
+    // Get prefs
     val prefs = context.getSharedPreferences("GribThresholds", Context.MODE_PRIVATE)
     
-    // Terskelverdier for varsler
+    // Threshhold values from prefs
     var windThreshold by remember { mutableStateOf(prefs.getFloat("wind_threshold", 10f)) }
     var currentThreshold by remember { mutableStateOf(prefs.getFloat("current_threshold", 2f)) }
     var precipitationThreshold by remember { mutableStateOf(prefs.getFloat("rain_threshold", 5f)) }
     var waveHeightThreshold by remember { mutableStateOf(prefs.getFloat("wave_threshold", 2f)) }
 
-    // Oppdater GribOverlayUtil når terskelverdiene endres
+    // Update thresholds when they change
     LaunchedEffect(windThreshold, currentThreshold, precipitationThreshold, waveHeightThreshold) {
         GribOverlayUtil.updateThresholds(
             context = context,
@@ -76,7 +76,7 @@ fun SettingsPopup(
             currentThreshold = currentThreshold,
             precipitationThreshold = precipitationThreshold
         )
-        // Oppdater overlays umiddelbart
+        // Update grib overlay data immediatly after changing thresholds
         gribViewModel.loadGribOverlayData()
     }
 
@@ -272,7 +272,7 @@ fun SettingsPopup(
                         modifier = Modifier.padding(bottom = 20.dp)
                     )
 
-                    // Vindhastighet slider
+                    // Windspeed slider
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -324,7 +324,7 @@ fun SettingsPopup(
 
                     Spacer(modifier = Modifier.height(28.dp))
 
-                    // Strømhastighet slider
+                    // Current speed slider
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -376,7 +376,7 @@ fun SettingsPopup(
 
                     Spacer(modifier = Modifier.height(28.dp))
 
-                    // Nedbør slider
+                    // Rain slider
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -428,7 +428,7 @@ fun SettingsPopup(
 
                     Spacer(modifier = Modifier.height(28.dp))
 
-                    // Bølgehøyde slider
+                    // Wave height slider
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()

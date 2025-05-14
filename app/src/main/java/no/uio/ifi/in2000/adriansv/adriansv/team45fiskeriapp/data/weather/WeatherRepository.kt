@@ -16,7 +16,7 @@ interface WeatherRepository {
             longitude: Double,
             zoomLevel: WeatherZoomLevel
         ): Result<LocationWeather> {
-            Log.d(TAG, "Getting weather for location: lat=$latitude, lon=$longitude, zoom=$zoomLevel")
+
             return try {
                 val response = weatherDataSource.fetchWeather(latitude, longitude, zoomLevel)
 
@@ -40,11 +40,9 @@ interface WeatherRepository {
                         airPressure = instantDetails.airPressureAtSeaLevel,
                         timeseries = weatherResponse.properties.timeseries
                     )
-                    Log.d(TAG, "Successfully mapped weather data: $locationWeather")
                     locationWeather
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to get weather for location", e)
                 Result.failure(e)
             }
         }

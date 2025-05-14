@@ -99,12 +99,10 @@ object FishLogImageUtils {
                         )
                     style.addLayer(layer)
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error loading image: ${e.message}")
                     onImageLoadFailed(imageId)
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error loading image: ${e.message}")
             onImageLoadFailed(imageId)
         }
     }

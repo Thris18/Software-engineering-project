@@ -97,7 +97,6 @@ fun FishingTripDialog(
         if (result.resultCode == android.app.Activity.RESULT_OK) {
             val photo = result.data?.extras?.get("data") as? android.graphics.Bitmap
             photo?.let {
-                // Konverter bitmap til URI og lagre
                 val uri = saveImageToInternalStorage(context, it)
                 selectedImageUri = uri
             }
@@ -108,7 +107,6 @@ fun FishingTripDialog(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            // Start kamera
             val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
             cameraLauncher.launch(intent)
         } else {
@@ -116,7 +114,7 @@ fun FishingTripDialog(
         }
     }
     
-    // Oppdater posisjon kontinuerlig når turen er aktiv
+    // Update posistion every second the trip is active
     LaunchedEffect(isTripActive) {
         if (isTripActive) {
             try {
@@ -175,8 +173,7 @@ fun FishingTripDialog(
             showLocationPermissionDialog = true
         }
     }
-    
-    // Håndter posisjonshenting
+
     LaunchedEffect(shouldGetLocation) {
         if (shouldGetLocation) {
             isGettingLocation = true
@@ -196,8 +193,7 @@ fun FishingTripDialog(
             }
         }
     }
-    
-    // Oppdater tiden hvert sekund når turen er aktiv
+
     LaunchedEffect(isTripActive, startTime) {
         while (isTripActive && startTime != null) {
             currentDuration = Duration.between(startTime, LocalDateTime.now())
@@ -229,7 +225,6 @@ fun FishingTripDialog(
                     )
 
                     if (!isTripActive) {
-                        // Start tur visning
                         OutlinedTextField(
                             value = tripName,
                             onValueChange = onTripNameChange,
@@ -277,7 +272,6 @@ fun FishingTripDialog(
                             }
                         }
                     } else {
-                        // Aktiv tur visning
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -290,7 +284,6 @@ fun FishingTripDialog(
                                 modifier = Modifier.padding(16.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                // Varighet
                                 currentDuration?.let { duration ->
                                     val hours = duration.toHours()
                                     val minutes = (duration.toMinutes() % 60)
@@ -314,8 +307,7 @@ fun FishingTripDialog(
                                     thickness = 1.dp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f)
                                 )
-                                
-                                // Posisjon
+
                                 currentLocation?.let { location ->
                                     Text(
                                         text = "Din posisjon",
@@ -360,14 +352,12 @@ fun FishingTripDialog(
                             }
                         }
 
-                        // Knapper for aktiv tur
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(bottom = 16.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            // Legg til fangst knapp
                             Button(
                                 onClick = { showAddCatchDialog = true },
                                 modifier = Modifier
@@ -385,8 +375,6 @@ fun FishingTripDialog(
                                     maxLines = 1
                                 )
                             }
-
-                            // Avslutt tur knapp
                             Button(
                                 onClick = { showConfirmationDialog = true },
                                 modifier = Modifier
@@ -407,7 +395,7 @@ fun FishingTripDialog(
                         }
                     }
 
-                    // Vis fangst seksjon
+
                     if (fishLogs.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(8.dp))
                         if (isTripActive) {
@@ -500,7 +488,6 @@ fun FishingTripDialog(
                         }
                     }
 
-                    // Lukk knapp
                 TextButton(
                         onClick = { 
                             showDialog = false
@@ -598,7 +585,6 @@ fun FishingTripDialog(
         )
     }
 
-    // Legg til fangst dialog
     if (showAddCatchDialog) {
         AlertDialog(
             onDismissRequest = { showAddCatchDialog = false },
@@ -615,7 +601,6 @@ fun FishingTripDialog(
                     OutlinedTextField(
                         value = selectedWeight,
                         onValueChange = { newValue ->
-                            // Tillat kun tall og punktum
                             if (newValue.isEmpty() || newValue.matches(Regex("^\\d*\\.?\\d*$"))) {
                                 selectedWeight = newValue
                             }
@@ -664,7 +649,6 @@ fun FishingTripDialog(
                     onClick = {
                         val weight = selectedWeight.toDoubleOrNull() ?: 0.0
                         currentLocation?.let { location ->
-                            // Opprett FishLog med beskrivelse
                             val fishLog = FishLog(
                                 fishType = selectedFishType,
                                 area = tripName,
@@ -675,11 +659,9 @@ fun FishingTripDialog(
                                 longitude = location.longitude,
                                 timestamp = Date()
                             )
-                            
-                            // Legg til fangsten i repository
+
                             fishLogViewModel.addFishLog(fishLog)
-                            
-                            // Oppdater fangstlisten umiddelbart
+
                             showCatches = true
                             
                             showAddCatchDialog = false

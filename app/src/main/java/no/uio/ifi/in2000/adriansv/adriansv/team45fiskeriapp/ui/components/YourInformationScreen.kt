@@ -46,7 +46,6 @@ fun YourInformationScreen(
     val context = LocalContext.current
     val sharedPreferences = remember { context.getSharedPreferences("user_info", Context.MODE_PRIVATE) }
 
-    // Lagre informasjon når den endres
     LaunchedEffect(firstName, lastName, phoneNumber, email) {
         sharedPreferences.edit().apply {
             putString("firstName", firstName)
@@ -68,7 +67,6 @@ fun YourInformationScreen(
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
-                // Topbar med tilbakeknapp
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -93,7 +91,6 @@ fun YourInformationScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Informasjonsfelt
                 OutlinedTextField(
                     value = firstName,
                     onValueChange = onFirstNameChange,
@@ -151,7 +148,6 @@ fun YourInformationScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Legg til knapp
                 TextButton(
                     onClick = onBackClick,
                     modifier = Modifier

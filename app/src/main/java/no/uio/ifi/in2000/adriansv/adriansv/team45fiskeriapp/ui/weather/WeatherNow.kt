@@ -33,56 +33,55 @@ fun WeatherNow(weather: LocationWeather?) {
 
     Log.d("WeatherSymbolCode", "Current weather symbol code: ${weather.symbolCode}")
 
-    // Dynamisk valg av animasjon basert på vær
+    // Dynamic background color based on weather
     val weatherAnimation = when (weather.symbolCode) {
 
-        // Klart vær
+        // Clear
         "clearsky_day" -> "lottie_weather_files/weather_sun.json"
         "clearsky_night" -> "lottie_weather_files/weather_night.json"
 
-        // Delvis skyet
+        // Partly cloud
         "fair_day", "partlycloudy_day" -> "lottie_weather_files/weather_fair.json"
         "fair_night", "partlycloudy_night", "cloudy_night" -> "lottie_weather_files/weather_cloudynight.json"
 
-        // Skyet
+        // Cloudy
         "cloudy_day" -> "lottie_weather_files/weather_cloudy.json"
 
-        // Regn
+        // Rain
         "rain_day", "lightrain_day", "heavyrain_day" -> "lottie_weather_files/weather_rain.json"
 
-        // Torden
+        // Thunder/lightning
         "lightning_day", "lightning_night" -> "lottie_weather_files/weather_lightning.json"
         "heavyrainandthunder_day", "heavyrainandthunder_night" -> "lottie_weather_files/weather_thunderandrain.json"
 
-        // Snø
+        // Snow
         "snow_day", "heavysnow_day", "snow_night", "heavysnow_night" -> "lottie_weather_files/weather_snow.json"
 
-        // Tåke
+        // Fog
         "fog_day" -> "lottie_weather_files/weather_fog.json"
 
-        else -> "lottie_weather_files/weather_cloudy.json" // Standard til skyet
+        else -> "lottie_weather_files/weather_cloudy.json"
     }
-    // Last animasjonen fra assets
+    // Load the animation
     val composition by rememberLottieComposition(spec = LottieCompositionSpec.Asset(weatherAnimation))
 
-    // Loop animasjonen kontinuerlig
+    // Loop animation and get progress
     val progress by animateLottieCompositionAsState(
         composition,
-        isPlaying = true, // Sørger for at animasjonen spiller
-        iterations = LottieConstants.IterateForever // Sørger for at animasjonen går uendelig
+        isPlaying = true,
+        iterations = LottieConstants.IterateForever
     )
 
-    // Dynamisk bakgrunnsfarge basert på vær
     val backgroundColor = when (weather.symbolCode) {
 
-        "clearsky_day" -> Color(0xFF87CEEB) // Lys blå (klar himmel)
-        "clearsky_night" -> Color(0xFF0D1B2A) // Mørk blåsvart
+        "clearsky_day" -> Color(0xFF87CEEB)
+        "clearsky_night" -> Color(0xFF0D1B2A)
 
         "fair_day", "partlycloudy_day" -> Color(0xFFAEDFF7)
         "fair_night", "partlycloudy_night" -> Color(0xFF1C2D40)
 
-        "cloudy_day" -> Color(0xFFB0BEC5) // Grå
-        "cloudy_night" -> Color(0xFF2F3E46) // Mørk gråblå
+        "cloudy_day" -> Color(0xFFB0BEC5)
+        "cloudy_night" -> Color(0xFF2F3E46)
 
         "lightrain_day", "rain_day", "heavyrain_day" -> Color(0xFF607D8B)
         "lightrain_night", "rain_night", "heavyrain_night" -> Color(0xFF263238)
@@ -96,29 +95,29 @@ fun WeatherNow(weather: LocationWeather?) {
         "lightning_day", "heavyrainandthunder_day" -> Color(0xFF455A64)
         "lightning_night", "heavyrainandthunder_night" -> Color(0xFF263238)
 
-        else -> Color(0xFF90CAF9) // Standard blå bakgrunn
+        else -> Color(0xFF90CAF9)
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(backgroundColor) // Bakgrunnsfarge endret dynamisk
+            .background(backgroundColor)
             .padding(horizontal = 24.dp, vertical = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp) // Plass mellom de forskjellige tekstene og elementene
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Temperatur - Større font og venstrejustert
+
         Text(
             text = "${weather.temperature.toInt()}°",
-            fontSize = 100.sp, // Større tekst
+            fontSize = 100.sp,
             color = Color.Black,
-            modifier = Modifier.padding(top = 24.dp) // Litt avstand til toppen
+            modifier = Modifier.padding(top = 24.dp)
         )
 
-        // Informasjonslinjer under temperaturen
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 16.dp), // Litt avstand fra temperatur
+                .padding(top = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             InfoLine("Føles som", "${weather.temperature.toInt()}°")
@@ -138,18 +137,17 @@ fun WeatherNow(weather: LocationWeather?) {
             InfoLine("Nedbør neste time", "${weather.precipitationAmount} mm")
         }
 
-        // Større Lottie animasjon midtstilt under tekstlinjene
         Box(
             modifier = Modifier
-                .fillMaxWidth() // Bredde på animasjonen
-                .height(350.dp) // Øk høyden på animasjonen
-                .padding(top = 40.dp) // Økt avstand mellom tekst og animasjon
+                .fillMaxWidth()
+                .height(350.dp)
+                .padding(top = 40.dp)
         ) {
             LottieAnimation(
                 composition = composition,
                 progress = progress,
                 modifier = Modifier
-                    .align(Alignment.Center) // Midtstille animasjonen
+                    .align(Alignment.Center)
             )
         }
     }

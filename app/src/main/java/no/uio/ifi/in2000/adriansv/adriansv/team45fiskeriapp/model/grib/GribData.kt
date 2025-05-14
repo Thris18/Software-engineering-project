@@ -2,8 +2,8 @@ package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.grib
 
 data class GribData(
     val values: FloatArray,
-    val uValues: FloatArray? = null,  // U-komponenter for vind/strøm
-    val vValues: FloatArray? = null,  // V-komponenter for vind/strøm
+    val uValues: FloatArray? = null,  // U-komponenter for wind/current
+    val vValues: FloatArray? = null,  // V-komponenter for wind/current
     val width: Int,
     val height: Int,
     val latitudes: FloatArray,

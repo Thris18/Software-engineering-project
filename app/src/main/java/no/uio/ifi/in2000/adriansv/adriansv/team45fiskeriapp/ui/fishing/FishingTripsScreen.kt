@@ -58,7 +58,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-// Datamodell for fisketur
+// Datamodell for fishingtrip
 data class FishingTrip(
     val name: String,
     val screenshotUri: String,
@@ -67,7 +67,7 @@ data class FishingTrip(
     val catchCount: Int = 0
 )
 
-// Hjelpefunksjoner for lagring og lasting
+// Help functions for saving and loading trips
 object FishingTripStorage {
     private const val FILE_NAME = "fishing_trips.json"
 
@@ -100,7 +100,6 @@ object FishingTripStorage {
         FileWriter(file).use { writer ->
             writer.write(Gson().toJson(trips))
         }
-        // Slett bildet hvis det finnes
         try {
             val uri = Uri.parse(trip.screenshotUri)
             val imageFile = File(uri.path ?: "")
@@ -126,7 +125,6 @@ fun FishingTripsScreen(onBack: () -> Unit) {
         reloadTrips()
     }
 
-    // Sorter listen basert på valgt sortering
     val sortedTrips = when (sortType) {
         "Dato" -> trips.sortedByDescending { it.endTime }
         "Antall fangst" -> trips.sortedByDescending { it.catchCount }
@@ -218,7 +216,6 @@ fun FishingTripsScreen(onBack: () -> Unit) {
                 }
             }
         }
-        // Popup for stor bildevisning
         if (selectedImageUri != null) {
             Dialog(onDismissRequest = { selectedImageUri = null }) {
                 Surface(

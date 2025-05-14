@@ -11,14 +11,12 @@ import org.maplibre.android.maps.Style
 
 object GribOverlayManager {
     fun addOrUpdateGribOverlay(context: Context, style: Style, geoJson: String, isDarkMode: Boolean) {
-        Log.d("GribOverlayManager", "Starting to add/update GRIB overlay")
-        Log.d("GribOverlayManager", "GeoJSON: $geoJson")
 
         try {
             val obj = JSONObject(geoJson)
             val features = obj.optJSONArray("features")
             if (features != null) {
-                // Grupper punkter etter type
+                // group points by type
                 val windPoints = mutableListOf<GribPoint>()
                 val currentPoints = mutableListOf<GribPoint>()
                 val wavePoints = mutableListOf<GribPoint>()
@@ -36,7 +34,7 @@ object GribOverlayManager {
                         val u = props?.optDouble("u")?.toFloat() ?: 0f
                         val v = props?.optDouble("v")?.toFloat() ?: 0f
 
-                        // Beregn retning og hastighet fra u- og v-komponenter
+                        // calculate direction and speed from u and v
                         val direction = CalculateUtil.calculateDirectionFromUV(u.toDouble(), v.toDouble())
                         val speed = CalculateUtil.calculateSpeedFromUV(u.toDouble(), v.toDouble())
 
@@ -65,11 +63,10 @@ object GribOverlayManager {
 
                         when (type) {
                             "wind" -> {
-                                Log.d("GribOverlayManager", "Wind point: lat=${point.latitude}, lon=${point.longitude}, speed=$speed, direction=$direction")
+
                                 windPoints.add(point)
                             }
                             "strom" -> {
-                                Log.d("GribOverlayManager", "Current point: lat=${point.latitude}, lon=${point.longitude}, speed=$speed, direction=$direction")
                                 currentPoints.add(point)
                             }
                             "wave" -> wavePoints.add(point)
@@ -77,10 +74,6 @@ object GribOverlayManager {
                         }
                     }
                 }
-
-                Log.d("GribOverlayManager", "Antall bølgepunkter: ${wavePoints.size}, regnpunkter: ${rainPoints.size}")
-                wavePoints.forEach { Log.d("GribOverlayManager", "Bølgepunkt: ${it.latitude}, ${it.longitude}, verdi: ${it.data?.waveHeight}") }
-                rainPoints.forEach { Log.d("GribOverlayManager", "Regnpunkt: ${it.latitude}, ${it.longitude}, verdi: ${it.data?.precipitation}") }
 
                 val minDistanceKm = 6.5
                 val spatialGrid = SpatialGrid(minDistanceKm)

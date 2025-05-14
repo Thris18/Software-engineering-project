@@ -77,7 +77,7 @@ fun AddFishDialog(
 
     val context = LocalContext.current
     
-    // Håndter bildeopptak
+    // Manage image capture
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture(),
         onResult = { success ->
@@ -90,17 +90,15 @@ fun AddFishDialog(
         }
     )
 
-    // Tillatelseshåndtering for kamera
+    // Permission handler for camera
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            // Tillatelse gitt, start kamera
             photoUri?.let { uri ->
                 launcher.launch(uri)
             }
         } else {
-            // Tillatelse ikke gitt, vis melding til bruker
             Toast.makeText(
                 context,
                 "Kameratillatelse er nødvendig for å ta bilder",
@@ -108,8 +106,7 @@ fun AddFishDialog(
             ).show()
         }
     }
-
-    // Håndter bildevalg fra galleri
+    // Choose image from library
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
@@ -119,7 +116,6 @@ fun AddFishDialog(
         }
     }
 
-    // Opprett midlertidig fil for bilde
     val photoFile = remember {
         try {
             File.createTempFile(
@@ -132,7 +128,6 @@ fun AddFishDialog(
         }
     }
 
-    // Opprett URI for midlertidig fil
     LaunchedEffect(photoFile) {
         photoFile?.let { file ->
             photoUri = FileProvider.getUriForFile(
@@ -143,26 +138,22 @@ fun AddFishDialog(
         }
     }
 
-    // Håndter bildeopptak med tillatelsessjekk
     fun takePicture() {
         when {
             ContextCompat.checkSelfPermission(
                 context,
                 Manifest.permission.CAMERA
             ) == PackageManager.PERMISSION_GRANTED -> {
-                // Vi har allerede tillatelse, start kamera
                 photoUri?.let { uri ->
                     launcher.launch(uri)
                 }
             }
             else -> {
-                // Be om tillatelse
                 cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
             }
         }
     }
 
-    // Håndter bildevalg fra galleri
     fun pickImage() {
         galleryLauncher.launch("image/*")
     }
@@ -178,7 +169,6 @@ fun AddFishDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Vis bilde hvis det er valgt
                 if (imageUri != null) {
                     Card(
                         modifier = Modifier
@@ -245,7 +235,6 @@ fun AddFishDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Posisjonsknapp
                 Button(
                     onClick = onSelectLocation,
                     modifier = Modifier
@@ -276,7 +265,6 @@ fun AddFishDialog(
                     }
                 }
 
-                // Vis koordinater kun hvis brukeren har valgt et punkt gjennom kartet
                 if (latitude != 0.0 && longitude != 0.0 && selectedLocationForFish != null) {
                     Card(
                         modifier = Modifier
@@ -296,7 +284,6 @@ fun AddFishDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Bildeknapper
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)

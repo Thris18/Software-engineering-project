@@ -98,14 +98,12 @@ fun FishLogScreen(
                     }
                 },
                 actions = {
-                    // Sorteringsknapp
                     IconButton(onClick = { showSortMenu = true }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Sort,
                             contentDescription = "Sorter"
                         )
                     }
-                    // Legg til fisk-knapp
                     IconButton(onClick = onAddFish) {
                         Icon(
                             imageVector = Icons.Default.Add,
@@ -122,7 +120,6 @@ fun FishLogScreen(
                 .padding(paddingValues)
         ) {
             if (fishLogs.isEmpty()) {
-                // Vis melding når det ikke er noen fisker
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -147,7 +144,6 @@ fun FishLogScreen(
                     }
                 }
             } else {
-                // Liste med fisker
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp),
@@ -161,7 +157,6 @@ fun FishLogScreen(
                             Box(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                // X-knapp for å fjerne fisk
                                 IconButton(
                                     onClick = { onRemoveFish(fishLog) },
                                     modifier = Modifier
@@ -181,7 +176,6 @@ fun FishLogScreen(
                                         .padding(16.dp),
                                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                                 ) {
-                                    // Venstre side: info
                                     Column(
                                         modifier = Modifier.weight(1f),
                                         verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -237,7 +231,6 @@ fun FishLogScreen(
                                         )
                                     }
 
-                                    // Høyre side med bilde
                                     if (fishLog.imageUri != null) {
                                         Box(
                                             modifier = Modifier
@@ -264,7 +257,6 @@ fun FishLogScreen(
                 }
             }
 
-            // Sorteringsmeny
             if (showSortMenu) {
                 AlertDialog(
                     onDismissRequest = { showSortMenu = false },
@@ -305,7 +297,6 @@ fun FishLogScreen(
                 )
             }
 
-            // Popup for stor bildevisning
             if (selectedImageUri != null) {
                 Dialog(onDismissRequest = { selectedImageUri = null }) {
                     Surface(

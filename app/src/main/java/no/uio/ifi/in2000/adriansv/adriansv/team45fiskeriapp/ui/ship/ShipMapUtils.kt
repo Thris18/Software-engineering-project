@@ -72,8 +72,7 @@ fun setupShipLayer(context: Context, style: Style) {
             Log.d(TAG, "Added ship icon for type: $type")
         }
     }
-    
-    // Add empty GeoJSON source
+
     val emptyFeatureCollection = JSONObject().apply {
         put("type", "FeatureCollection")
         put("features", JSONArray())
@@ -81,8 +80,7 @@ fun setupShipLayer(context: Context, style: Style) {
     val source = GeoJsonSource(SHIP_SOURCE_ID, emptyFeatureCollection.toString())
     style.addSource(source)
     Log.d(TAG, "Added ship source")
-    
-    // Add ship layer with type-based icon selection
+
     val symbolLayer = SymbolLayer(SHIP_LAYER_ID, SHIP_SOURCE_ID)
         .withProperties(
             PropertyFactory.iconImage(Expression.get("type")),
@@ -99,11 +97,9 @@ fun setupShipLayer(context: Context, style: Style) {
             )
         )
     style.addLayer(symbolLayer)
-    Log.d(TAG, "Added ship layer")
 }
 
 fun updateShipSource(context: Context, style: Style, ships: List<Ship>) {
-    Log.d(TAG, "Updating ship source with ${ships.size} ships")
     
     try {
         val features = JSONArray()

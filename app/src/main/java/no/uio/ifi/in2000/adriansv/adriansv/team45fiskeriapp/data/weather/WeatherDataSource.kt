@@ -25,8 +25,7 @@ class WeatherDataSource {
                 if (connection.responseCode == 200) {
                     val response = connection.inputStream.bufferedReader().readText()
                     val jsonObject = JSONObject(response)
-                    
-                    Log.d(TAG, "Weather fetched for location: lat=$latitude, lon=$longitude, zoomLevel=$zoomLevel")
+
                     Result.success(parser.parseJsonToWeatherResponse(jsonObject))
                 } else {
                     val errorMessage = connection.errorStream?.bufferedReader()?.readText() ?: "Unknown error"

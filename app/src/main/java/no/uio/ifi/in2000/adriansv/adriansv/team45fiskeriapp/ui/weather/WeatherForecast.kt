@@ -19,29 +19,23 @@ import java.util.*
 
 @Composable
 fun WeatherForecast(weather: LocationWeather?) {
-    // Grupperer værdataene etter dato
     val groupedByDay = weather?.timeseries
         ?.groupBy { it.time.substring(0, 10) } ?: emptyMap()
 
-    // Husk tilstanden for hvilken dag som er utvidet
     val expandedDays = remember { mutableStateMapOf<String, Boolean>() }
 
-    // Bruker LazyColumn for å lage en scrollbar liste med værdataene
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFF2F2F7)) // lys grå bakgrunn
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        // Går gjennom hver dag og viser et kort for hver dag
         groupedByDay.forEach { (date, entries) ->
             val isExpanded = expandedDays[date] == true
 
-            // Hvis dagen er utvidet, vises alle timene, ellers filtreres hovedperiodene
             val filtered = if (isExpanded) entries else filterByMainPeriods(entries)
 
             item {
-                // Kort som inneholder værdataene for en spesifikk dag
                 Card(
                     colors = CardDefaults.cardColors(containerColor = Color.White),
                     shape = RoundedCornerShape(16.dp),
@@ -53,7 +47,7 @@ fun WeatherForecast(weather: LocationWeather?) {
                         modifier = Modifier.padding(vertical = 12.dp, horizontal = 16.dp)
                     ) {
 
-                        // Datoen formateres og vises som en overskrift
+
                         Text(
                             text = formatDate(date),
                             style = MaterialTheme.typography.titleMedium,
@@ -62,10 +56,8 @@ fun WeatherForecast(weather: LocationWeather?) {
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
 
-                        // Går gjennom og viser værdata for de filtrerte tidspunktene
                         filtered.forEach { WeatherRow(it) }
 
-                        // Knapp for å utvide eller skjule detaljene for dagen
                         TextButton(
                             onClick = { expandedDays[date] = !isExpanded },
                             modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -79,14 +71,13 @@ fun WeatherForecast(weather: LocationWeather?) {
     }
 }
 
-// Funksjon for å formatere datoen fra "YYY-MM-DD" til "Dag, D. Måned"
+
 fun formatDate(date: String): String {
     val localDate = LocalDate.parse(date)
     val formatter = DateTimeFormatter.ofPattern("EEEE d. MMMM", Locale("no"))
     return localDate.format(formatter).replaceFirstChar { it.uppercase() }
 }
 
-// Filtrerer tidspunktene, slik at kun hovedperiodene vises
 fun filterByMainPeriods(entries: List<TimeSeriesEntry>): List<TimeSeriesEntry> {
     return entries.filter {
         val hour = it.time.substring(11, 13).toInt()
@@ -94,7 +85,6 @@ fun filterByMainPeriods(entries: List<TimeSeriesEntry>): List<TimeSeriesEntry> {
     }
 }
 
-// Funksjon for å formatere vindretning, vindhastighet og vindkast
 fun formatWind(entry: TimeSeriesEntry): String {
     val speed = entry.data.instant.details.windSpeed.toInt()
     val gust = speed + 1
