@@ -37,7 +37,7 @@ Dette dokumentet beskriver de viktigste funksjonelle kravene og systemdesignet f
 - Brukeren kan registrere fangst under turen
 - Når turen er ferdig, genereres en turrapport
 
-![Use case for fisketur](docs/UseCaseFisketur.png)
+![Use case for fisketur](diagrammer/UseCaseFisketur.png)
 
 **Beskrivelse:**
 Dette use case-diagrammet viser hvordan en fisker starter en fisketur i appen. Systemet sporer posisjon, henter vær- og skipsdata, og lar brukeren registrere fangst. Hvis internett forsvinner, får brukeren begrenset funksjonalitet, men kan fortsatt lagre fangst. Når turen avsluttes, genereres en rapport.
@@ -84,7 +84,7 @@ Dette use case-diagrammet viser hvordan en fisker starter en fisketur i appen. S
 **Beskrivelse:**
 Dette use case-diagrammet viser hvordan brukeren kan navigere mellom ulike deler av appen via kartet. Brukeren kan se værdata, skipsposisjoner, og egne fangster på kartet, samt filtrere og utforske ulike lag.
 
-![Use case for navigasjon](docs/UseCaseNavigasjon.png)
+![Use case for navigasjon](diagrammer/UseCaseNavigasjon.png)
 
 **Beskrivelse:**
 Brukeren kan navigere mellom kartlag, se vær, skip og egne fangster, og filtrere informasjon. Diagrammet illustrerer hovedflyten og alternative navigasjonsmuligheter i appen.
@@ -96,7 +96,7 @@ Brukeren kan navigere mellom kartlag, se vær, skip og egne fangster, og filtrer
 **Beskrivelse:**
 Sekvensdiagrammet illustrerer hvordan brukeren henter værdata for et valgt område. Brukeren trykker på "Vis vær", appen sender forespørsel til vær-API, og resultatet vises i grensesnittet. Diagrammet viser samspillet mellom bruker, UI, ViewModel og Repository/DataSource.
 
-![Sekvensdiagram for vær](docs/Sekvensdiagramvaer.png)
+![Sekvensdiagram for vær](diagrammer/Sekvensdiagramvaer.png)
 
 ---
 
@@ -105,7 +105,7 @@ Sekvensdiagrammet illustrerer hvordan brukeren henter værdata for et valgt omr�
 **Beskrivelse:**
 Klassediagrammet gir en visuell oversikt over de viktigste klassene og deres ansvar, samt hvordan de samarbeider for å realisere funksjonaliteten i Sjøspor. Det reflekterer use-case og sekvensdiagrammene, og viser hvordan ViewModels, Repositories, DataSources og domeneobjekter henger sammen.
 
-![Klassediagram](docs/Klassediagram.png)
+![Klassediagram](diagrammer/Klassediagram.png)
 
 ---
 
@@ -114,4 +114,4 @@ Klassediagrammet gir en visuell oversikt over de viktigste klassene og deres ans
 **Beskrivelse:**
 Flytdiagrammet viser steg-for-steg hvordan brukerens profil håndteres i appen, inkludert opprettelse, validering av input og lagring av endringer. Diagrammet illustrerer beslutningspunkter og mulige utfall i profillogikken.
 
-![Flytdiagram for profil](docs/Flytdiagramprofil.png)
+![Flytdiagram for profil](diagrammer/Flytdiagramprofil.png)
