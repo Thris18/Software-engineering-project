@@ -1,12 +1,16 @@
 # Appnavn: Sjøspor 
 
-En Android-applikasjon utviklet for fiskere som gir tilgang til værdata, skipsposisjoner, og mulighet for å starte fisketurer og logge fangster.
+- En Android-applikasjon utviklet for fiskere som gir tilgang til værdata, skipsposisjoner, og mulighet for å starte fisketurer og logge fangster.
 
 ## CASE-KRAV
 - Case 2 kravlegger: "Nedbør og bølgehøyde er skalarverdier som kan vises med farger, mens vind og strøm er vektorer hvor dere må tegne piler eller på andre måter angi både retning og styrke. Dersom noen av verdiene overstiger en viss terskel (satt av bruker) skal dette markeres i kartet så man kan unngå å ferdes i området."
 
 - Terskler for GRIB-dataen finnes via profil > innstillinger. 
-## Krav til systemet
+
+## README.md Struktur
+
+- Vi følger GitHub sin anbefalte rammeverk. 
+## Krav til systemet 
 
 - Android 9.0 (API level 28)
 - Internettilkobling
