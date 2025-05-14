@@ -107,45 +107,46 @@ fun TutorialOverlay(
                 }
 
                 if (currentStep.mascotResourceId != null) {
-                val mascotPosition = getMascotPosition(
-                    screenWidth = screenWidth,
-                    screenHeight = screenHeight,
-                    step = currentStep,
-                    defaultSize = 140.dp
-                )
-
-                if (currentStep.title == "Da er du klar !") {
-                            AndroidView(
-                                factory = { context ->
-                                    ImageView(context).apply {
-                                        setBackgroundResource(R.drawable.waving_mascot)
-                                        scaleType = ImageView.ScaleType.FIT_CENTER
-                                        adjustViewBounds = true
-                                        (background as? AnimationDrawable)?.start()
-                                    }
-                                },
-                                modifier = Modifier
-                        .size(mascotPosition.size)
-                        .align(mascotPosition.alignment)
-                        .offset(x = mascotPosition.offset.x, y = mascotPosition.offset.y)
+                    val mascotPosition = getMascotPosition(
+                        screenWidth = screenWidth,
+                        screenHeight = screenHeight,
+                        step = currentStep,
+                        defaultSize = 140.dp
                     )
-                } else {
-                            Image(
-                                painter = painterResource(id = currentStep.mascotResourceId),
-                                contentDescription = null,
-                                modifier = Modifier
-                        .size(mascotPosition.size)
-                        .align(mascotPosition.alignment)
-                        .offset(x = mascotPosition.offset.x, y = mascotPosition.offset.y),
-                                contentScale = ContentScale.Fit
-                            )
+
+                    if (currentStep.isLastStep) {
+                        AndroidView(
+                            factory = { context ->
+                                ImageView(context).apply {
+                                    setBackgroundResource(currentStep.mascotResourceId)
+                                    scaleType = ImageView.ScaleType.FIT_CENTER
+                                    adjustViewBounds = true
+                                    (background as? AnimationDrawable)?.start()
+                                }
+                            },
+                            modifier = Modifier
+                                .size(mascotPosition.size)
+                                .align(mascotPosition.alignment)
+                                .offset(x = mascotPosition.offset.x, y = mascotPosition.offset.y)
+                        )
+                    } else {
+                        Image(
+                            painter = painterResource(id = currentStep.mascotResourceId),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(mascotPosition.size)
+                                .align(mascotPosition.alignment)
+                                .offset(x = mascotPosition.offset.x, y = mascotPosition.offset.y),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
                 }
             }
         }
     }
-}
 
-    data class MascotPosition(
+
+data class MascotPosition(
     val alignment: Alignment,
     val offset: androidx.compose.ui.unit.DpOffset,
     val size: androidx.compose.ui.unit.Dp
