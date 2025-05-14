@@ -1,31 +1,51 @@
 package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import android.annotation.SuppressLint
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import coil.compose.rememberAsyncImagePainter
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.fish.FishLog
 import java.text.SimpleDateFormat
-import java.util.*
-import androidx.compose.foundation.Image
-import androidx.compose.ui.layout.ContentScale
-import coil.compose.rememberAsyncImagePainter
-import android.net.Uri
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
+import java.util.Locale
 
+@SuppressLint("ConstantLocale")
 private val dateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
 
+@SuppressLint("DefaultLocale")
 @Composable
 fun FishLogDialog(
     fishLogs: List<FishLog>,
@@ -33,8 +53,6 @@ fun FishLogDialog(
     onClearLogs: () -> Unit,
     onAddFish: () -> Unit,
     selectedLocation: Pair<Double, Double>?,
-    failedImageLoads: Set<String>,
-    onImageLoadError: (String) -> Unit,
     onRemoveFish: (FishLog) -> Unit
 ) {
     val selectedFishLog = if (selectedLocation != null) {
@@ -92,7 +110,7 @@ fun FishLogDialog(
                                 valueStyle = MaterialTheme.typography.bodySmall
                             )
 
-                            Divider(modifier = Modifier.padding(vertical = 4.dp))
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
                             InfoSection(
                                 title = "Område",
@@ -102,7 +120,7 @@ fun FishLogDialog(
                             )
 
                             if (selectedFishLog.description.isNotBlank()) {
-                                Divider(modifier = Modifier.padding(vertical = 4.dp))
+                                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                                 InfoSection(
                                     title = "Beskrivelse",
                                     value = selectedFishLog.description,
@@ -112,7 +130,7 @@ fun FishLogDialog(
                             }
 
                             if (selectedFishLog.weight != null) {
-                                Divider(modifier = Modifier.padding(vertical = 4.dp))
+                                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                                 InfoSection(
                                     title = "Vekt",
                                     value = String.format("%.1f kg", selectedFishLog.weight),
@@ -121,7 +139,7 @@ fun FishLogDialog(
                                 )
                             }
 
-                            Divider(modifier = Modifier.padding(vertical = 4.dp))
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
                             InfoSection(
                                 title = "Dato",
@@ -131,7 +149,7 @@ fun FishLogDialog(
                             )
 
                             selectedFishLog.imageUri?.let { uri ->
-                                Divider(modifier = Modifier.padding(vertical = 4.dp))
+                                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                                 Image(
                                     painter = rememberAsyncImagePainter(uri),
                                     contentDescription = "Fiskebilde",

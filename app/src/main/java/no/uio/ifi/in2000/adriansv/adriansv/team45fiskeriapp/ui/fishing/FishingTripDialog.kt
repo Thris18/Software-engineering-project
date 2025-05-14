@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing
 
 import androidx.compose.foundation.layout.*
@@ -12,6 +14,7 @@ import java.time.Duration
 import java.time.LocalDateTime
 import kotlinx.coroutines.delay
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
@@ -52,10 +55,10 @@ import java.util.Date
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 
+@SuppressLint("DefaultLocale")
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun FishingTripDialog(
-    onDismiss: () -> Unit,
     tripName: String,
     onTripNameChange: (String) -> Unit,
     isTripActive: Boolean,
@@ -63,7 +66,6 @@ fun FishingTripDialog(
     onEndTrip: () -> Unit,
     startTime: LocalDateTime?,
     onClose: () -> Unit,
-    onAddCatch: (String, Double, Uri?, Location) -> Unit,
     fishLogViewModel: FishLogViewModel
 ) {
     var showDialog by remember { mutableStateOf(true) }
@@ -76,16 +78,13 @@ fun FishingTripDialog(
     var shouldGetLocation by remember { mutableStateOf(false) }
     var currentLocation by remember { mutableStateOf<Location?>(null) }
     var showAddCatchDialog by remember { mutableStateOf(false) }
-    var showEndTripConfirmation by remember { mutableStateOf(false) }
     var selectedFishType by remember { mutableStateOf("") }
     var selectedWeight by remember { mutableStateOf("") }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var selectedDescription by remember { mutableStateOf("") }
-    var selectedLocation by remember { mutableStateOf<Location?>(null) }
     var showCameraPermissionDialog by remember { mutableStateOf(false) }
     var showCatches by remember { mutableStateOf(false) }
-    var catches by remember { mutableStateOf<List<Triple<String, Double, Uri?>>>(emptyList()) }
-    
+
     val context = LocalContext.current
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
     val locationManager = remember { context.getSystemService(Context.LOCATION_SERVICE) as LocationManager }
@@ -309,11 +308,11 @@ fun FishingTripDialog(
                                         modifier = Modifier.padding(bottom = 16.dp)
                                     )
                                 }
-                                
-                                Divider(
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f),
+
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(vertical = 8.dp),
                                     thickness = 1.dp,
-                                    modifier = Modifier.padding(vertical = 8.dp)
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f)
                                 )
                                 
                                 // Posisjon
@@ -567,7 +566,7 @@ fun FishingTripDialog(
                 TextButton(
                     onClick = { 
                         showLocationServiceDialog = false
-                        val intent = android.content.Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                        val intent = Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS)
                         context.startActivity(intent)
                     }
                 ) {
@@ -640,7 +639,7 @@ fun FishingTripDialog(
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(
                         onClick = {
-                            cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+                            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {

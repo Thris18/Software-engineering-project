@@ -14,8 +14,10 @@ import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
+private const val TAG = "GribDataSource"
+
+
 class GribDataSource(private val context: Context) {
-    private val TAG = "GribDataSource"
     private val client = OkHttpClient.Builder()
         .addInterceptor(HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BASIC

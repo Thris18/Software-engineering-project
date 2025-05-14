@@ -103,18 +103,4 @@ object GribOverlayManager {
         }
     }
 
-    fun removeGribOverlay(style: Style) {
-        // Fjern standard overlay
-        val standardSourceId = "grib-standard-source"
-        val standardSymbolLayerId = "grib-standard-symbol-layer"
-        val standardCircleLayerId = "grib-standard-circle-layer"
-        style.removeLayer(standardSymbolLayerId)
-        style.removeLayer(standardCircleLayerId)
-        style.removeSource(standardSourceId)
-        // Fjern alle overlays
-        WindOverlay.remove(style)
-        CurrentOverlay.remove(style)
-        WaveOverlay.remove(style)
-        RainOverlay.remove(style)
-    }
 }

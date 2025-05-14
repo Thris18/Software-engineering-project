@@ -96,9 +96,9 @@ fun filterByMainPeriods(entries: List<TimeSeriesEntry>): List<TimeSeriesEntry> {
 
 // Funksjon for å formatere vindretning, vindhastighet og vindkast
 fun formatWind(entry: TimeSeriesEntry): String {
-    val speed = entry.data.instant.details.wind_speed.toInt()
+    val speed = entry.data.instant.details.windSpeed.toInt()
     val gust = speed + 1
-    val direction = entry.data.instant.details.wind_from_direction.toInt()
+    val direction = entry.data.instant.details.windFromDirection.toInt()
     val arrow = when (direction) {
         in 0..44 -> "↓"
         in 45..89 -> "↙"

@@ -206,17 +206,4 @@ object WaveOverlay {
         }
     }
 
-    fun remove(style: Style) {
-        try {
-            style.getLayer(ICON_LAYER_ID)?.let { style.removeLayer(it) }
-            style.getLayer(FOG_LAYER_ID)?.let { style.removeLayer(it) }
-            style.getSource(SOURCE_ID)?.let { style.removeSource(it) }
-            style.removeImage(WAVE_ICON_ID)
-            style.removeImage("blue")
-            style.removeImage("yellow")
-            style.removeImage("red")
-        } catch (e: Exception) {
-            Log.e("WaveOverlay", "Error removing wave overlay: ${e.message}")
-        }
-    }
 }

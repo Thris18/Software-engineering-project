@@ -3,20 +3,17 @@ package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.ship
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.Drawable
 import android.util.Log
 import androidx.core.content.ContextCompat
-import org.maplibre.android.maps.Style
-import org.maplibre.android.style.layers.Property
-import org.maplibre.android.style.layers.PropertyFactory
-import org.maplibre.android.style.layers.SymbolLayer
-import org.maplibre.android.style.sources.GeoJsonSource
-import org.maplibre.android.style.expressions.Expression
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.R
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.ship.Ship
 import org.json.JSONArray
 import org.json.JSONObject
+import org.maplibre.android.maps.Style
+import org.maplibre.android.style.expressions.Expression
+import org.maplibre.android.style.layers.PropertyFactory
+import org.maplibre.android.style.layers.SymbolLayer
+import org.maplibre.android.style.sources.GeoJsonSource
 
 private const val TAG = "ShipMapUtils"
 private const val SHIP_SOURCE_ID = "ship-source"
@@ -122,8 +119,8 @@ fun updateShipSource(context: Context, style: Style, ships: List<Ship>) {
                 })
                 put("properties", JSONObject().apply {
                     put("id", ship.mmsi)
-                    put("course", ship.course ?: 0.0)
-                    put("speed", ship.speed ?: 0.0)
+                    put("course", ship.course)
+                    put("speed", ship.speed)
                     put("mmsi", ship.mmsi)
                     put("name", ship.name)
                     put("messageTime", ship.messageTime)

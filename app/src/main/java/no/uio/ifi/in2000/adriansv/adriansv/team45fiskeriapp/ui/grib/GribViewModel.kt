@@ -1,5 +1,6 @@
 package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -21,6 +22,7 @@ data class GribUiState(
     val gribData: Map<String, GribData?> = emptyMap()
 )
 
+@SuppressLint("StaticFieldLeak")
 class GribViewModel(
     private val gribRepository: GribRepository,
     private val context: Context
@@ -41,28 +43,6 @@ class GribViewModel(
                 Log.e(TAG, "Error initializing GRIB overlay", e)
                 _uiState.value = _uiState.value.copy(
                     error = e.message ?: "Unknown error initializing GRIB overlay"
-                )
-            }
-        }
-    }
-
-    fun updateGribVisibility(showGrib: Boolean) {
-        viewModelScope.launch {
-            try {
-                val newGribData = if (showGrib) {
-                    gribRepository.getAllWeatherGrids()
-                } else {
-                    emptyMap()
-                }
-                _uiState.value = _uiState.value.copy(gribData = newGribData)
-                
-                if (showGrib) {
-                    loadGribOverlayData()
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error updating GRIB visibility", e)
-                _uiState.value = _uiState.value.copy(
-                    error = e.message ?: "Unknown error updating GRIB visibility"
                 )
             }
         }

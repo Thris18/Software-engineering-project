@@ -11,13 +11,14 @@ import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.sqrt
 
+private const val TAG = "GribRepository"
+
 interface GribRepository {
     suspend fun getGribData(point: GribPoint): GribData?
     suspend fun getGribDataGrid(type: String, variableName: String? = null): GribData?
     suspend fun getAllWeatherGrids(): Map<String, GribData?>
 
-    class GribRepositoryImpl(private val context: Context) : GribRepository {
-        private val TAG = "GribRepository"
+    class GribRepositoryImpl(context: Context) : GribRepository {
         private val gribDataSource = GribDataSource(context)
 
         override suspend fun getGribData(point: GribPoint): GribData? = withContext(Dispatchers.IO) {
@@ -160,8 +161,8 @@ interface GribRepository {
                     lon = point.longitude.toFloat(),
                     time = time,
                     reftime = reftime,
-                    height_above_ground = height ?: 0f,
-                    height_above_ground1 = height1 ?: 0f
+                    heightAboveGround = height ?: 0f,
+                    heightAboveGround1 = height1 ?: 0f
                 )
             } catch (e: Exception) {
                 Log.e(TAG, "Feil ved henting av GRIB-data: ${e.message}", e)

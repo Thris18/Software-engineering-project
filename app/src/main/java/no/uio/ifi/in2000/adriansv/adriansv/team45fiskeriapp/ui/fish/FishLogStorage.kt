@@ -12,8 +12,10 @@ import java.io.FileOutputStream
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 
+private const val TAG = "FishLogRepository"
+
+
 class FishLogStorage(private val context: Context) {
-    private val TAG = "FishLogRepository"
     private val _fishLogs = MutableStateFlow<List<FishLog>>(emptyList())
     val fishLogs: Flow<List<FishLog>> = _fishLogs.asStateFlow()
 
@@ -52,7 +54,7 @@ class FishLogStorage(private val context: Context) {
     }
 
     fun addFishLog(fishLog: FishLog) {
-        _fishLogs.value = _fishLogs.value + fishLog
+        _fishLogs.value += fishLog
         saveFishLogs()
     }
 

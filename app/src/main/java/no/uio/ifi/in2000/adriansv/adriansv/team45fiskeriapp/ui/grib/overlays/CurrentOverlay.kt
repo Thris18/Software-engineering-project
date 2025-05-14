@@ -221,16 +221,4 @@ object CurrentOverlay {
         Log.d("CurrentOverlay", "Antall features som faktisk tegnes: ${features.length()}")
     }
 
-    fun remove(style: Style) {
-        try {
-            style.getLayer(TEXT_LAYER_ID)?.let { style.removeLayer(it) }
-            style.getLayer(ICON_LAYER_ID)?.let { style.removeLayer(it) }
-            style.getLayer(ARROW_LAYER_ID)?.let { style.removeLayer(it) }
-            style.getSource(SOURCE_ID)?.let { style.removeSource(it) }
-            style.removeImage(CURRENT_ICON_ID)
-            style.removeImage(ARROW_ICON_ID)
-        } catch (e: Exception) {
-            Log.e("CurrentOverlay", "Error removing current overlay: ${e.message}")
-        }
-    }
 }

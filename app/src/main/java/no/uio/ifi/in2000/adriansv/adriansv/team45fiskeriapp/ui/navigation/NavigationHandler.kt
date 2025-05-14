@@ -90,12 +90,7 @@ fun NavigationHandler() {
                             }
                         )
                         "kart" -> MapScreen(
-                            onNavigateToProfile = { 
-                                appViewModel.updateCurrentRoute("profil")
-                                appViewModel.updateIsComingFromWelcome(false)
-                            },
-                            currentRoute = currentRoute,
-                            onNavigate = { route -> 
+                            onNavigate = { route ->
                                 appViewModel.updateCurrentRoute(route)
                                 appViewModel.updateIsComingFromWelcome(false)
                             },
@@ -140,7 +135,6 @@ fun NavigationHandler() {
                             onPhoneNumberChange = { appViewModel.updatePhoneNumber(it) },
                             onEmailChange = { appViewModel.updateEmail(it) },
                             onProfileImageChange = { appViewModel.updateProfileImageUri(it) },
-                            onSettingsClick = { appViewModel.updateShowSettings(true) },
                             isDarkMode = isDarkMode,
                             showGrib = showGrib,
                             showAlerts = showAlerts,
@@ -183,8 +177,6 @@ fun NavigationHandler() {
                     NavigationBar(
                         currentRoute = currentRoute,
                         onNavigate = { route -> appViewModel.updateCurrentRoute(route) },
-                        weather = weatherUiState.weather,
-                        weatherState = weatherUiState,
                         tutorialManager = tutorialManager
                     )
                 }
@@ -263,19 +255,17 @@ fun NavigationHandler() {
                         appViewModel.updateCurrentRoute("kart")
                         showAddFishDialog = false
                     },
-                    selectedLocationForFish = selectedLocation,
                     initialFishType = fishType,
-                    initialLocation = location,
                     initialArea = area,
                     initialDescription = description,
                     initialWeight = weight,
                     initialImageUri = imageUri,
                     onFishTypeChange = { fishType = it },
-                    onLocationChange = { location = it },
                     onAreaChange = { area = it },
                     onDescriptionChange = { description = it },
                     onWeightChange = { weight = it },
-                    onImageUriChange = { imageUri = it }
+                    onImageUriChange = { imageUri = it },
+                    selectedLocationForFish = selectedLocation
                 )
             }
         }

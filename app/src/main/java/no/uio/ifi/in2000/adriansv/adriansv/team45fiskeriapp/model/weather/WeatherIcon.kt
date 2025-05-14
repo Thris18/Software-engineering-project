@@ -5,106 +5,51 @@ enum class WeatherIcon(private val iconName: String) {
     CLEAR_DAY("01d.svg"),
     CLEAR_MORNING("01m.svg"),
     CLEAR_NIGHT("01n.svg"),
-    
+
     // Delvis skyet (02-03)
     PARTLY_CLOUDY_DAY("02d.svg"),
     PARTLY_CLOUDY_MORNING("02m.svg"),
     PARTLY_CLOUDY_NIGHT("02n.svg"),
-    CLOUDY_SUN_DAY("03d.svg"),
-    CLOUDY_SUN_MORNING("03m.svg"),
-    CLOUDY_SUN_NIGHT("03n.svg"),
-    
+
     // Overskyet (04)
     CLOUDY("04.svg"),
-    
+
     // Regn (05)
     RAIN_DAY("05d.svg"),
-    RAIN_MORNING("05m.svg"),
-    RAIN_NIGHT("05n.svg"),
-    
+
     // Regn og torden (06)
     RAIN_THUNDER_DAY("06d.svg"),
-    RAIN_THUNDER_MORNING("06m.svg"),
-    RAIN_THUNDER_NIGHT("06n.svg"),
-    
+
     // Sludd/Snø (07-08)
     SLEET_DAY("07d.svg"),
-    SLEET_MORNING("07m.svg"),
-    SLEET_NIGHT("07n.svg"),
     SNOW_SUN_DAY("08d.svg"),
-    SNOW_SUN_MORNING("08m.svg"),
-    SNOW_SUN_NIGHT("08n.svg"),
-    
+
     // Regn (09-11)
     RAIN("09.svg"),
     HEAVY_RAIN_SHOWERS("10.svg"),
     HEAVY_RAIN("11.svg"),
-    
+
     // Sludd og snø (12-15)
-    SLEET_THUNDER("12.svg"),
     SNOW("13.svg"),
-    SNOW_THUNDER("14.svg"),
     FOG("15.svg"),
-    
+
     // Regn og torden med sludd/snø (20-22)
     SLEET_THUNDER_DAY("20d.svg"),
-    SLEET_THUNDER_MORNING("20m.svg"),
-    SLEET_THUNDER_NIGHT("20n.svg"),
     SNOW_THUNDER_DAY("21d.svg"),
-    SNOW_THUNDER_MORNING("21m.svg"),
-    SNOW_THUNDER_NIGHT("21n.svg"),
     RAIN_THUNDER("22.svg"),
-    
+
     // Regn og torden (23-25)
     SLEET_SHOWERS_DAY("23.svg"),
-    THUNDER_DAY("24d.svg"),
-    THUNDER_MORNING("24m.svg"),
-    THUNDER_NIGHT("24n.svg"),
-    SLEET_SHOWERS("25d.svg"),
-    
+
     // Snø og sludd (26-29)
     SNOW_SHOWERS_DAY("26.svg"),
     SLEET_SHOWERS_THUNDER_DAY("27d.svg"),
-    SLEET_SHOWERS_THUNDER_MORNING("27m.svg"),
-    SLEET_SHOWERS_THUNDER_NIGHT("27n.svg"),
     SNOW_SHOWERS_THUNDER_DAY("28d.svg"),
-    SNOW_SHOWERS_THUNDER_MORNING("28m.svg"),
-    SNOW_SHOWERS_THUNDER_NIGHT("28n.svg"),
-    SNOW_SHOWERS_THUNDER_DAY_HEAVY("29d.svg"),
-    SNOW_SHOWERS_THUNDER_MORNING_HEAVY("29m.svg"),
-    SNOW_SHOWERS_THUNDER_NIGHT_HEAVY("29n.svg"),
-    
-    // Regn og torden (30-34)
-    RAIN_THUNDER_LIGHT("30.svg"),
-    RAIN_THUNDER_HEAVY("31.svg"),
-    SLEET_AND_THUNDER("32.svg"),
-    SNOW_AND_THUNDER("33.svg"),
-    SNOW_AND_THUNDER_HEAVY("34.svg"),
-    
+
     // Regn og snø (40-50)
-    DRIZZLE_DAY("40d.svg"),
-    DRIZZLE_MORNING("40m.svg"),
-    DRIZZLE_NIGHT("40n.svg"),
-    RAIN_SHOWERS_DAY("41d.svg"),
-    RAIN_SHOWERS_MORNING("41m.svg"),
-    RAIN_SHOWERS_NIGHT("41n.svg"),
-    SLEET_SHOWERS_DAY_LIGHT("42d.svg"),
-    SLEET_SHOWERS_MORNING_LIGHT("42m.svg"),
-    SLEET_SHOWERS_NIGHT_LIGHT("42n.svg"),
-    SNOW_SHOWERS_DAY_HEAVY("43d.svg"),
-    SNOW_SHOWERS_MORNING_HEAVY("43m.svg"),
-    SNOW_SHOWERS_NIGHT_HEAVY("43n.svg"),
-    SNOW_SHOWERS_DAY_LIGHT("44d.svg"),
-    SNOW_SHOWERS_MORNING_LIGHT("44m.svg"),
-    SNOW_SHOWERS_NIGHT_LIGHT("44n.svg"),
-    SNOW_SHOWERS_DAY_HEAVY_2("45d.svg"),
-    SNOW_SHOWERS_MORNING_HEAVY_2("45m.svg"),
-    SNOW_SHOWERS_NIGHT_HEAVY_2("45n.svg"),
-    RAIN_SHOWERS_LIGHT("46.svg"),
-    SLEET_LIGHT("47.svg"),
-    SNOW_HEAVY("48.svg"),
-    SNOW_LIGHT("49.svg"),
-    SNOW_HEAVY_2("50.svg");
+
+    RAIN_SHOWERS_DAY("41d.svg");
+
 
     // Henter full sti til SVG filen i assets
     fun getAssetPath(): String = "symbols/lightmode/svg/$iconName"
@@ -112,10 +57,10 @@ enum class WeatherIcon(private val iconName: String) {
     companion object {
         fun fromWeatherCode(code: String, hour: Int): WeatherIcon {
             // Bestem tid på døgnet
-            val timeOfDay = when {
-                hour in 6..9 -> "m"  // Morgen
-                hour in 10..17 -> "d" // Dag
-                hour in 18..20 -> "m" // Kveld
+            val timeOfDay = when (hour) {
+                in 6..9 -> "m"  // Morgen
+                in 10..17 -> "d" // Dag
+                in 18..20 -> "m" // Kveld
                 else -> "n" // Natt
             }
 
