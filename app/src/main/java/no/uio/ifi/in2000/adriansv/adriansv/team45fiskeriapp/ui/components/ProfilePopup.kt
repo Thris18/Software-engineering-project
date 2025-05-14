@@ -17,12 +17,12 @@ import androidx.compose.ui.window.Dialog
 @Composable
 fun ProfilePopup(
     userName: String,
-    onUserNameChange: (String) -> Unit,
     onSettingsClick: () -> Unit,
     onYourInformationClick: () -> Unit = {},
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
-) {
+    onUserNameChange: (String) -> Unit,
+
+    ) {
     Dialog(
         onDismissRequest = onDismiss
     ) {

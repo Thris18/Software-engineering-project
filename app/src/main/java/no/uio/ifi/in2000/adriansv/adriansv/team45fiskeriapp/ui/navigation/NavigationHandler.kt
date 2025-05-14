@@ -26,6 +26,7 @@ import androidx.annotation.RequiresApi
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.map.AppViewModel
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.weather.WeatherScreen
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.tutorial.rememberTutorialManager
+import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.GribViewModel
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -191,6 +192,7 @@ fun NavigationHandler() {
 
             // Innstillinger-popup
             if (showSettings) {
+                val gribViewModel: GribViewModel = viewModel()
                 SettingsPopup(
                     context = context,
                     isDarkMode = isDarkMode,
@@ -212,7 +214,8 @@ fun NavigationHandler() {
                         appViewModel.updateShowShips(newValue)
                         appViewModel.updateCurrentRoute(currentRoute)
                     },
-                    onDismiss = { appViewModel.updateShowSettings(false) }
+                    onDismiss = { appViewModel.updateShowSettings(show = false) },
+                    gribViewModel = gribViewModel
                 )
             }
 
