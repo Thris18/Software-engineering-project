@@ -3,6 +3,7 @@ package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.alerts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -71,7 +72,7 @@ private fun convertUTCtoNorwegianTime(utcTimeString: String): String {
         val formatter = SimpleDateFormat("d. MMMM HH:mm", Locale("nb","NO"))
         formatter.timeZone = TimeZone.getTimeZone("Europe/Oslo")
         return formatter.format(utcCal.time)
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         return utcTimeString
     }
 }
@@ -112,14 +113,15 @@ fun FarevarselPopup(
     // Animert synlighet
     var isVisible by remember { mutableStateOf(false) }
     LaunchedEffect(alertData) {
+        delay(50) // Kort forsinkelse for å la layouten stabilisere seg
         isVisible = true
     }
 
-    // Offset for dragging med smooth animasjon
+    // Offset for dragging
     var offsetX by remember { mutableStateOf(0f) }
     var offsetY by remember { mutableStateOf(0f) }
     
-    // Animerte verdier for smooth bevegelse
+    // Animated values for smooth movement
     val animatedOffsetX by animateFloatAsState(
         targetValue = offsetX,
         animationSpec = spring(
@@ -137,178 +139,182 @@ fun FarevarselPopup(
 
     AnimatedVisibility(
         visible = isVisible,
-        enter = fadeIn(
-            initialAlpha = 0f,
-            animationSpec = tween(300)
-        ) + expandIn(
-            expandFrom = Alignment.Center,
-            animationSpec = tween(300)
-        ),
-        exit = fadeOut(
-            animationSpec = tween(200)
-        ) + shrinkOut(
-            shrinkTowards = Alignment.Center,
-            animationSpec = tween(200)
-        )
+        enter = fadeIn(initialAlpha = 0f),
+        exit = fadeOut()
     ) {
-        Surface(
-            modifier = modifier
-                .offset { IntOffset(animatedOffsetX.roundToInt(), animatedOffsetY.roundToInt()) }
-                .pointerInput(Unit) {
-                    detectDragGestures { change, dragAmount ->
-                        change.consume()
-                        offsetX += dragAmount.x
-                        offsetY += dragAmount.y
-                    }
-                }
-                .graphicsLayer {
-                    rotationZ = (offsetX * 0.02f).coerceIn(-3f, 3f)
-                },
-            shape = RoundedCornerShape(16.dp),
-            tonalElevation = 8.dp
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
+            // Semi-transparent overlay that will dismiss the popup when clicked
             Box(
                 modifier = Modifier
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
-                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.90f)
-                            )
-                        )
-                    )
-            ) {
-                Column(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .widthIn(max = 260.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    // Header med tittel, lukkeknapp og severity badge
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        // Tittel og severity badge i en kolonne
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text(
-                                text = alertData.optString("eventAwarenessName"),
-                                style = MaterialTheme.typography.titleLarge,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.95f)
-                            )
-                            
-                            // Severity badge med animert bakgrunn for høy fare
-                            val severity = alertData.optString("severity")
-                            val severityColor = when(severity) {
-                                "Severe" -> Color(0xFFD32F2F)
-                                "Moderate" -> Color(0xFFF57C00)
-                                "Minor" -> Color(0xFFFBC02D)
-                                else -> Color(0xFFCCCCCC)
-                            }
-                            
-                            val isHighSeverity = severity == "Severe"
-                            val alpha by animateFloatAsState(
-                                targetValue = if (isHighSeverity) 0.8f else 1f,
-                                animationSpec = infiniteRepeatable(
-                                    animation = tween(1000),
-                                    repeatMode = RepeatMode.Reverse
-                                )
-                            )
-                            
-                            Surface(
-                                color = severityColor.copy(alpha = if (isHighSeverity) alpha else 1f),
-                                shape = RoundedCornerShape(8.dp),
-                                modifier = Modifier.wrapContentWidth()
-                            ) {
-                                Text(
-                                    text = when(severity) {
-                                        "Severe" -> "Høy fare"
-                                        "Moderate" -> "Moderat fare"
-                                        "Minor" -> "Lav fare"
-                                        else -> severity
-                                    },
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                                    color = Color.White,
-                                    style = MaterialTheme.typography.labelMedium
-                                )
-                            }
-                        }
-                        
-                        IconButton(
-                            onClick = {
-                                isVisible = false
-                                kotlinx.coroutines.MainScope().launch {
-                                    delay(300)
-                                    onDismiss()
-                                }
-                            },
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Lukk popup",
-                                modifier = Modifier.size(20.dp),
-                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                            )
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.3f))
+                    .clickable { onDismiss() }
+            )
+            
+            Surface(
+                modifier = modifier
+                    .widthIn(max = 300.dp)
+                    .padding(16.dp)
+                    .offset { IntOffset(animatedOffsetX.roundToInt(), animatedOffsetY.roundToInt()) }
+                    .pointerInput(Unit) {
+                        detectDragGestures { change, dragAmount ->
+                            change.consume()
+                            offsetX += dragAmount.x
+                            offsetY += dragAmount.y
                         }
                     }
-
-                    Divider(
-                        modifier = Modifier.padding(vertical = 4.dp),
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                    )
-
-                    // Innhold
+                    .graphicsLayer {
+                        rotationZ = (offsetX * 0.02f).coerceIn(-3f, 3f)
+                    },
+                shape = RoundedCornerShape(16.dp),
+                tonalElevation = 8.dp
+            ) {
+                Box(
+                    modifier = Modifier
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
+                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.90f)
+                                )
+                            )
+                        )
+                ) {
                     Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .widthIn(max = 260.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        // Område
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(
-                                "Område",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
-                            )
-                            Text(
-                                alertData.optString("area"),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
-                            )
+                        // Header med tittel, lukkeknapp og severity badge
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            // Tittel og severity badge i en kolonne
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = alertData.optString("eventAwarenessName"),
+                                    style = MaterialTheme.typography.titleLarge,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.95f)
+                                )
+                                
+                                // Severity badge med animert bakgrunn for høy fare
+                                val severity = alertData.optString("severity")
+                                val severityColor = when(severity) {
+                                    "Severe" -> Color(0xFFD32F2F)
+                                    "Moderate" -> Color(0xFFF57C00)
+                                    "Minor" -> Color(0xFFFBC02D)
+                                    else -> Color(0xFFCCCCCC)
+                                }
+                                
+                                val isHighSeverity = severity == "Severe"
+                                val alpha by animateFloatAsState(
+                                    targetValue = if (isHighSeverity) 0.8f else 1f,
+                                    animationSpec = infiniteRepeatable(
+                                        animation = tween(1000),
+                                        repeatMode = RepeatMode.Reverse
+                                    )
+                                )
+                                
+                                Surface(
+                                    color = severityColor.copy(alpha = if (isHighSeverity) alpha else 1f),
+                                    shape = RoundedCornerShape(8.dp),
+                                    modifier = Modifier.wrapContentWidth()
+                                ) {
+                                    Text(
+                                        text = when(severity) {
+                                            "Severe" -> "Høy fare"
+                                            "Moderate" -> "Moderat fare"
+                                            "Minor" -> "Lav fare"
+                                            else -> severity
+                                        },
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                        color = Color.White,
+                                        style = MaterialTheme.typography.labelMedium
+                                    )
+                                }
+                            }
+                            
+                            IconButton(
+                                onClick = {
+                                    isVisible = false
+                                    kotlinx.coroutines.MainScope().launch {
+                                        delay(300)
+                                        onDismiss()
+                                    }
+                                },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Lukk popup",
+                                    modifier = Modifier.size(20.dp),
+                                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                                )
+                            }
                         }
 
-                        // Beskrivelse
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(
-                                "Beskrivelse",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
-                            )
-                            Text(
-                                convertDescriptionToNorwegianTime(alertData.optString("description")),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
-                            )
-                        }
+                        Divider(
+                            modifier = Modifier.padding(vertical = 4.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
 
-                        // Anbefaling
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(
-                                "Anbefaling",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
-                            )
-                            Text(
-                                alertData.optString("recommendation").takeIf { it.isNotBlank() }
-                                    ?: "Følg med på værmeldinger og vær forberedt på endringer i værforholdene.",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
-                            )
+                        // Innhold
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            // Område
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(
+                                    "Område",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
+                                )
+                                Text(
+                                    alertData.optString("area"),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
+                                )
+                            }
+
+                            // Beskrivelse
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(
+                                    "Beskrivelse",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
+                                )
+                                Text(
+                                    convertDescriptionToNorwegianTime(alertData.optString("description")),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
+                                )
+                            }
+
+                            // Anbefaling
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(
+                                    "Anbefaling",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
+                                )
+                                Text(
+                                    alertData.optString("recommendation").takeIf { it.isNotBlank() }
+                                        ?: "Følg med på værmeldinger og vær forberedt på endringer i værforholdene.",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
+                                )
+                            }
                         }
                     }
                 }

@@ -3,6 +3,7 @@ package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.ship
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -82,17 +83,12 @@ fun ShipInfoCard(
     modifier: Modifier = Modifier
 ) {
     var isVisible by remember { mutableStateOf(false) }
-    val density = LocalDensity.current
     
-    // Sett offset direkte fra skipets posisjon
-    var offsetX by remember(shipScreenPosition) { 
-        mutableStateOf(shipScreenPosition?.x ?: 0f) 
-    }
-    var offsetY by remember(shipScreenPosition) { 
-        mutableStateOf(shipScreenPosition?.y ?: 0f) 
-    }
+    // Offset for dragging
+    var offsetX by remember { mutableStateOf(0f) }
+    var offsetY by remember { mutableStateOf(0f) }
     
-    // Animerte verdier for smooth bevegelse
+    // Animated values for smooth movement
     val animatedOffsetX by animateFloatAsState(
         targetValue = offsetX,
         animationSpec = spring(
@@ -107,7 +103,7 @@ fun ShipInfoCard(
             stiffness = Spring.StiffnessLow
         )
     )
-
+    
     // Start animasjon når kortet vises
     LaunchedEffect(Unit) {
         delay(50) // Kort forsinkelse for å la layouten stabilisere seg
@@ -119,119 +115,129 @@ fun ShipInfoCard(
         enter = fadeIn(initialAlpha = 0f),
         exit = fadeOut()
     ) {
-        Surface(
-            modifier = modifier
-                .offset { 
-                    IntOffset(
-                        (animatedOffsetX - (300f * density.density / 2)).roundToInt(),
-                        (animatedOffsetY - (400f * density.density)).roundToInt()
-                    ) 
-                }
-                .pointerInput(Unit) {
-                    detectDragGestures { change, dragAmount ->
-                        change.consume()
-                        offsetX += dragAmount.x
-                        offsetY += dragAmount.y
-                    }
-                }
-                .graphicsLayer {
-                    rotationZ = ((offsetX - (shipScreenPosition?.x ?: 0f)) * 0.02f).coerceIn(-3f, 3f)
-                },
-            shape = RoundedCornerShape(16.dp),
-            tonalElevation = 8.dp
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
+            // Semi-transparent overlay that will dismiss the card when clicked
             Box(
                 modifier = Modifier
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
-                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.90f)
-                            )
-                        )
-                    )
-            ) {
-                Column(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .widthIn(max = 260.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    // Header med navn og lukkeknapp
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = if (ship.name == "Ukjent") "Ukjent skip" else ship.name,
-                                style = MaterialTheme.typography.titleLarge,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.95f),
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "MMSI: ${ship.mmsi}",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        
-                        IconButton(
-                            onClick = {
-                                isVisible = false
-                                kotlinx.coroutines.MainScope().launch {
-                                    delay(300)
-                                    onDismiss()
-                                }
-                            },
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Lukk",
-                                modifier = Modifier.size(20.dp),
-                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                            )
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.3f))
+                    .clickable { onDismiss() }
+            )
+            
+            Surface(
+                modifier = modifier
+                    .widthIn(max = 300.dp)
+                    .padding(16.dp)
+                    .offset { IntOffset(animatedOffsetX.roundToInt(), animatedOffsetY.roundToInt()) }
+                    .pointerInput(Unit) {
+                        detectDragGestures { change, dragAmount ->
+                            change.consume()
+                            offsetX += dragAmount.x
+                            offsetY += dragAmount.y
                         }
                     }
-
-                    Divider(
-                        modifier = Modifier.padding(vertical = 4.dp),
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                    )
-
-                    // Info seksjoner
+                    .graphicsLayer {
+                        rotationZ = (offsetX * 0.02f).coerceIn(-3f, 3f)
+                    },
+                shape = RoundedCornerShape(16.dp),
+                tonalElevation = 8.dp
+            ) {
+                Box(
+                    modifier = Modifier
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
+                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.90f)
+                                )
+                            )
+                        )
+                ) {
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .widthIn(max = 260.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        InfoSection(
-                            title = "Fartøytype",
-                            value = ship.displayType,
-                            color = MaterialTheme.colorScheme.primary
+                        // Header med navn og lukkeknapp
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = if (ship.name == "Ukjent") "Ukjent skip" else ship.name,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.95f),
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "MMSI: ${ship.mmsi}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            
+                            IconButton(
+                                onClick = {
+                                    isVisible = false
+                                    kotlinx.coroutines.MainScope().launch {
+                                        delay(300)
+                                        onDismiss()
+                                    }
+                                },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Lukk",
+                                    modifier = Modifier.size(20.dp),
+                                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                                )
+                            }
+                        }
+
+                        Divider(
+                            modifier = Modifier.padding(vertical = 4.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
                         )
-                        
-                        InfoSection(
-                            title = "Posisjon",
-                            value = String.format("%.4f°N, %.4f°Ø", ship.latitude, ship.longitude)
-                        )
-                        
-                        InfoSection(
-                            title = "Fart",
-                            value = String.format("%.1f knop", ship.speed)
-                        )
-                        
-                        InfoSection(
-                            title = "Kurs",
-                            value = String.format("%.1f°", ship.course)
-                        )
-                        
-                        InfoSection(
-                            title = "Sist oppdatert",
-                            value = getRelativeTimeString(ship.messageTime)
-                        )
+
+                        // Info seksjoner
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            InfoSection(
+                                title = "Fartøytype",
+                                value = ship.displayType,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            
+                            InfoSection(
+                                title = "Posisjon",
+                                value = String.format("%.4f°N, %.4f°Ø", ship.latitude, ship.longitude)
+                            )
+                            
+                            InfoSection(
+                                title = "Fart",
+                                value = String.format("%.1f knop", ship.speed)
+                            )
+                            
+                            InfoSection(
+                                title = "Kurs",
+                                value = String.format("%.1f°", ship.course)
+                            )
+                            
+                            InfoSection(
+                                title = "Sist oppdatert",
+                                value = getRelativeTimeString(ship.messageTime)
+                            )
+                        }
                     }
                 }
             }

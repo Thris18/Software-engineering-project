@@ -13,16 +13,14 @@ import java.net.URL
 import java.net.URLEncoder
 
 private const val TAG = "ShipDataSource"
-private const val TOKEN_URL = "https://id.barentswatch.no/connect/token"
-private const val AIS_URL = "https://live.ais.barentswatch.no/v1/latest/combined"
 
 class ShipDataSource {
-    private suspend fun getAccessToken(): AccessToken? {
+    private fun getAccessToken(): AccessToken? {
         return try {
             val clientId = "aayanali492@gmail.com:aayanklient"
             val clientSecret = "hemmeligheten"
 
-            val connection = URL(TOKEN_URL).openConnection() as HttpURLConnection
+            val connection = URL("https://id.barentswatch.no/connect/token").openConnection() as HttpURLConnection
             connection.requestMethod = "POST"
             connection.doOutput = true
             connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
@@ -60,7 +58,7 @@ class ShipDataSource {
                     Exception("Failed to get access token")
                 )
 
-                val connection = URL(AIS_URL).openConnection() as HttpURLConnection
+                val connection = URL("https://live.ais.barentswatch.no/v1/latest/combined").openConnection() as HttpURLConnection
                 connection.setRequestProperty("Authorization", "Bearer ${token.access_token}")
                 connection.setRequestProperty("Accept", "application/json")
 
