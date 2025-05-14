@@ -10,10 +10,10 @@ En Android-applikasjon utviklet for fiskere som gir tilgang til værdata, skipsp
 - Kamera (valgfritt, for å ta bilder av fangster)
 
 ## Installasjon
-1. Klon repositoriet:
+1. Klon repositoriet: 
 git clone https://github.com/Team45FiskeriApp/Team45FiskeriApp.git
 
-2. Åpne prosjektet i Android Studio
+2. Åpne prosjektet i Android Studio 
 
 3. Bygg og kjør appen på en emulator eller fysisk enhet
 
