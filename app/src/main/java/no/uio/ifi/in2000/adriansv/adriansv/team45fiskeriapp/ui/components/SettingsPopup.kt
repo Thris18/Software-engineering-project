@@ -298,8 +298,8 @@ fun SettingsPopup(
                                         val rounded = (Math.round(it * 10) / 10f)
                                         windThreshold = rounded
                                     },
-                                    valueRange = 0f..10f,
-                                    steps = 99,
+                                    valueRange = 0f..15f,
+                                    steps = 149,
                                     modifier = Modifier.weight(1f),
                                     colors = SliderDefaults.colors(
                                         thumbColor = MaterialTheme.colorScheme.primary,

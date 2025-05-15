@@ -6,6 +6,10 @@ import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.core.utils.Calculate
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.grib.GribData
 import org.json.JSONArray
 import org.json.JSONObject
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 object GribOverlayUtil {
     private const val PREFS_NAME = "GribThresholds"
@@ -55,7 +59,7 @@ object GribOverlayUtil {
         }
     }
 
-    fun getColor(type: String, value: Double): Int {
+    private fun getColor(type: String, value: Double): Int {
         val threshold = currentThresholds[type] ?: defaultThresholds[type] ?: 0.0
         val normalizedValue = (value - threshold).coerceAtLeast(0.0)
         val maxValue = when (type) {
@@ -94,7 +98,7 @@ object GribOverlayUtil {
     }
 
     // Radius for fog
-    fun getRadius(type: String, value: Double): Double {
+    private fun getRadius(type: String, value: Double): Double {
         val threshold = currentThresholds[type] ?: defaultThresholds[type] ?: return 12.0
         val base = 12.0
         val extra = ((value - threshold) * 2.0).coerceAtLeast(0.0)
@@ -105,14 +109,14 @@ object GribOverlayUtil {
 
     // Help function for calculating distance between two points
     private fun haversine(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
-        val R = 6371.0 // Radius of Earth in km
+        val r = 6371.0 // Radius of Earth in km
         val dLat = Math.toRadians(lat2 - lat1)
         val dLon = Math.toRadians(lon2 - lon1)
-        val a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
-                Math.sin(dLon / 2) * Math.sin(dLon / 2)
-        val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-        return R * c
+        val a = sin(dLat / 2) * sin(dLat / 2) +
+                cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
+                sin(dLon / 2) * sin(dLon / 2)
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+        return r * c
     }
 
 
@@ -129,6 +133,11 @@ object GribOverlayUtil {
         var lastLat = Double.NaN
         var lastLon = Double.NaN
 
+        // Use different minimum distances based on type
+        val typeMinDistanceKm = when (type) {
+            "wind" -> 20.0  // Increased distance for wind icons
+            else -> minDistanceKm
+        }
 
         for (y in 0 until height) {
             for (x in 0 until width) {
@@ -137,26 +146,42 @@ object GribOverlayUtil {
                 val lat = gribData.latitudes[y].toDouble()
                 val lon = gribData.longitudes[x].toDouble()
 
-                if (!value.isNaN() && value > threshold) {
-                    if (lastLat.isNaN() || haversine(lat, lon, lastLat, lastLon) > minDistanceKm) {
-                        val color = getColor(type, value)
-                        val radius = getRadius(type, value)
+                // For wind and current, calculate speed first and use that for filtering
+                if (type in listOf("wind", "strom")) {
+                    val u = gribData.uValues?.get(index)?.toDouble() ?: 0.0
+                    val v = gribData.vValues?.get(index)?.toDouble() ?: 0.0
+                    val speed = CalculateUtil.calculateSpeedFromUV(u, v)
+                    val direction = CalculateUtil.calculateDirectionFromUV(u, v)
+                    
+                    if (!speed.isNaN() && speed > threshold) {
+                        if (lastLat.isNaN() || haversine(lat, lon, lastLat, lastLon) > typeMinDistanceKm) {
+                            val color = getColor(type, speed.toDouble())
+                            val radius = getRadius(type, speed.toDouble())
 
-                        val properties = if (type in listOf("wind", "strom")) {
-                            val u = gribData.uValues?.get(index)?.toDouble() ?: 0.0
-                            val v = gribData.vValues?.get(index)?.toDouble() ?: 0.0
-                            val speed = CalculateUtil.calculateSpeedFromUV(u, v)
-                            val direction = CalculateUtil.calculateDirectionFromUV(u, v)
-                            """{"type": "$type", "value": $speed, "icon": "$icon", "color": "$color", "radius": $radius, "u": $u, "v": $v, "direction": $direction}"""
-                        } else {
-                            """{"type": "$type", "value": $value, "icon": "$icon", "color": "$color", "radius": $radius}"""
+                            val properties = """{"type": "$type", "value": $speed, "icon": "$icon", "color": "$color", "radius": $radius, "u": $u, "v": $v, "direction": $direction}"""
+                            
+                            features.add(
+                                """{"type": "Feature", "geometry": {"type": "Point", "coordinates": [$lon, $lat]}, "properties": $properties}"""
+                            )
+                            lastLat = lat
+                            lastLon = lon
                         }
+                    }
+                } else {
+                    // For other types (wave, rain), use the original value for filtering
+                    if (!value.isNaN() && value > threshold) {
+                        if (lastLat.isNaN() || haversine(lat, lon, lastLat, lastLon) > typeMinDistanceKm) {
+                            val color = getColor(type, value)
+                            val radius = getRadius(type, value)
 
-                        features.add(
-                            """{"type": "Feature", "geometry": {"type": "Point", "coordinates": [$lon, $lat]}, "properties": $properties}"""
-                        )
-                        lastLat = lat
-                        lastLon = lon
+                            val properties = """{"type": "$type", "value": $value, "icon": "$icon", "color": "$color", "radius": $radius}"""
+                            
+                            features.add(
+                                """{"type": "Feature", "geometry": {"type": "Point", "coordinates": [$lon, $lat]}, "properties": $properties}"""
+                            )
+                            lastLat = lat
+                            lastLon = lon
+                        }
                     }
                 }
             }
@@ -175,7 +200,7 @@ object GribOverlayUtil {
                         allFeatures.put(features.getJSONObject(i))
                     }
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
             }
         }
         val merged = JSONObject()
