@@ -63,7 +63,6 @@ object GribOverlayManager {
 
                         when (type) {
                             "wind" -> {
-
                                 windPoints.add(point)
                             }
                             "strom" -> {

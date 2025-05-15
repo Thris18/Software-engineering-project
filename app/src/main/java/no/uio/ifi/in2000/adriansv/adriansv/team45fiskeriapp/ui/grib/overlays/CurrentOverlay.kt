@@ -3,7 +3,6 @@ package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.overlays
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.util.Log
 import androidx.appcompat.content.res.AppCompatResources
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.R
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.grib.GribPoint
@@ -88,9 +87,8 @@ object CurrentOverlay {
                 }
                 features.put(feature)
                 spatialGrid.addPoint(point.latitude, point.longitude)
-            } else {
-
             }
+
         }
 
         val geoJson = JSONObject().apply {

@@ -89,7 +89,6 @@ object WindOverlay {
                 }
                 features.put(feature)
                 spatialGrid.addPoint(point.latitude, point.longitude)
-            } else {
             }
         }
 
@@ -106,7 +105,7 @@ object WindOverlay {
                 GeoJsonSource(
                     SOURCE_ID,
                     geoJson,
-                    GeoJsonOptions().withCluster(true).withClusterRadius(50)
+                    GeoJsonOptions().withCluster(true).withClusterRadius(80)
                 )
             )
         }
