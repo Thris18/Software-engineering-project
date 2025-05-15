@@ -16,13 +16,11 @@ fun WeatherIconView(weatherIcon: WeatherIcon, size: Dp) {
 
     val context = LocalContext.current
 
-    // Henter banen til SVG-filen for det spesifikke ikonet
     val iconPath = weatherIcon.getAssetPath()
 
     val svgString = remember(iconPath) {
         try {
 
-            // Leser inn SVG-filen fra appens ressurser
             val rawSvg = context.assets.open(iconPath).bufferedReader().use { it.readText() }
             """
             <html>
@@ -33,30 +31,22 @@ fun WeatherIconView(weatherIcon: WeatherIcon, size: Dp) {
             """.trimIndent()
         } catch (_: Exception) {
 
-            // Hvis det oppstår en feil, vises feilmelding
             "<html><body>Ikon mangler</body></html>"
         }
     }
-
-    // Bruker AndroidView for å vise WebView som laster SVG-strengen
     AndroidView(
         factory = {
 
-            // Setter opp WebView for å vise SVG-data som HTML
             WebView(it).apply {
 
-                // Aktiverer JavaScript i WebView for korrekt visning av SVG
                 settings.javaScriptEnabled = true
 
-                // Gjør WebView bakgrunnen gjennomsiktig
                 setBackgroundColor(0x00000000)
 
-                // Laster SVG-strengen som HTML innhold i WebView
                 loadDataWithBaseURL(null, svgString, "text/html", "utf-8", null)
             }
         },
 
-        //Setter størrelsen på WebView for å matche ønsket størrelse på ikonet
         modifier = Modifier.size(size)
     )
 }

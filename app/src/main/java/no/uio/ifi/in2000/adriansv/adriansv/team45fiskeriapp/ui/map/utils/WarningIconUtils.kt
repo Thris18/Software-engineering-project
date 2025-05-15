@@ -38,7 +38,6 @@ object WarningIconUtils {
                     }
                 } catch (_: Exception) {
                     failedIcons++
-                    Log.d(TAG, "Icon not found: $type-$severity") // Some combinations might not exist
                 }
             }
         }
@@ -60,7 +59,5 @@ object WarningIconUtils {
             failedIcons++
             Log.e(TAG, "Failed to load extreme icon", e)
         }
-
-        Log.d(TAG, "Icon loading summary - Loaded: $loadedIcons, Failed: $failedIcons")
     }
 } 

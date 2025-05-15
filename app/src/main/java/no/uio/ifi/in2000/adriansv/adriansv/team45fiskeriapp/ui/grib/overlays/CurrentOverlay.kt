@@ -42,19 +42,14 @@ object CurrentOverlay {
                 drawable.draw(canvas)
                 bitmap
             } else {
-                Log.e("CurrentOverlay", "Failed to load drawable for id: $drawableId")
                 null
             }
         } catch (e: Exception) {
-            Log.e("CurrentOverlay", "Error creating bitmap from vector drawable: ${e.message}")
             null
         }
     }
 
     fun addOrUpdate(context: Context, style: Style, points: List<GribPoint>, spatialGrid: SpatialGrid, isDarkMode: Boolean) {
-        Log.d("CurrentOverlay", "addOrUpdate() called. Antall punkter: ${points.size}")
-        Log.d("CurrentOverlay", "Antall punkter som tegnes: ${points.size}")
-        // Legg til bilder hvis de ikke allerede er lagt til
         if (style.getImage(CURRENT_ICON_ID) == null) {
             val currentIcon = getBitmapFromVectorDrawable(context, if (isDarkMode) R.drawable.dark_strom else R.drawable.strom)
             if (currentIcon != null) {
@@ -68,7 +63,7 @@ object CurrentOverlay {
             }
         }
 
-        // Bygg GeoJSON features
+        // Build GeoJSON from points
         val features = JSONArray()
         points.forEach { point ->
             val data = point.data ?: return@forEach
@@ -77,7 +72,6 @@ object CurrentOverlay {
             val rotation = CalculateUtil.calculateCurrentRotation(direction)
             val roundedSpeed = String.format(Locale.US, "%.2f", speed).replace(',', '.').toDouble()
             if (spatialGrid.isFarFromAll(point.latitude, point.longitude)) {
-                Log.d("CurrentOverlay", "Strømpunkt: ${point.latitude}, ${point.longitude}, speed: $speed (TEGNES)")
                 val feature = JSONObject().apply {
                     put("type", "Feature")
                     put("geometry", JSONObject().apply {
@@ -95,7 +89,7 @@ object CurrentOverlay {
                 features.put(feature)
                 spatialGrid.addPoint(point.latitude, point.longitude)
             } else {
-                Log.d("CurrentOverlay", "Strømpunkt: ${point.latitude}, ${point.longitude} (IGNORERT pga. avstand)")
+
             }
         }
 
@@ -104,7 +98,7 @@ object CurrentOverlay {
             put("features", features)
         }.toString()
 
-        // Legg til/oppdater GeoJSON kilde med clustering
+        //  Add GeoJSON source
         val source = style.getSource(SOURCE_ID) as? GeoJsonSource
         if (source != null) {
             source.setGeoJson(geoJson)
@@ -118,7 +112,7 @@ object CurrentOverlay {
             )
         }
 
-        // Legg til/oppdater lag
+        // Add layers
         if (style.getLayer(ARROW_LAYER_ID) == null) {
             style.addLayer(
                 SymbolLayer(ARROW_LAYER_ID, SOURCE_ID)
@@ -198,7 +192,7 @@ object CurrentOverlay {
             )
         }
 
-        // Legg til cluster-lag for å vise antall punkter i clusteret
+        // Add cluster layers
         if (style.getLayer("current-cluster-layer") == null) {
             style.addLayer(
                 SymbolLayer("current-cluster-layer", SOURCE_ID)
@@ -218,7 +212,6 @@ object CurrentOverlay {
             )
         }
 
-        Log.d("CurrentOverlay", "Antall features som faktisk tegnes: ${features.length()}")
     }
 
 }

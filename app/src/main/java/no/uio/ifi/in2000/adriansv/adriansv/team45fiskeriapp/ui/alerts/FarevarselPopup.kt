@@ -27,13 +27,11 @@ import kotlin.math.roundToInt
 
 private fun convertUTCtoNorwegianTime(utcTimeString: String): String {
     try {
-        // Fjern "kl" og "UTC" før parsing
         val cleaned = utcTimeString
             .replace(Regex("\\bkl\\b", RegexOption.IGNORE_CASE), "")
             .replace(Regex("\\bUTC\\b", RegexOption.IGNORE_CASE), "")
             .trim()
 
-        // Nå forventer vi format "17 april 10:00"
         val parts = cleaned.split(" ")
         if (parts.size < 3) return utcTimeString
 
@@ -58,7 +56,7 @@ private fun convertUTCtoNorwegianTime(utcTimeString: String): String {
         val hour = timeParts[0].toIntOrNull() ?: return utcTimeString
         val minute = timeParts[1].toIntOrNull() ?: return utcTimeString
 
-        // Bygg ett UTC‐kalenderobjekt
+        // Build UTC Calendar
         val utcCal = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
             clear()
             set(Calendar.DAY_OF_MONTH, day)
@@ -67,7 +65,7 @@ private fun convertUTCtoNorwegianTime(utcTimeString: String): String {
             set(Calendar.MINUTE, minute)
         }
 
-        // Formatter til norsk tid
+        // Format to Norwegian time
         val formatter = SimpleDateFormat("d. MMMM HH:mm", Locale("nb","NO"))
         formatter.timeZone = TimeZone.getTimeZone("Europe/Oslo")
         return formatter.format(utcCal.time)
@@ -77,18 +75,16 @@ private fun convertUTCtoNorwegianTime(utcTimeString: String): String {
 }
 
 private fun convertDescriptionToNorwegianTime(description: String): String {
-    // Fjern alle "UTC" og "kl" globalt
+    // Remove all kl and UTC
     val noUtc = description
         .replace(Regex("\\bkl\\b", RegexOption.IGNORE_CASE), "")
         .replace(Regex("\\bUTC\\b", RegexOption.IGNORE_CASE), "")
-    // Del på "fra" og "til"
     val parts = noUtc.split(" fra ", " til ")
     if (parts.size < 3) return noUtc
 
     val base = parts[0]
     val start = convertUTCtoNorwegianTime(parts[1])
     val endPart = parts[2]
-    // håndter "og" i slutten
     val (end, extra) = endPart.split(" og ", limit = 2).let {
         it[0] to it.getOrNull(1)
     }
@@ -109,17 +105,14 @@ fun FarevarselPopup(
 ) {
     if (alertData == null) return
 
-    // Animert synlighet
     var isVisible by remember { mutableStateOf(false) }
     LaunchedEffect(alertData) {
         isVisible = true
     }
 
-    // Offset for dragging med smooth animasjon
     var offsetX by remember { mutableStateOf(0f) }
     var offsetY by remember { mutableStateOf(0f) }
-    
-    // Animerte verdier for smooth bevegelse
+
     val animatedOffsetX by animateFloatAsState(
         targetValue = offsetX,
         animationSpec = spring(
@@ -185,7 +178,7 @@ fun FarevarselPopup(
                         .widthIn(max = 260.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // Header med tittel, lukkeknapp og severity badge
+                    // Header with close button
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
@@ -202,7 +195,7 @@ fun FarevarselPopup(
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.95f)
                             )
                             
-                            // Severity badge med animert bakgrunn for høy fare
+                            // Severity badge with animated alpha
                             val severity = alertData.optString("severity")
                             val severityColor = when(severity) {
                                 "Severe" -> Color(0xFFD32F2F)
@@ -263,12 +256,10 @@ fun FarevarselPopup(
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
                     )
 
-                    // Innhold
                     Column(
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        // Område
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(
                                 "Område",
@@ -281,8 +272,6 @@ fun FarevarselPopup(
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
                             )
                         }
-
-                        // Beskrivelse
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(
                                 "Beskrivelse",
@@ -296,7 +285,6 @@ fun FarevarselPopup(
                             )
                         }
 
-                        // Anbefaling
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(
                                 "Anbefaling",

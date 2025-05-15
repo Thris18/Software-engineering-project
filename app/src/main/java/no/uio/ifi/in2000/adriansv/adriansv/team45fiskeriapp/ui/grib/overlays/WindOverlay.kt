@@ -52,8 +52,6 @@ object WindOverlay {
     }
 
     fun addOrUpdate(context: Context, style: Style, points: List<GribPoint>, spatialGrid: SpatialGrid, isDarkMode: Boolean) {
-        Log.d("WindOverlay", "Antall punkter som tegnes: ${points.size}")
-        // Legg til bilder hvis de ikke allerede er lagt til
         if (style.getImage(WIND_ICON_ID) == null) {
             val windIcon = getBitmapFromVectorDrawable(context, R.drawable.wind)
             if (windIcon != null) {
@@ -67,7 +65,6 @@ object WindOverlay {
             }
         }
 
-        // Bygg GeoJSON features
         val features = JSONArray()
         points.forEach { point ->
             val data = point.data ?: return@forEach
@@ -76,7 +73,6 @@ object WindOverlay {
             val rotation = CalculateUtil.calculateWindRotation(direction)
             val roundedSpeed = String.format(Locale.US, "%.2f", speed).replace(',', '.').toDouble()
             if (spatialGrid.isFarFromAll(point.latitude, point.longitude)) {
-                Log.d("WindOverlay", "Vindpunkt: ${point.latitude}, ${point.longitude}, speed: $speed (TEGNES)")
                 val feature = JSONObject().apply {
                     put("type", "Feature")
                     put("geometry", JSONObject().apply {
@@ -94,7 +90,6 @@ object WindOverlay {
                 features.put(feature)
                 spatialGrid.addPoint(point.latitude, point.longitude)
             } else {
-                Log.d("WindOverlay", "Vindpunkt: ${point.latitude}, ${point.longitude} (IGNORERT pga. avstand)")
             }
         }
 
@@ -103,7 +98,6 @@ object WindOverlay {
             put("features", features)
         }.toString()
 
-        // Legg til/oppdater GeoJSON kilde med clustering
         val source = style.getSource(SOURCE_ID) as? GeoJsonSource
         if (source != null) {
             source.setGeoJson(geoJson)
@@ -117,7 +111,6 @@ object WindOverlay {
             )
         }
 
-        // Legg til/oppdater lag
         if (style.getLayer(ARROW_LAYER_ID) == null) {
             style.addLayer(
                 SymbolLayer(ARROW_LAYER_ID, SOURCE_ID)
@@ -197,7 +190,6 @@ object WindOverlay {
             )
         }
 
-        // Legg til cluster-lag for å vise antall punkter i clusteret
         if (style.getLayer("wind-cluster-layer") == null) {
             style.addLayer(
                 SymbolLayer("wind-cluster-layer", SOURCE_ID)

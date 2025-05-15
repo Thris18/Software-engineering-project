@@ -70,9 +70,6 @@ object WaveOverlay {
         addFogImages(context, style)
         addWaveIcons(context, style, isDarkMode)
         val features = JSONArray()
-        Log.d("WaveOverlay", "Antall punkter til overlay: ${points.size}")
-        Log.d("WaveOverlay", "Antall punkter som tegnes: ${points.size}")
-        points.forEach { Log.d("WaveOverlay", "Punkt: ${it.latitude}, ${it.longitude}, verdi: ${it.data?.waveHeight}") }
         points.forEach { point ->
             val data = point.data ?: return@forEach
             val value = data.waveHeight ?: 0f
@@ -81,7 +78,6 @@ object WaveOverlay {
             val fog = WaveOverlayUtil.getFogImageName(value.toDouble(), threshold)
             val ratio = value / threshold
             if (spatialGrid.isFarFromAll(point.latitude, point.longitude)) {
-                Log.d("WaveOverlay", "Bølgepunkt: ${point.latitude}, ${point.longitude}, verdi: $value, threshold: $threshold, ratio: $ratio, fog: $fog (TEGNES)")
                 val feature = JSONObject().apply {
                     put("type", "Feature")
                     put("geometry", JSONObject().apply {
@@ -99,7 +95,6 @@ object WaveOverlay {
                 features.put(feature)
                 spatialGrid.addPoint(point.latitude, point.longitude)
             } else {
-                Log.d("WaveOverlay", "Bølgepunkt: ${point.latitude}, ${point.longitude} (IGNORERT pga. avstand)")
             }
         }
         val geoJson = JSONObject().apply {
@@ -134,7 +129,7 @@ object WaveOverlay {
                                 Expression.literal(if (isDarkMode) 0.4f else 1f),
                                 Expression.literal("yellow"),
                                 Expression.literal(if (isDarkMode) 0.25f else 0.5f),
-                                Expression.literal(if (isDarkMode) 0.25f else 0.4f) // default (red)
+                                Expression.literal(if (isDarkMode) 0.25f else 0.4f)
                             )
                         )
                     )

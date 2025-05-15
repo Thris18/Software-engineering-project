@@ -11,26 +11,26 @@ import java.util.Locale
 import kotlin.math.max
 import kotlin.math.min
 
+
+// Denne filen inneholder GribParser-klassen, som har ansvar for å lese og tolke GRIB-filer (gridded binary) med vær- og havdata.
+// Klassen åpner en GRIB-fil, henter ut relevante variabler (f.eks. vind, bølger, temperatur), og konverterer dataene til et GribData-objekt
+// som kan brukes videre i appen. Parseren håndterer ulike dimensjoner og variabelnavn, og forsøker å finne de mest relevante dataene automatisk.
+// Den støtter også feilhåndtering og tilpasser seg hvis enkelte data mangler eller har uventet format.
+
 class GribParser {
     companion object {
         private const val TAG = "GribParser"
 
         fun parseGribFile(gribFile: File, variableName: String? = null): GribData? {
             try {
-                Log.d(TAG, "Parser GRIB-fil: ${gribFile.absolutePath}")
 
-                // Åpner gribfilen
+                // Open Gribfile
                 val dataset = NetcdfDatasets.openDataset(gribFile.absolutePath)
 
-                // Debug: Printer alle variablene i datasettet
-                Log.d(TAG, "Variabler i datasett: ${dataset.variables.joinToString(", ") { it.shortName }}")
-
-                // Henter koordinater (latitude and longitude)
                 val latVar = dataset.findVariable("lat") ?: dataset.findVariable("latitude")
                 val lonVar = dataset.findVariable("lon") ?: dataset.findVariable("longitude")
 
                 if (latVar == null || lonVar == null) {
-                    Log.e(TAG, "Kunne ikke finne lat/lon variabler i GRIB-filer")
                     dataset.close()
                     return null
                 }
@@ -38,7 +38,6 @@ class GribParser {
                 val latArray = latVar.read()
                 val lonArray = lonVar.read()
 
-                // Henter dimensjoner
                 val latDims = latVar.shape
                 val lonDims = lonVar.shape
 
@@ -49,7 +48,6 @@ class GribParser {
                 val latitudes = FloatArray(height)
                 val longitudes = FloatArray(width)
 
-                // Henter latitude og longitude verdier ved å bruke index
                 for (i in 0 until height) {
                     val idx = Index.factory(latArray.shape)
                     idx.set(i)
@@ -63,8 +61,6 @@ class GribParser {
                 }
 
 
-
-                // Finner datavariabel basert på variabelnavn eller søker etter standard variabler
                 val dataVar = if (variableName != null) {
                     dataset.findVariable(variableName) ?: run {
                         Log.e(TAG, "Kunne ikke finne variabel: $variableName")
@@ -72,7 +68,7 @@ class GribParser {
                         return null
                     }
                 } else {
-                    // Finner første datavariabel
+
                     val dataVars = dataset.variables.filter {
                         !it.shortName.equals("lat", ignoreCase = true) &&
                                 !it.shortName.equals("lon", ignoreCase = true) &&
@@ -83,15 +79,11 @@ class GribParser {
                                 it.shape.size >= 2
                     }
 
-                    Log.d(TAG, "Funnet potensielle data variabler: ${dataVars.joinToString(", ") { it.shortName }}")
-
                     if (dataVars.isEmpty()) {
-                        Log.e(TAG, "Fant ikke data variabler i GRIB-filen som passer")
                         dataset.close()
                         return null
                     }
 
-                    // Prøver å finne variabler som faktisk har data
                     val preferredVars = listOf(
                         "Pressure_height_above_ground",
                         "Wind_speed_gust",
@@ -107,14 +99,10 @@ class GribParser {
                         preferredVars.any { preferred -> varName.shortName.contains(preferred, ignoreCase = true) }
                     } ?: dataVars.first()
                 }
-
-                // Henter variabelnavn og enhet
                 val varName = dataVar.shortName
                 val unit = dataVar.unitsString ?: ""
 
 
-
-                // Spesialhåndtering for time og reftime
                 val referenceTime = if (varName.equals("time", ignoreCase = true) || varName.equals("reftime", ignoreCase = true)) {
                     val timeArray = dataVar.read()
                     val timeIdx = Index.factory(timeArray.shape)
@@ -136,39 +124,31 @@ class GribParser {
                     }
                 }
 
-                Log.d(TAG, "Referansetid: $referenceTime")
 
-                // Les dataen
+                // Reads the data
                 val dataArray = dataVar.read()
                 val values = FloatArray(width * height)
                 var minValue = Float.MAX_VALUE
                 var maxValue = Float.MIN_VALUE
 
-                // Variabler for hvor mange Not A Number det er
                 var nanCount = 0
                 var validCount = 0
 
-
                 try {
-                    // Bestemmer hvilken dimensjon basert på form
                     val shape = dataVar.shape
                     val dimCount = shape.size
 
 
-                    // Spesialhåndtering for 1D-variabler
+                    // Special handling for 1D-variables
                     if (dimCount == 1) {
                         val totalSize = dataArray.size.toInt()
-                        Log.d(TAG, "Håndterer 1D-variabel med størrelse: $totalSize")
 
-                        // For 1D-variabler, kopierer vi verdien til alle punkter
                         val value = when (dataVar.dataType) {
                             ucar.ma2.DataType.DOUBLE -> dataArray.getDouble(0).toFloat()
                             ucar.ma2.DataType.FLOAT -> dataArray.getFloat(0)
                             ucar.ma2.DataType.INT -> dataArray.getInt(0).toFloat()
                             else -> dataArray.getFloat(0)
                         }
-
-                        Log.d(TAG, "1D-variabel verdi: $value")
 
                         for (i in values.indices) {
                             values[i] = value
@@ -181,38 +161,33 @@ class GribParser {
                             }
                         }
                     } else {
-                        // Sjekker om vi har nok dimensjoner
                         if (dimCount < 2) {
-                            Log.e(TAG, "Dataarrayet har for få dimensjoner: $dimCount")
                             throw IllegalArgumentException("Dataarrayet har for få dimensjoner")
                         }
 
 
-
-                        // Leser data på en sikrere måte
                         var index = 0
                         for (y in 0 until height) {
                             for (x in 0 until width) {
                                 try {
                                     val idx = Index.factory(shape)
 
-                                    // Setter indekser basert på dimensjoner
                                     when (dimCount) {
                                         2 -> {
-                                            // 2D data (lat, lon)
+
                                             idx.setDim(0, y)
                                             idx.setDim(1, x)
                                         }
                                         3 -> {
                                             // 3D data (time, lat, lon)
-                                            idx.setDim(0, 0)  // første tidspunkt
+                                            idx.setDim(0, 0)
                                             idx.setDim(1, y)
                                             idx.setDim(2, x)
                                         }
                                         else -> {
                                             // 4D eller mer (time, level, lat, lon)
                                             for (d in 0 until dimCount - 2) {
-                                                idx.setDim(d, 0)  // setter første dimensjoner til 0
+                                                idx.setDim(d, 0)
                                             }
                                             idx.setDim(dimCount - 2, y)  // latitude
                                             idx.setDim(dimCount - 1, x)  // longitude
@@ -236,8 +211,6 @@ class GribParser {
                                         nanCount++
                                     }
                                 } catch (e: Exception) {
-                                    Log.e(TAG, "Error ved lesing av dataverdi for ($x, $y): ${e.message}")
-                                    Log.e(TAG, "Stack trace: ${e.stackTraceToString()}")
                                     values[index] = 0f
                                     nanCount++
                                 }
@@ -246,16 +219,12 @@ class GribParser {
                         }
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error ved lesing av data array: ${e.message}")
 
-                    // Forsøk en fallback approach ved å bruke direkte iterasjon
                     try {
-                        // Fyller array med noe meningsfull data
                         for (i in values.indices) {
                             values[i] = 0f
                         }
 
-                        // Prøver å hente ut verdier direkte fra arrayet
                         val totalSize = dataArray.size.toInt()
                         val valueCount = min(width * height, totalSize)
 
@@ -273,11 +242,9 @@ class GribParser {
                                     nanCount++
                                 }
                             } catch (e2: Exception) {
-                                Log.e(TAG, "Error ved lesing: ${e2.message}")
                             }
                         }
                     } catch (e2: Exception) {
-                        Log.e(TAG, "Backup-lesemetoden feilet: ${e2.message}")
                     }
                 }
 
@@ -288,9 +255,6 @@ class GribParser {
                     minValue = 0f
                     maxValue = 1f
                 }
-
-                Log.d(TAG, "Klarte å parse GRIB-fil. Variabel: $varName, Min: $minValue, Max: $maxValue")
-                Log.d(TAG, "Datakvalitet: $validCount valide punkter, $nanCount NaN-verdier ${width * height} totale antall punkter")
 
                 return GribData(
                     values = values,
@@ -305,7 +269,6 @@ class GribParser {
                     referenceTime = referenceTime
                 )
             } catch (e: Exception) {
-                Log.e(TAG, "Error ved parsing av GRIB-fil: ${e.message}", e)
                 return null
             }
         }

@@ -90,54 +90,42 @@ class ShipDataSource {
                     for (i in 0 until jsonArray.length()) {
                         val shipJson = jsonArray.getJSONObject(i)
                         val mmsi = shipJson.getString("mmsi")
-                        
 
-                        
-                        // Hent skipsinformasjon
                         val name = if (shipJson.has("name") && !shipJson.isNull("name") && shipJson.getString("name") != "string") 
                             shipJson.getString("name") 
                         else 
                             "Ukjent"
                             
-                        // Hent skiptype fra shipType-feltet og map til våre drawable-ressurser
+                        // Get type of ship
                         val type = when (shipJson.optInt("shipType", 0)) {
-                            // Spesielle fartøy
+
                             20, 21, 22, 23, 24, 25 -> "annen_fartoytype" // WIG
 
-                            // Fiskefartøy
                             30 -> "fiskefartoy"
 
-                            // Slepebåter og spesialfartøy
                             31, 32, 52 -> "taubat"  // Towing/Pushing/Tug
                             33 -> "annen_fartoytype"  // Dredger
                             34 -> "dykkerfartoy"  // Dive vessel
                             35 -> "reservert"  // Military
 
-                            // Fritidsbåter
                             36, 37 -> "mindre_arbeidsbat"  // Pleasure/Sailing
 
-                            // Høyhastighetsfartøy
                             40, 41, 42, 43, 44, 45, 46, 47, 48, 49 -> "hoyhastighetsfartoy"
 
-                            // Havnefartøy og spesialfartøy
                             50 -> "losbat"  // Pilot
                             51 -> "sar"  // Search and Rescue
                             54 -> "annen_fartoytype"  // Anti pollution
                             55 -> "politi"  // Law enforcement
 
-                            // Passasjerfartøy
                             60, 61, 62, 63, 64, 65, 66, 67, 68, 69 -> "passasjerfartoy"
 
-                            // Lasteskip
                             70, 71, 72, 73, 74, 75, 76, 77, 78, 79 -> "fraktefartoy"
 
-                            // Tankskip
                             80, 81, 82, 83, 84, 85, 86, 87, 88, 89 -> "fraktefartoy"
 
                             else -> "annen_fartoytype"
                         }
 
-                        // Norsk navn på skipstypen for visning
                         val displayType = when (shipJson.optInt("shipType", 0)) {
                             20, 21, 22, 23, 24, 25 -> "WIG-fartøy"
                             30 -> "Fiskefartøy"

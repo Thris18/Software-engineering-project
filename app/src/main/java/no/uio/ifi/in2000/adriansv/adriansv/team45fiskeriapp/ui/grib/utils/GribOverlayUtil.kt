@@ -14,7 +14,7 @@ object GribOverlayUtil {
     private const val KEY_CURRENT = "current_threshold"
     private const val KEY_RAIN = "rain_threshold"
 
-    // Standard terskelverdier som fallback
+    // Standard threshholds as fallback
     private val defaultThresholds = mapOf(
         "wind" to 2.0,
         "wave" to 0.3,
@@ -22,10 +22,10 @@ object GribOverlayUtil {
         "rain" to 0.5
     )
 
-    // Dynamiske terskelverdier som kan oppdateres
+    // Dynamic thresholds
     var currentThresholds = defaultThresholds.toMutableMap()
 
-    // Initialiser med lagrede verdier
+    // Initialize with default values
     fun initialize(context: Context) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         currentThresholds["wind"] = prefs.getFloat(KEY_WIND, defaultThresholds["wind"]!!.toFloat()).toDouble()
@@ -34,7 +34,6 @@ object GribOverlayUtil {
         currentThresholds["rain"] = prefs.getFloat(KEY_RAIN, defaultThresholds["rain"]!!.toFloat()).toDouble()
     }
 
-    // Funksjon for å oppdatere terskelverdier
     fun updateThresholds(
         context: Context,
         windThreshold: Float,
@@ -47,7 +46,6 @@ object GribOverlayUtil {
         currentThresholds["strom"] = currentThreshold.toDouble()
         currentThresholds["rain"] = precipitationThreshold.toDouble()
 
-        // Lagre verdiene
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit().apply {
             putFloat(KEY_WIND, windThreshold)
             putFloat(KEY_WAVE, waveThreshold)
@@ -57,7 +55,6 @@ object GribOverlayUtil {
         }
     }
 
-    // Farge basert på hvor mye verdien overstiger terskelen
     fun getColor(type: String, value: Double): Int {
         val threshold = currentThresholds[type] ?: defaultThresholds[type] ?: 0.0
         val normalizedValue = (value - threshold).coerceAtLeast(0.0)
@@ -96,7 +93,7 @@ object GribOverlayUtil {
         }
     }
 
-    // Radius for tåke (i pixels, for MapLibre)
+    // Radius for fog
     fun getRadius(type: String, value: Double): Double {
         val threshold = currentThresholds[type] ?: defaultThresholds[type] ?: return 12.0
         val base = 12.0
@@ -106,7 +103,7 @@ object GribOverlayUtil {
 
 
 
-    // Hjelpefunksjon for å regne ut avstand mellom to lat/lon-punkter (i km)
+    // Help function for calculating distance between two points
     private fun haversine(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
         val R = 6371.0 // Radius of Earth in km
         val dLat = Math.toRadians(lat2 - lat1)
@@ -123,7 +120,7 @@ object GribOverlayUtil {
         gribData: GribData,
         type: String,
         icon: String,
-        minDistanceKm: Double = 10.0 // Juster radius etter behov
+        minDistanceKm: Double = 10.0
     ): String {
         val features = mutableListOf<String>()
         val threshold = currentThresholds[type] ?: 0.0
@@ -132,17 +129,6 @@ object GribOverlayUtil {
         var lastLat = Double.NaN
         var lastLon = Double.NaN
 
-        // Hent u- og v-komponenter basert på type
-        val uComponent = when (type) {
-            "wind" -> "u-component_of_wind_height_above_ground"
-            "strom" -> "u-component_of_current_depth_below_sea"
-            else -> null
-        }
-        val vComponent = when (type) {
-            "wind" -> "v-component_of_wind_height_above_ground"
-            "strom" -> "v-component_of_current_depth_below_sea"
-            else -> null
-        }
 
         for (y in 0 until height) {
             for (x in 0 until width) {
@@ -152,12 +138,10 @@ object GribOverlayUtil {
                 val lon = gribData.longitudes[x].toDouble()
 
                 if (!value.isNaN() && value > threshold) {
-                    // Sjekk avstand til forrige ikon av samme type
                     if (lastLat.isNaN() || haversine(lat, lon, lastLat, lastLon) > minDistanceKm) {
                         val color = getColor(type, value)
                         val radius = getRadius(type, value)
 
-                        // For vind og strøm, inkluder u- og v-komponenter
                         val properties = if (type in listOf("wind", "strom")) {
                             val u = gribData.uValues?.get(index)?.toDouble() ?: 0.0
                             val v = gribData.vValues?.get(index)?.toDouble() ?: 0.0
@@ -192,7 +176,6 @@ object GribOverlayUtil {
                     }
                 }
             } catch (e: Exception) {
-                // Ignorer ugyldig JSON
             }
         }
         val merged = JSONObject()

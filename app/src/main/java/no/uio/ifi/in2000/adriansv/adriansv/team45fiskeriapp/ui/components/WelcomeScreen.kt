@@ -83,7 +83,6 @@ fun WelcomeScreen(onNavigateToHome: () -> Unit) {
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Beholdt samme mellomrom mellom tittel og maskott
             Spacer(modifier = Modifier.height((screenHeight.value * 0.05f).dp))
 
             AndroidView(
@@ -101,10 +100,8 @@ fun WelcomeScreen(onNavigateToHome: () -> Unit) {
                     .padding(8.dp)
             )
 
-            // Redusert mellomrom ytterligere for å flytte maskotten nærmere midten
             Spacer(modifier = Modifier.weight(0.4f))
 
-            // Fiskeanimasjon - større størrelse
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(R.drawable.fish_jump)
@@ -116,7 +113,6 @@ fun WelcomeScreen(onNavigateToHome: () -> Unit) {
                     .padding(4.dp)
             )
 
-            // Responsiv velkomstknapp - større
             Button(
                 onClick = { onNavigateToHome() },
                 shape = RoundedCornerShape(16.dp),

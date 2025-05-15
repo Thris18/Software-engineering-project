@@ -65,7 +65,7 @@ fun FishingTripSummaryDialog(
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
 
-                // Varighet
+                // Duration
                 val duration = Duration.between(startTime, endTime)
                 val hours = duration.toHours()
                 val minutes = duration.toMinutesPart()
@@ -77,7 +77,6 @@ fun FishingTripSummaryDialog(
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
 
-                // Kart screenshot
                 mapScreenshot?.let { uri ->
                     Image(
                         painter = rememberAsyncImagePainter(uri),
@@ -91,7 +90,6 @@ fun FishingTripSummaryDialog(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
-                // Fangster
                 if (catches.isNotEmpty()) {
                     Text(
                         text = "Fangster",
@@ -150,7 +148,6 @@ fun FishingTripSummaryDialog(
                     }
                 }
 
-                // Lukk knapp
                 TextButton(
                     onClick = onDismiss,
                     modifier = Modifier.padding(top = 16.dp)

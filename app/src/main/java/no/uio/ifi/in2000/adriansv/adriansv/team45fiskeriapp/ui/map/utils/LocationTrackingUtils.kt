@@ -30,7 +30,6 @@ object LocationTrackingUtils {
             val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
             
             if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                Log.d(TAG, "Starting location updates")
                 if (ActivityCompat.checkSelfPermission(
                         context,
                         Manifest.permission.ACCESS_FINE_LOCATION
@@ -46,7 +45,6 @@ object LocationTrackingUtils {
                     1000L, // Update every second
                     1f // Update if user moves more than 1 meter
                 ) { location ->
-                    Log.d(TAG, "Location update received: lat=${location.latitude}, lon=${location.longitude}, accuracy=${location.accuracy}")
                     
                     // Update user location
                     val newLocation = LatLng(location.latitude, location.longitude)
@@ -92,7 +90,6 @@ object LocationTrackingUtils {
         """
         try {
             source.setGeoJson(geoJson)
-            Log.d(TAG, "Successfully updated user location on map")
         } catch (e: Exception) {
             Log.e(TAG, "Error updating user location on map: ${e.message}")
         }
@@ -104,7 +101,6 @@ object LocationTrackingUtils {
         routeSource: GeoJsonSource,
         onRouteUpdate: (List<LatLng>) -> Unit
     ) {
-        Log.d(TAG, "Fishing trip is active, updating route")
         // Check if new position is different from last in route
         val lastPosition = currentRoute.lastOrNull()
         
@@ -114,7 +110,6 @@ object LocationTrackingUtils {
             
             val newRoute = currentRoute + location
             onRouteUpdate(newRoute)
-            Log.d(TAG, "Updated fishing trip route. New route size: ${newRoute.size}")
 
             // Update route on map
             val routeGeoJson = """
@@ -128,7 +123,6 @@ object LocationTrackingUtils {
             """
             try {
                 routeSource.setGeoJson(routeGeoJson)
-                Log.d(TAG, "Successfully updated route on map")
             } catch (e: Exception) {
                 Log.e(TAG, "Error updating route on map: ${e.message}")
             }

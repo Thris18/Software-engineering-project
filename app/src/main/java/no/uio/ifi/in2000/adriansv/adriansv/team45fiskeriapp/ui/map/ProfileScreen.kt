@@ -61,7 +61,7 @@ fun ProfileScreen(
     val sharedPreferences = remember { context.getSharedPreferences("user_info", Context.MODE_PRIVATE) }
     val gribViewModel: GribViewModel = viewModel()
 
-    // Last inn lagret informasjon når skjermen åpnes
+    // Load saved user information from SharedPreferences
     LaunchedEffect(Unit) {
         val savedFirstName = sharedPreferences.getString("firstName", "") ?: ""
         val savedLastName = sharedPreferences.getString("lastName", "") ?: ""
@@ -90,7 +90,7 @@ fun ProfileScreen(
                 .background(MaterialTheme.colorScheme.background)
                 .padding(16.dp)
         ) {
-            // Header med profil tittel
+            // Header with profile title
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -251,7 +251,7 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Mine fisketurer Card
+            // Fishtrips Card
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()

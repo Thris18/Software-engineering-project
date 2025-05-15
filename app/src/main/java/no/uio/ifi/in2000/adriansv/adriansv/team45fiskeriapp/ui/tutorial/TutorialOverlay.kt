@@ -48,7 +48,6 @@ fun TutorialOverlay(
         val screenWidth = maxWidth
         val screenHeight = maxHeight
 
-        // Semi-transparent overlay without highlight cutout
         Box(
             modifier = Modifier
                 .fillMaxSize()

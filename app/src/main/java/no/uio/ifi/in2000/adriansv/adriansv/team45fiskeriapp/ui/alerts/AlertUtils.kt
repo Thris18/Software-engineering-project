@@ -10,7 +10,6 @@ object AlertUtils {
         val layer = style.getLayer("alert-polygon-layer") as? FillLayer ?: return
 
         if (alertId != null) {
-            // Vis kun polygoner med samme id
             layer.setFilter(
                 Expression.all(
                     Expression.any(
@@ -22,7 +21,6 @@ object AlertUtils {
             )
             layer.setProperties(PropertyFactory.fillOpacity(0.5f))
         } else {
-            // Gjem alt
             layer.setProperties(PropertyFactory.fillOpacity(0f))
         }
     }

@@ -17,7 +17,7 @@ interface GeoJsonRepository {
                 if (result != null) {
                     Result.success(result)
                 } else {
-                    Result.failure(Exception("Failed to fetch GeoJSON data"))
+                    Result.failure(Exception("Ingen internett-tilgang"))
                 }
             } catch (e: Exception) {
                 Result.failure(e)

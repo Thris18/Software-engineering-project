@@ -15,7 +15,7 @@ import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.ship.Ship
 
 
 private const val TAG = "ShipViewModel"
-private const val UPDATE_INTERVAL = 15000L // 15 sekunder
+private const val UPDATE_INTERVAL = 15000L // 15 Seconds
 
 data class ShipUIState(
     val ships: List<Ship> = emptyList(),

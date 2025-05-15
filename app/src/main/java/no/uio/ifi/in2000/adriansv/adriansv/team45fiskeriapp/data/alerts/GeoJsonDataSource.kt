@@ -22,8 +22,7 @@ class GeoJsonDataSource {
             if (connection.responseCode == 200) {
                 val rawJson = connection.inputStream.bufferedReader().use { it.readText() }
                 Log.d(TAG, "Raw API response length: ${rawJson.length}")
-                
-                // Log the raw response structure
+
                 try {
                     val rawJsonObj = JSONObject(rawJson)
                     Log.d(TAG, "Raw JSON keys: ${rawJsonObj.keys().asSequence().toList()}")
@@ -42,7 +41,6 @@ class GeoJsonDataSource {
                 val geoJson = convertToGeoJson(rawJson)
                 Log.d(TAG, "Converted GeoJSON length: ${geoJson.length}")
 
-                // Log the converted GeoJSON structure
                 val jsonObj = JSONObject(geoJson)
                 val features = jsonObj.getJSONArray("features")
                 Log.d(TAG, "Number of features in converted GeoJSON: ${features.length()}")
@@ -75,8 +73,7 @@ class GeoJsonDataSource {
     private fun convertToGeoJson(rawJson: String): String {
         val jsonObject = JSONObject(rawJson)
         val featuresArray = jsonObject.getJSONArray("features")
-        
-        // Modify each feature to ensure it has the correct properties
+
         val modifiedFeatures = JSONArray()
         for (i in 0 until featuresArray.length()) {
             val feature = featuresArray.getJSONObject(i)

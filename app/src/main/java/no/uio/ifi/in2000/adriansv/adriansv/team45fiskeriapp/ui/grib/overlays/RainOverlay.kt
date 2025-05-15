@@ -64,9 +64,6 @@ object RainOverlay {
     fun addOrUpdate(context: Context, style: Style, points: List<GribPoint>, spatialGrid: SpatialGrid, isDarkMode: Boolean) {
         addFogImages(context, style)
         val features = JSONArray()
-        Log.d("RainOverlay", "Antall punkter til overlay: ${points.size}")
-        Log.d("RainOverlay", "Antall punkter som tegnes: ${points.size}")
-        points.forEach { Log.d("RainOverlay", "Punkt: ${it.latitude}, ${it.longitude}, verdi: ${it.data?.precipitation}") }
         points.forEach { point ->
             val data = point.data ?: return@forEach
             val value = data.precipitation ?: 0f
@@ -75,7 +72,6 @@ object RainOverlay {
             val fog = RainOverlayUtil.getFogImageName(value.toDouble(), threshold)
             val ratio = value / threshold
             if (spatialGrid.isFarFromAll(point.latitude, point.longitude)) {
-                Log.d("RainOverlay", "Regnpunkt: ${point.latitude}, ${point.longitude}, verdi: $value, threshold: $threshold, ratio: $ratio, fog: $fog (TEGNES)")
                 val feature = JSONObject().apply {
                     put("type", "Feature")
                     put("geometry", JSONObject().apply {
@@ -93,7 +89,6 @@ object RainOverlay {
                 features.put(feature)
                 spatialGrid.addPoint(point.latitude, point.longitude)
             } else {
-                Log.d("RainOverlay", "Regnpunkt: ${point.latitude}, ${point.longitude} (IGNORERT pga. avstand)")
             }
         }
         val geoJson = JSONObject().apply {
@@ -128,7 +123,7 @@ object RainOverlay {
                                 Expression.literal(if (isDarkMode) 0.5f else 1f),
                                 Expression.literal("yellow"),
                                 Expression.literal(if (isDarkMode) 0.25f else 0.55f),
-                                Expression.literal(if (isDarkMode) 0.15f else 0.3f) // default (red)
+                                Expression.literal(if (isDarkMode) 0.15f else 0.3f)
                             )
                         )
                     )
