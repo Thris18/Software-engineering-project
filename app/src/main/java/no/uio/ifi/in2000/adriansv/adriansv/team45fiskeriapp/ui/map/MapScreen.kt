@@ -4,6 +4,8 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Build
 import android.util.Log
@@ -21,6 +23,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -117,6 +120,7 @@ import org.maplibre.android.style.layers.SymbolLayer
 import org.maplibre.android.style.sources.GeoJsonSource
 import java.time.LocalDateTime
 import java.util.Date
+import androidx.compose.material3.AlertDialog
 
 private const val TAG = "MapScreen"
 private const val SHIP_LAYER_ID = "ship-layer"
@@ -235,6 +239,12 @@ fun MapScreen(
     )
 
     val gribUiState by gribViewModel.uiState.collectAsStateWithLifecycle()
+
+    var showNoInternetAlert by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        showNoInternetAlert = !isOnline(context)
+    }
 
     LaunchedEffect(uiState.geoJsonData) {
         mapLoadTimeout = false
@@ -516,19 +526,15 @@ fun MapScreen(
                 )
             }
 
-            if (uiState.geoJsonData != null) {
-                // Map view
-                AndroidView(
-                    factory = { ctx ->
-                        MapView(ctx).also { view ->
-                            mapView = view
-
-                            try {
+            // Kartet skal alltid vises, uansett nettstatus eller geoJsonData
+            AndroidView(
+                factory = { ctx ->
+                    MapView(ctx).also { view ->
+                        mapView = view
+                        try {
                             view.getMapAsync { map ->
                                 try {
                                     mapLibreMap = map
-
-                                    // Velg stil basert på dark mode
                                     val styleUrl = if (isDarkMode) {
                                         "https://api.maptiler.com/maps/streets-v2-dark/style.json?key=oMZQoq4zniKOHeMvi7oA"
                                     } else {
@@ -575,131 +581,133 @@ fun MapScreen(
                                             WarningIconUtils.loadWarningIcons(context, style)
                                             setupShipLayer(context, style)
 
-                                            // Add GeoJSON source and layer for alerts
-                                            val source =
-                                                GeoJsonSource("alerts-source", uiState.geoJsonData)
-                                            style.addSource(source)
+                                            // overlays og lag kan fortsatt sjekke geoJsonData
+                                            if (uiState.geoJsonData != null) {
+                                                // overlays, lag, etc.
+                                                val source = GeoJsonSource("alerts-source", uiState.geoJsonData)
+                                                style.addSource(source)
 
-                                            val symbolLayer =
-                                                SymbolLayer("alert-symbol-layer", "alerts-source")
-                                                    .withProperties(
-                                                        iconImage(
-                                                            Expression.match(
-                                                                Expression.get("eventAwarenessName"),
-                                                                Expression.literal("Sterk ising på skip"),
-                                                                Expression.concat(
-                                                                    Expression.literal("generic-"),
-                                                                    Expression.match(
-                                                                        Expression.get("severity"),
-                                                                        Expression.literal("Severe"),
-                                                                        Expression.literal("red"),
-                                                                        Expression.literal("Moderate"),
-                                                                        Expression.literal("orange"),
-                                                                        Expression.literal("Minor"),
-                                                                        Expression.literal("yellow"),
-                                                                        Expression.literal("yellow")
-                                                                    )
-                                                                ),
-                                                                Expression.literal("Storm"),
-                                                                Expression.concat(
-                                                                    Expression.literal("wind-"),
-                                                                    Expression.match(
-                                                                        Expression.get("severity"),
-                                                                        Expression.literal("Severe"),
-                                                                        Expression.literal("red"),
-                                                                        Expression.literal("Moderate"),
-                                                                        Expression.literal("orange"),
-                                                                        Expression.literal("Minor"),
-                                                                        Expression.literal("yellow"),
-                                                                        Expression.literal("yellow")
-                                                                    )
-                                                                ),
-                                                                Expression.literal("Kuling"),
-                                                                Expression.concat(
-                                                                    Expression.literal("wind-"),
-                                                                    Expression.match(
-                                                                        Expression.get("severity"),
-                                                                        Expression.literal("Severe"),
-                                                                        Expression.literal("red"),
-                                                                        Expression.literal("Moderate"),
-                                                                        Expression.literal("orange"),
-                                                                        Expression.literal("Minor"),
-                                                                        Expression.literal("yellow"),
-                                                                        Expression.literal("yellow")
-                                                                    )
-                                                                ),
-                                                                Expression.literal("Kraftige vindkast"),
-                                                                Expression.concat(
-                                                                    Expression.literal("wind-"),
-                                                                    Expression.match(
-                                                                        Expression.get("severity"),
-                                                                        Expression.literal("Severe"),
-                                                                        Expression.literal("red"),
-                                                                        Expression.literal("Moderate"),
-                                                                        Expression.literal("orange"),
-                                                                        Expression.literal("Minor"),
-                                                                        Expression.literal("yellow"),
-                                                                        Expression.literal("yellow")
-                                                                    )
-                                                                ),
-                                                                Expression.literal("Skogbrannfare"),
-                                                                Expression.concat(
-                                                                    Expression.literal("forestfire-"),
-                                                                    Expression.match(
-                                                                        Expression.get("severity"),
-                                                                        Expression.literal("Severe"),
-                                                                        Expression.literal("red"),
-                                                                        Expression.literal("Moderate"),
-                                                                        Expression.literal("orange"),
-                                                                        Expression.literal("Minor"),
-                                                                        Expression.literal("yellow"),
-                                                                        Expression.literal("yellow")
-                                                                    )
-                                                                ),
-                                                                Expression.literal("generic-yellow")
-                                                            )
-                                                        ),
-                                                        iconSize(0.8f),
-                                                        iconAllowOverlap(true),
-                                                        iconIgnorePlacement(true),
-                                                        iconOffset(arrayOf(0f, -5f)),
-                                                        symbolPlacement(Property.SYMBOL_PLACEMENT_POINT),
-                                                        iconAnchor(Property.ICON_ANCHOR_CENTER)
-                                                    )
-                                            style.addLayer(symbolLayer)
-
-                                            val polygonLayer =
-                                                FillLayer("alert-polygon-layer", "alerts-source")
-                                                    .withProperties(
-                                                        fillColor(
-                                                            Expression.match(
-                                                                Expression.get("severity"),
-                                                                Expression.literal("Severe"),
-                                                                Expression.color("#66D32F2F".toColorInt()),
-                                                                Expression.literal("Moderate"),
-                                                                Expression.color("#66F57C00".toColorInt()),
-                                                                Expression.literal("Minor"),
-                                                                Expression.color("#66FBC02D".toColorInt()),
-                                                                Expression.color("#66FBC02D".toColorInt())
-                                                            )
-                                                        ),
-                                                        fillOpacity(0f),
-                                                        fillOutlineColor("#000000".toColorInt())
-                                                    )
-                                                    .withFilter(
-                                                        Expression.any(
-                                                            Expression.eq(
-                                                                Expression.geometryType(),
-                                                                Expression.literal("Polygon")
+                                                val symbolLayer =
+                                                    SymbolLayer("alert-symbol-layer", "alerts-source")
+                                                        .withProperties(
+                                                            iconImage(
+                                                                Expression.match(
+                                                                    Expression.get("eventAwarenessName"),
+                                                                    Expression.literal("Sterk ising på skip"),
+                                                                    Expression.concat(
+                                                                        Expression.literal("generic-"),
+                                                                        Expression.match(
+                                                                            Expression.get("severity"),
+                                                                            Expression.literal("Severe"),
+                                                                            Expression.literal("red"),
+                                                                            Expression.literal("Moderate"),
+                                                                            Expression.literal("orange"),
+                                                                            Expression.literal("Minor"),
+                                                                            Expression.literal("yellow"),
+                                                                            Expression.literal("yellow")
+                                                                        )
+                                                                    ),
+                                                                    Expression.literal("Storm"),
+                                                                    Expression.concat(
+                                                                        Expression.literal("wind-"),
+                                                                        Expression.match(
+                                                                            Expression.get("severity"),
+                                                                            Expression.literal("Severe"),
+                                                                            Expression.literal("red"),
+                                                                            Expression.literal("Moderate"),
+                                                                            Expression.literal("orange"),
+                                                                            Expression.literal("Minor"),
+                                                                            Expression.literal("yellow"),
+                                                                            Expression.literal("yellow")
+                                                                        )
+                                                                    ),
+                                                                    Expression.literal("Kuling"),
+                                                                    Expression.concat(
+                                                                        Expression.literal("wind-"),
+                                                                        Expression.match(
+                                                                            Expression.get("severity"),
+                                                                            Expression.literal("Severe"),
+                                                                            Expression.literal("red"),
+                                                                            Expression.literal("Moderate"),
+                                                                            Expression.literal("orange"),
+                                                                            Expression.literal("Minor"),
+                                                                            Expression.literal("yellow"),
+                                                                            Expression.literal("yellow")
+                                                                        )
+                                                                    ),
+                                                                    Expression.literal("Kraftige vindkast"),
+                                                                    Expression.concat(
+                                                                        Expression.literal("wind-"),
+                                                                        Expression.match(
+                                                                            Expression.get("severity"),
+                                                                            Expression.literal("Severe"),
+                                                                            Expression.literal("red"),
+                                                                            Expression.literal("Moderate"),
+                                                                            Expression.literal("orange"),
+                                                                            Expression.literal("Minor"),
+                                                                            Expression.literal("yellow"),
+                                                                            Expression.literal("yellow")
+                                                                        )
+                                                                    ),
+                                                                    Expression.literal("Skogbrannfare"),
+                                                                    Expression.concat(
+                                                                        Expression.literal("forestfire-"),
+                                                                        Expression.match(
+                                                                            Expression.get("severity"),
+                                                                            Expression.literal("Severe"),
+                                                                            Expression.literal("red"),
+                                                                            Expression.literal("Moderate"),
+                                                                            Expression.literal("orange"),
+                                                                            Expression.literal("Minor"),
+                                                                            Expression.literal("yellow"),
+                                                                            Expression.literal("yellow")
+                                                                        )
+                                                                    ),
+                                                                    Expression.literal("generic-yellow")
+                                                                )
                                                             ),
-                                                            Expression.eq(
-                                                                Expression.geometryType(),
-                                                                Expression.literal("MultiPolygon")
+                                                            iconSize(0.8f),
+                                                            iconAllowOverlap(true),
+                                                            iconIgnorePlacement(true),
+                                                            iconOffset(arrayOf(0f, -5f)),
+                                                            symbolPlacement(Property.SYMBOL_PLACEMENT_POINT),
+                                                            iconAnchor(Property.ICON_ANCHOR_CENTER)
+                                                        )
+                                                style.addLayer(symbolLayer)
+
+                                                val polygonLayer =
+                                                    FillLayer("alert-polygon-layer", "alerts-source")
+                                                        .withProperties(
+                                                            fillColor(
+                                                                Expression.match(
+                                                                    Expression.get("severity"),
+                                                                    Expression.literal("Severe"),
+                                                                    Expression.color("#66D32F2F".toColorInt()),
+                                                                    Expression.literal("Moderate"),
+                                                                    Expression.color("#66F57C00".toColorInt()),
+                                                                    Expression.literal("Minor"),
+                                                                    Expression.color("#66FBC02D".toColorInt()),
+                                                                    Expression.color("#66FBC02D".toColorInt())
+                                                                )
+                                                            ),
+                                                            fillOpacity(0f),
+                                                            fillOutlineColor("#000000".toColorInt())
+                                                        )
+                                                        .withFilter(
+                                                            Expression.any(
+                                                                Expression.eq(
+                                                                    Expression.geometryType(),
+                                                                    Expression.literal("Polygon")
+                                                                ),
+                                                                Expression.eq(
+                                                                    Expression.geometryType(),
+                                                                    Expression.literal("MultiPolygon")
+                                                                )
                                                             )
                                                         )
-                                                    )
 
-                                            style.addLayerBelow(polygonLayer, "alert-symbol-layer")
+                                                style.addLayerBelow(polygonLayer, "alert-symbol-layer")
+                                            }
 
                                             map.addOnMapClickListener { point ->
                                                 val screenPoint =
@@ -957,48 +965,27 @@ fun MapScreen(
                                     Log.e(TAG, "Error setting up map: ${e.message}")
                                 }
                             }
-                            } catch (e: Exception) {
-                                Log.e(TAG, "Error getting map async: ${e.message}")
-                            }
-                        }
-                    },
-                    update = { mapView ->
-                        if (mapLoadTimeout && mapLibreMap == null) {
-                            try {
-                                mapView.getMapAsync { map ->
-                                    mapLibreMap = map
-                                    map.setStyle(Style.Builder().fromUri("https://api.maptiler.com/maps/streets-v2/style.json?key=oMZQoq4zniKOHeMvi7oA"))
-                                }
-                                mapLoadTimeout = false
-                            } catch (e: Exception) {
-                                Log.e(TAG, "Error reloading map: ${e.message}")
-                            }
-                        }
-                    },
-                    modifier = Modifier.fillMaxSize()
-                )
-
-                if (mapLoadTimeout) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-            Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            CircularProgressIndicator()
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = "Laster kartet...",
-                                style = MaterialTheme.typography.bodyLarge
-                            )
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error getting map async: ${e.message}")
                         }
                     }
-                }
-            }
+                },
+                update = { mapView ->
+                    if (mapLoadTimeout && mapLibreMap == null) {
+                        try {
+                            mapView.getMapAsync { map ->
+                                mapLibreMap = map
+                                map.setStyle(Style.Builder().fromUri("https://api.maptiler.com/maps/streets-v2/style.json?key=oMZQoq4zniKOHeMvi7oA"))
+                            }
+                            mapLoadTimeout = false
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error reloading map: ${e.message}")
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+
             // UI Elements
             Box(
                 modifier = Modifier
@@ -1296,6 +1283,19 @@ fun MapScreen(
                 onNext = { tutorialManager.nextStep() },
                 onSkip = { tutorialManager.skipTutorial() }
             )
+
+            if (showNoInternetAlert) {
+                AlertDialog(
+                    onDismissRequest = { showNoInternetAlert = false },
+                    title = { Text("Ingen internettforbindelse") },
+                    text = { Text("Kartet vises, men du er ikke tilkoblet internett. Nye kartdata kan ikke lastes inn.") },
+                    confirmButton = {
+                        TextButton(onClick = { showNoInternetAlert = false }) {
+                            Text("OK")
+                        }
+                    }
+                )
+            }
         }
     }
 
@@ -1322,4 +1322,11 @@ fun MapScreen(
             }
         }
     }
+}
+
+fun isOnline(context: Context): Boolean {
+    val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    val network = connectivityManager.activeNetwork
+    val capabilities = connectivityManager.getNetworkCapabilities(network)
+    return capabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
 } 
