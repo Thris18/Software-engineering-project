@@ -43,7 +43,7 @@ AppViewModel bryter kohesjon: den eier navigasjon, brukerprofil, filterinnstilli
 
 ### UDF (Unidirectional Data Flow)
 **Brudd**
-- GribOverlayManager og andre utils muterer kartet direkte – så mye av dataflyten går utenom VM.
+- GribOverlayManager og andre utils muterer kartet direkte, så mye av dataflyten går utenom VM.
 - Enkelte utils gir dataflyt til UI-lag uten VM-mellomledd. 
 
 ### Testbarhet og Videreutvikling
@@ -69,11 +69,11 @@ Dersom det innføres strengere grenser for modulene og ViewModel-oppdeling kan p
 
 ### Hemmelige nøkler 
 
-*Dagens løsning*
+**Dagens løsning**
 'clientId' og 'clientSecret' ligger som ren tekst i 'ShipDataSource.kt'. Dette gjør dem synlige i Git-historikken, som ikke er optimalt. 
 Dette er allikevel et aktivt valg, ettersom bruker selv (inkld sensor) hadde vært nødt til å lage egen ID og passord for å få tilgang til skipene. 
 
-*Bedre løsning*
+**Bedre løsning**
 Flytt nøklene til 'gradle.properties' (som ikke commit-es) og eksponerer dem via 'BuildConfig.BAR_ID' / 'BuildConfig.BAR_SECRET'
 Da blir de ikke sjekket inn i repoet og kan enkelt byttes per bygg-variant. 
 
