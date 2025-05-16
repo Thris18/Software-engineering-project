@@ -4,11 +4,11 @@
 Dette dokumentet beskriver arkitekturen til Sjøspor, en Android-applikasjon utviklet for fiskere. Dokumentet er primært rettet mot utviklere som skal videreutvikle appen og sette seg inn i kodestrukturen.
 
 ### Android Versjon
-- **Minimum SDK**: 28 (Android 9.0)
+- **Minimum SDK**: 31 (Android 12)
 - **Target SDK**: 35 (Android 14)
 - **Compile SDK**: 35
 
-Valget av minimum SDK 28 gir oss tilgang til moderne Android-funksjoner samtidig som vi dekker 90% av aktive Android-enheter. Target SDK 35 sikrer at vi følger de nyeste Android-retningslinjene og har tilgang til de nyeste API-ene.
+Valget av minimum SDK 31 gir oss tilgang til moderne Android-funksjoner samtidig som vi dekker en stor andel av aktive Android-enheter. Target SDK 35 sikrer at vi følger de nyeste Android-retningslinjene og har tilgang til de nyeste API-ene.
 
 ### Hovedteknologier
 - **Kotlin**: Primært programmeringsspråk

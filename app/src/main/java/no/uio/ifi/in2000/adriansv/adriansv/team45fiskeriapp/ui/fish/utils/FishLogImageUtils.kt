@@ -12,8 +12,6 @@ import org.maplibre.android.style.layers.SymbolLayer
 import org.maplibre.android.style.sources.GeoJsonSource
 import java.time.LocalDateTime
 
-private const val TAG = "FishLogImageUtils"
-
 object FishLogImageUtils {
     fun loadImage(
         context: Context,

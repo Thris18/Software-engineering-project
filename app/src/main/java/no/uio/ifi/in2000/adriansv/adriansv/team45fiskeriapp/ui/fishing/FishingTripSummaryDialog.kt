@@ -2,6 +2,8 @@ package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing
 
 import android.annotation.SuppressLint
 import android.net.Uri
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -31,6 +33,7 @@ import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.fish.FishLog
 import java.time.Duration
 import java.time.LocalDateTime
 
+@RequiresApi(Build.VERSION_CODES.S)
 @SuppressLint("DefaultLocale")
 @Composable
 fun FishingTripSummaryDialog(

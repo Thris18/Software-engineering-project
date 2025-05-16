@@ -1,10 +1,7 @@
 package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.data.weather
 
-import android.util.Log
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.weather.LocationWeather
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.weather.WeatherZoomLevel
-
-private const val TAG = "WeatherRepository"
 
 interface WeatherRepository {
     suspend fun getWeatherForLocation(latitude: Double, longitude: Double, zoomLevel: WeatherZoomLevel): Result<LocationWeather>
@@ -18,7 +15,7 @@ interface WeatherRepository {
         ): Result<LocationWeather> {
 
             return try {
-                val response = weatherDataSource.fetchWeather(latitude, longitude, zoomLevel)
+                val response = weatherDataSource.fetchWeather(latitude, longitude)
 
                 response.map { weatherResponse ->
                     val firstTimeSeries = weatherResponse.properties.timeseries.firstOrNull()

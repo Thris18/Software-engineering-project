@@ -2,7 +2,7 @@ package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,7 +38,7 @@ class FishLogViewModel(context: Context) : ViewModel() {
     fun addFishLog(fishLog: FishLog) {
         if (fishLog.imageUri != null) {
             try {
-                val sourceUri = Uri.parse(fishLog.imageUri)
+                val sourceUri = fishLog.imageUri.toUri()
                 val imageId = "fish_${fishLog.timestamp}"
                 val destinationFile = File(appContext.filesDir, "$imageId.jpg")
                 
@@ -66,7 +66,7 @@ class FishLogViewModel(context: Context) : ViewModel() {
                 try {
                     val imageId = "fish_${fishLog.timestamp}"
                     File(appContext.filesDir, imageId).delete()
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                 }
             }
         }

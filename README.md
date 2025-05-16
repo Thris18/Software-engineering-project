@@ -9,10 +9,11 @@
 
 ## README.md Struktur
 
-- Vi følger GitHub sin anbefalte rammeverk. 
+- Vi følger GitHub sitt anbefalte rammeverk. 
+
 ## Krav til systemet 
 
-- Android 9.0 (API level 28)
+- Android 12 (API level 31)
 - Internettilkobling
 - GPS/lokasjonstjenester
 - Kamera (valgfritt, for å ta bilder av fangster)

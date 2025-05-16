@@ -13,7 +13,7 @@ private const val TAG = "WeatherDataSource"
 class WeatherDataSource {
     private val parser = WeatherResponseParser()
     
-    suspend fun fetchWeather(latitude: Double, longitude: Double, zoomLevel: WeatherZoomLevel): Result<WeatherResponse> {
+    suspend fun fetchWeather(latitude: Double, longitude: Double): Result<WeatherResponse> {
         return withContext(Dispatchers.IO) {
             try {
                 val baseUrl = "https://api.met.no/weatherapi/locationforecast/2.0/compact"
