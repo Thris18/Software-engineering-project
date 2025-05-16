@@ -2,10 +2,7 @@ package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fish.utils
 
 import android.content.Context
 import android.graphics.BitmapFactory
-import android.os.Build
 import androidx.core.net.toUri
-import android.util.Log
-import androidx.annotation.RequiresApi
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.core.utils.ImageUtils
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.fish.FishLog
 import org.maplibre.android.maps.Style
@@ -18,7 +15,6 @@ import java.time.LocalDateTime
 private const val TAG = "FishLogImageUtils"
 
 object FishLogImageUtils {
-    @RequiresApi(Build.VERSION_CODES.O)
     fun loadImage(
         context: Context,
         style: Style,

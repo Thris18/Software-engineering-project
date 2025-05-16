@@ -3,8 +3,6 @@
 ## Innledning
 Dette dokumentet beskriver arkitekturen til Sjøspor, en Android-applikasjon utviklet for fiskere. Dokumentet er primært rettet mot utviklere som skal videreutvikle appen og sette seg inn i kodestrukturen.
 
-## Teknisk Stack
-
 ### Android Versjon
 - **Minimum SDK**: 28 (Android 9.0)
 - **Target SDK**: 35 (Android 14)
@@ -22,125 +20,62 @@ Valget av minimum SDK 28 gir oss tilgang til moderne Android-funksjoner samtidig
 - **Location Services**: Lokasjonstjenester
 - **FileProvider**: Filhåndtering for bilder
 
-## Arkitekturmønster
+## Arkitektur og Design
+![Arkitekturskisse](diagrammer/Dataflytdiagram.png)
 
-### MVVM (Model-View-ViewModel)
-Appen følger MVVM-arkitekturmønsteret, som er anbefalt av Google for Android-utvikling, og anbefalt struktur for IN2000 prosjekter:
+### Lav kobling 
+| Del av systemet | Positivt                                                                                  | Svakheter                                                                                                                               |
+|-----------------|-------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| Repositories → ViewModels | Repositories er separate klasser som skjuler nettlogikk; ViewModel henter data via disse. | De instantieres ofte manuelt i Screen-kode → presentasjonslaget må kjenne til repo-implementasjon og Context.                           |
+| Utils (f.eks. GribOverlayUtil, LocationTrackingUtils) | Inneholder ren logikk for beregning.                                                      | Mange utils har sideeffekter; det gir en sterk kobling mot Android-API og MapLibre.                                                     |
+| Overlays | Egen underpakke (ui/grib/overlays) som kapsler visuell GRIB-representasjon.               | Implementert som singletons som endrer MapLibre Style direkte → dette har ført til tett kobling til kartbibliotek og til global tilstand. |
 
-- **Model**: Data og forretningslogikk
-  - Repositories: (GeoJsonRepository, GribRepository, WeatherRepository, ShipRepository)
-  - Data klasser: (GeoJsonDataSource, GribDataSource, WeatherDataSource, ShipDataSource)
-  - API-klienter: (Locationforecast 2.0, METalerts 2.0, GRIB files 1.1, Barentswatch AIS API/v1/latest/combined)
+### Høy kohesjon
+Flertallet av utils og overlay-klasser har ett primært ansvar (f.eks. WaveOverlay tegner bare bølger).
+AppViewModel bryter kohesjon: den eier navigasjon, brukerprofil, filterinnstillinger, mørk/lys modus osv.
 
-- **View**: UI-komponenter
-  - Compose-baserte skjermer (MapScreen, WeatherScreen, ProfileScreen)
-  - Gjenbrukbare UI-komponenter (NavigationBar, SettingsPopup)
-  - Navigation (NavigationHandler)
+### MVVM i praksis
+| Komponent   | Implementasjon                                                                   | Avvik                                                                                                                    |
+|-------------|----------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| Model       | Repository + DataSource-struktur for hvert domene (Weather, Grib, Ship, Alerts). |                                                                                                                          |
+| ViewModel   | Eksponerer StateFlow som observeres i Compose-skjermer                           | Instansieres oftest inne i Screen, med remember { … } (uten ViewModel)                                                   |
+| View | Observerer tilstand og kaller VM-metoder.                                        | Mange skjerm-filer oppretter nettverks- eller repos-instanser selv → Mye kunnskap fra modell lekker derfor til UI-laget. |
 
-- **ViewModel**: Tilstandshåndtering
-  - AppViewModel for global tilstand
-  - WeatherViewModel for værdata
-  - FishLogViewModel for fiskelogger
-  - ShipViewModel for skipsposisjoner
+### UDF (Unidirectional Data Flow)
+**Brudd**
+- GribOverlayManager og andre utils muterer kartet direkte – så mye av dataflyten går utenom VM.
+- Enkelte utils gir dataflyt til UI-lag uten VM-mellomledd. 
 
-### Unidirectional Data Flow (UDF)
-Appen implementerer UDF-prinsippet for å sikre forutsigbar tilstandshåndtering:
+### Testbarhet og Videreutvikling
+- Fravær av DI (Dependency Injection) gjør enhetstesting av ViewModel vanskelig; må opprette repo/Context.
+- Singletons og direkte Context gjør at alle deler på samme data og samme Android-objekter. Da blir det vanskelig å kjøre tester samtidig og uavhengig av hverandre.
+- Splitte for eksempel AppViewModel og flytt mye av overlay-beregning til egen ViewModel for å muliggjøre ren enhetstesting av kartlogikk.
 
-1. **State**: StateFlow for observabel tilstand
-   - Global app-tilstand i AppViewModel
-   - Skjermspesifikk tilstand i respektive ViewModels
+### Forbedringsforslag
+1. **Dependency Injection**
+   - Bruke et avhengighetsverktøy som Hilt for å "dele ut" Repository-objektene til ViewModel-ene.
+   - Da vil skjermene slippe å lage dem selv, og vi kan bytte dem ut med test-versjoner når vi tester.
+2. **ViewModel-er**
+   - Dele opp for eksempel AppViewModel og gi hver del ett tydeligere ansvar.
+3. **Gjør GRIB-tegningen renere**
+   - Istedenfor å la GribOverlayManager endre kartet direkte, la GribViewModel først lage en liste med "overlay-data".
 
-2. **Event**: Brukerhandlinger og systemhendelser
-   - UI-events håndteres i Composable-funksjoner
-   - System-events (lokasjon, kamera) håndteres via ActivityResultLauncher
+### Oppsummering
+Løsningen bruker MVVM og UDF-prinsippene som et rammeverk, men implementasjonen er ikke konsekvent, med:
+- Tett kobling til Android- og MapLibre-API-er.
+- Vi har noen «gud-objekter» og singletons som reduserer kohesjon og øker kompleksitet.
 
-3. **Reducer**: Funksjoner som oppdaterer tilstand
-   - ViewModel-funksjoner for tilstandsoppdateringer
-   - Repository-funksjoner for datahåndtering
+Dersom det innføres strengere grenser for modulene og ViewModel-oppdeling kan prosjektet oppnå lavere kobling, høyere kohesjon og bedre testbarhet. Det vil øke kvaliteten og levetiden til koden.
 
-4. **Side Effects**: Asynkrone operasjoner
-   - Coroutines for asynkron kjøring
-   - Flow for reaktiv datastrøm
+### Hemmelige nøkler 
 
-## Prosjektstruktur
+*Dagens løsning*
+'clientId' og 'clientSecret' ligger som ren tekst i 'ShipDataSource.kt'. Dette gjør dem synlige i Git-historikken, som ikke er optimalt. 
+Dette er allikevel et aktivt valg, ettersom bruker selv (inkld sensor) hadde vært nødt til å lage egen ID og passord for å få tilgang til skipene. 
 
-```
-app/
-├── core/           # Kjernefunksjonalitet
-│   └── utils/     # Hjelpefunksjoner
-├── data/          # Data lag
-│   ├── api/      # API-klienter
-│   ├── models/   # Data modeller 
-│   └── repositories/ # Data repositories
-├── model/         # Domena modeller
-├── ui/           # UI lag
-│   ├── components/ # Gjenbrukbare komponenter
-│   ├── fish/     # Fiskelogg-relaterte skjermer
-│   ├── map/      # Kart-relaterte skjermer
-│   ├── navigation/ # Navigasjonshåndtering
-│   ├── theme/    # UI tema
-│   ├── tutorial/ # Veiledningskomponenter
-│   └── weather/  # Vær-relaterte skjermer
-└── MainActivity.kt # App entry point
-```
-
-## Design Prinsipper
-
-### Lav Kobling
-- Bruk av dependency injection via ViewModelFactory
-- Interface-basert design for repositories
-- Modulær arkitektur med klare grenser
-- Repository pattern for datahåndtering
-
-### Høy Kohesjon
-- Klasser har et enkelt, veldefinert ansvar
-- Relatert funksjonalitet er gruppert sammen
-- Tydelig separasjon av bekymringer
-
-### Design Patterns
-1. **Repository Pattern**
-   - Abstraherer data kilder
-   - Enkelt API for data tilgang
-   - Håndterer caching og synkronisering
-
-2. **Observer Pattern**
-   - StateFlow for reaktiv tilstandshåndtering
-   - Event-basert kommunikasjon
-
-3. **Factory Pattern**
-   - ViewModelFactory for ViewModel-opprettelse
-   - Dependency injection
-
-4. **Strategy Pattern**
-   - Fleksibel håndtering av ulike kartlag
-   - Konfigurerbar værdata-visning
-
-## Vedlikehold og Videreutvikling
-
-### Kodekvalitet
-- "Kotlin coding conventions"
-- Dokumentasjon av offentlige API-er 
-- Unit testing av kritisk forretningslogikk
-- UI testing av hovedflyter
-
-### Skalerbarhet
-- Modulær design for enkel utvidelse
-- Klar separasjon av bekymringer
-- Dokumenterte grensesnitt
-
-### Ytelse
-- Effektiv håndtering av minne
-- Asynkron operasjoner med Coroutines
-- Caching av data
-- Rask bildehåndtering med Coil
-
-## Drift og Vedlikehold
-
-### Utviklingsmiljø
-- Android Studio Arctic Fox eller nyere
-- Gradle 8.0 eller nyere
-- JDK 11 eller nyere
-- Git for versjonskontroll
+*Bedre løsning*
+Flytt nøklene til 'gradle.properties' (som ikke commit-es) og eksponerer dem via 'BuildConfig.BAR_ID' / 'BuildConfig.BAR_SECRET'
+Da blir de ikke sjekket inn i repoet og kan enkelt byttes per bygg-variant. 
 
 ### Byggeprosess
 1. Klon repositoriet
@@ -148,31 +83,4 @@ app/
 3. La Gradle synkronisere avhengigheter
 4. Bygg prosjektet med `./gradlew build`
 
-### Vedlikehold
-- Regelmessig oppdatering av avhengigheter
-- Følge Android Studio og Gradle oppdateringer
-- Holde seg oppdatert på Android API-endringer
 
-### Feilsøking
-- Logging implementert for viktige operasjoner
-- Crashlytics for produksjonsmiljø
-- Debug-versjoner med ekstra logging
-
-### API-integrasjoner
-- Locationforecast 2.0: Værdata
-- METalerts 2.0: Varsler
-- GRIB files 1.1: Værprognoser
-- Barentswatch AIS API: Skipsposisjoner
-
-### Sikkerhet
-- API-nøkler lagres i lokale properties
-- Sensitive data håndteres via Android Keystore
-- Filhåndtering følger Android best practices
-
-### Ytelsesoptimalisering
-- Bildekomprimering for fiskelogger
-- Caching av værdata
-- Effektiv håndtering av kartlag
-
-## Konklusjon
-Sjøspor er bygget med fokus på vedlikeholdbarhet, skalerbarhet og god brukeropplevelse. Ved å følge moderne Android-utviklingsprinsipper og etablere en solid arkitektur, er appen godt forberedt for videreutvikling og vedlikehold. Dokumentasjonen og kodebasen er strukturert for å gjøre det enkelt for nye utviklere å sette seg inn i prosjektet og bidra til videreutvikling. 

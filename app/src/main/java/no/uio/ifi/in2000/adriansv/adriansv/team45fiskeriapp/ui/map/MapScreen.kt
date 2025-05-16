@@ -120,6 +120,33 @@ import java.time.LocalDateTime
 import java.util.Date
 import androidx.compose.material3.AlertDialog
 
+/**
+ * HOVEDKARTSKJERMEN FOR FISKERIAPPLIKASJONEN
+ * 
+ * Dette er en kompleks og omfattende komponent som fungerer som applikasjonens hovedskjerm.
+ * Skjermen viser et interaktivt kart med flere overlays og funksjoner tilpasset fiskere.
+ * 
+ * Nøkkelfunksjonalitet:
+ * - Kartvisning med MapLibre (OpenStreetMap)
+ * - Værvarsling og værdata-integrasjon med GRIB-data
+ * - Sporing og logging av fisketurer
+ * - Fangstregistrering med bilder og lokasjonsdata
+ * - Farevarsel og sikkerhetsvarslinger fra Meteorologisk institutt
+ * - Visning av skip/fartøy i nærheten
+ * - Båtvettsregler og sikkerhetsinformasjon
+ * - Interaktiv tutorial for nye brukere
+ * - Adaptiv mørk/lys modus
+ * 
+ * Filen håndterer en rekke tilstander og brukerinteraksjoner, inkludert:
+ * - Posisjonssporing og rutelogging
+ * - Dialoger for fiskelogg og fisketur
+ * - Kartlag for vær, fartøy og fiskesteder
+ * - Brukerinteraksjon med kartet
+ * 
+ * Dette er en kompleks fil med tett integrasjon av mange funksjoner, og fungerer
+ * som navet i applikasjonens brukergrensesnitt.
+ */
+
 private const val TAG = "MapScreen"
 private const val SHIP_LAYER_ID = "ship-layer"
 

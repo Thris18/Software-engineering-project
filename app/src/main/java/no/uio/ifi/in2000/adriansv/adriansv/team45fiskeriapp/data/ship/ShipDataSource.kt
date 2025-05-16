@@ -12,6 +12,32 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
 
+/**
+ * SKIPSDATAKILDE FOR FISKERIAPPLIKASJONEN
+ * 
+ * Denne filen implementerer datakilde-laget for å hente sanntids skipsdata fra 
+ * BarentsWatch AIS-API. Den håndterer autentisering, datafetching og parsing.
+ * 
+ * NB: Koden inneholder direkte API-nøkler og hemmeligheter, noe som ikke er 
+ * best praksis i produksjon - disse bør ideelt sett lagres sikkert.
+ * 
+ * Nøkkelfunksjonalitet:
+ * - OAuth2-autentisering mot BarentsWatch for å få tilgangstoken
+ * - Henting av sanntidsdata om skip fra AIS-API
+ * - Konvertering av rå JSON-data til strukturerte Ship-objekter
+ * - Klassifisering av skip basert på skipstypekoder
+ * - Filtrering av ugyldige skipsposter (f.eks. med 0-koordinater)
+ * 
+ * Filen inneholder:
+ * - ShipDataSource: Hovedklassen som henter skipsdata
+ * - getAccessToken: Privat metode for å hente OAuth2-token
+ * - fetchShips: Hovedmetoden for å hente skipsinformasjon
+ * - isValidShip: Hjelpemetode for å validere skipsposter
+ * 
+ * Dataene fra denne kilden brukes til å vise fartøyposisjoner på kartet,
+ * noe som er viktig for sikkerheten og informasjonsverdien i appen.
+ */
+
 private const val TAG = "ShipDataSource"
 private const val TOKEN_URL = "https://id.barentswatch.no/connect/token"
 private const val AIS_URL = "https://live.ais.barentswatch.no/v1/latest/combined"

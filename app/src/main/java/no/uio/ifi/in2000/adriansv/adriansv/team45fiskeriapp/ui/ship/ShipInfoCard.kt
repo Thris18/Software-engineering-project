@@ -53,6 +53,28 @@ import java.util.Locale
 import java.util.TimeZone
 import kotlin.math.roundToInt
 
+/**
+ * SKIPSINFORMASJONSKORT FOR FISKERIAPPLIKASJONEN
+ * 
+ * Denne filen implementerer informasjonskortet som vises når brukeren trykker på et skip på kartet.
+ * Kortet gir detaljert informasjon om det valgte skipet og tilbyr en interaktiv brukeropplevelse.
+ * 
+ * Nøkkelfunksjonalitet:
+ * - Visning av skipsinformasjon (navn, MMSI, type, posisjon, fart, kurs)
+ * - Interaktivt kort som kan dras rundt på skjermen
+ * - Animasjoner for visning og bevegelse av kortet
+ * - Relativ tidsformatering ("for X minutter siden")
+ * - Tilpasset design med gradientbakgrunn og avrundede kanter
+ * 
+ * Filen inneholder:
+ * - getRelativeTimeString: En hjelpefunksjon som konverterer tidsstempel til lesbare, relative tidsangivelser
+ * - ShipInfoCard: Hovedkomponenten som viser skipsinformasjon med interaktiv funksjonalitet
+ * - InfoSection: En hjelpefunksjon for å vise informasjonsseksjoner med konsistent formatering
+ * 
+ * Kortet er designet for å være brukervennlig, visuelt tiltalende og gi nyttig informasjon
+ * om skipstrafikken i området der fiskeren befinner seg.
+ */
+
 private fun getRelativeTimeString(messageTime: String): String {
     val formats = listOf(
         "yyyy-MM-dd'T'HH:mm:ss'Z'",

@@ -48,6 +48,31 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.foundation.layout.PaddingValues
 
+/**
+ * FANGSTREGISTRERING FOR FISKERIAPPLIKASJONEN
+ * 
+ * Denne filen implementerer dialogboksen for å legge til nye fiskefangster i 
+ * applikasjonens fiskelogg. Den er en sentral del av fangstregistreringsfunksjonaliteten.
+ * 
+ * Nøkkelfunksjonalitet:
+ * - Registrering av fisketype, vekt, område og beskrivelse
+ * - Bildehåndtering med mulighet for å ta nye bilder med kamera
+ * - Bildehåndtering med mulighet for å velge bilder fra galleri
+ * - Stedsregistrering med kart-integrasjon
+ * - Validering av inndata før lagring
+ * - Håndtering av tillatelser for kamera og mediagalleri
+ * 
+ * Filen håndterer:
+ * - Brukergrensesnitt for fangstregistrering
+ * - Tilstandshåndtering for skjemaet
+ * - Bildehåndtering med temporær fillagring
+ * - Tillatelsesforespørsler for kamera og galleri
+ * - Konvertering av brukerdata til FishLog-objekter
+ * 
+ * Dialogboksen er designet for rask og enkel registrering av fangster,
+ * med umiddelbar visuell tilbakemelding og intuitivt brukergrensesnitt.
+ */
+
 @SuppressLint("DefaultLocale")
 @Composable
 fun AddFishDialog(

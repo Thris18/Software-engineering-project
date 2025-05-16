@@ -17,11 +17,9 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
-import android.os.Build
 import androidx.core.content.ContextCompat
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import android.location.Location
 import android.location.LocationManager
 import com.google.android.gms.location.LocationServices
@@ -55,8 +53,33 @@ import java.util.Date
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 
+/**
+ * FISKETURSDIALOG FOR FISKERIAPPLIKASJONEN
+ * 
+ * Denne filen implementerer dialoger for å starte, administrere og avslutte fisketurer.
+ * Den utgjør et sentralt element i applikasjonens funksjonalitet for fiskelogging.
+ * 
+ * Nøkkelfunksjonalitet:
+ * - Start og stopp av fisketurer med tidssporing
+ * - Stedsbasert sporing av brukeren under en aktiv fisketur
+ * - Visning av tidsvarighet og posisjon i sanntid
+ * - Registrering av fiskefangster under turen
+ * - Bildehåndtering av fangster med kameraintegrasjon
+ * - Lagring av fisketurdata og fangstinformasjon
+ * 
+ * Filen håndterer:
+ * - Posisjonstilgang og GPS-sjekk
+ * - Periodisk posisjonssporing
+ * - Kameratilgangstillatelser
+ * - Lagring av bilder til internt lager
+ * - Visning av samlet fangst under fisketuren
+ * - Dialoger for bekreftelse og feilhåndtering
+ * 
+ * Dialogen er sentral for applikasjonens kjerneformål om å dokumentere 
+ * og spore fiskeaktivitet på en enkel og strukturert måte.
+ */
+
 @SuppressLint("DefaultLocale")
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun FishingTripDialog(
     tripName: String,

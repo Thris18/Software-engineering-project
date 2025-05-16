@@ -25,6 +25,31 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.roundToInt
 
+/**
+ * FAREVARSEL-POPUP FOR FISKERIAPPLIKASJONEN
+ * 
+ * Denne filen implementerer en interaktiv popup-komponent som viser detaljer 
+ * om farevarsler til sjøs fra Meteorologisk institutt, slik at brukerne kan 
+ * ta informerte avgjørelser om sine fisketurer.
+ * 
+ * Nøkkelfunksjonalitet:
+ * - Presentasjon av viktige farevarsler i en elegant, flyttbar popup
+ * - Konvertering av UTC-tidspunkter til norsk tid for bedre forståelse
+ * - Visuell indikasjon av faregrad (høy, moderat, lav) med farger
+ * - Pulserende effekt for høyrisiko-varsler for å tiltrekke oppmerksomhet
+ * - Interaktivitet med drag-funksjonalitet for å flytte varselet rundt på skjermen
+ * - Detaljert presentasjon av området, beskrivelsen og anbefalinger
+ * 
+ * Filen inneholder:
+ * - Hjelpefunksjoner for tidskonvertering fra UTC til norsk tid
+ * - FarevarselPopup: Hovedkomponenten som viser farevarsel-informasjon
+ * - Animasjonslogikk for vising, lukking og interaksjon med popup-en
+ * 
+ * Denne komponenten utgjør en kritisk sikkerhetsfeature i appen, som 
+ * hjelper fiskere med å unngå farlige værforhold og ta forholdsregler
+ * basert på offisielle meteorologiske varsler.
+ */
+
 private fun convertUTCtoNorwegianTime(utcTimeString: String): String {
     try {
         val cleaned = utcTimeString

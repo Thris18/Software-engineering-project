@@ -55,6 +55,30 @@ import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.fish.FishLog
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+/**
+ * FISKELOGG-SKJERMEN FOR FISKERIAPPLIKASJONEN
+ * 
+ * Denne filen implementerer hovedvisningen for brukerens fiskelogg, hvor
+ * alle registrerte fangster vises og kan administreres.
+ * 
+ * Nøkkelfunksjonalitet:
+ * - Visning av alle registrerte fiskefangster i en scrollbar liste
+ * - Sortering av fangster etter fisketype, vekt eller dato
+ * - Detaljert visning av hver fangst med bilde, vekt, område og tidspunkt
+ * - Mulighet for å legge til nye fangster
+ * - Mulighet for å slette eksisterende fangster
+ * - Visning av bilder i fullskjerm ved klikk
+ * - Tomtilstandshåndtering når ingen fangster er registrert
+ * 
+ * Filen inneholder:
+ * - SortOrder: Enum for ulike sorteringsalternativer
+ * - FishLogScreen: Hovedkomponenten som viser fiskeloggen
+ * - Støttekomponenter for sortering og bildehåndtering
+ * 
+ * Skjermen er en sentral del av applikasjonens fiskeloggsfunksjonalitet,
+ * og lar fiskeren holde oversikt over og dokumentere sine fangster over tid.
+ */
+
 @SuppressLint("ConstantLocale")
 private val dateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
 

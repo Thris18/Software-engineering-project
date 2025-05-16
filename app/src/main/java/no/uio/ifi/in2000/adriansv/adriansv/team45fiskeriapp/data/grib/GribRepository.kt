@@ -11,6 +11,32 @@ import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.sqrt
 
+/**
+ * GRIB-DATA REPOSITORIUM FOR FISKERIAPPLIKASJONEN
+ * 
+ * Denne filen implementerer repositoriet som håndterer nedlasting, behandling og 
+ * fremskaffelse av meteorologiske data i GRIB-format (Gridded Binary), som er
+ * et standardformat for værdataformidling.
+ * 
+ * Nøkkelfunksjonalitet:
+ * - Nedlasting av GRIB-filer for vær, havstrømmer og bølger
+ * - Parsing av binære GRIB-filer til strukturerte datamodeller
+ * - Ekstrahering av spesifikke værparametere fra GRIB-data
+ * - Beregning av vindstyrke og -retning fra u- og v-komponenter
+ * - Beregning av strømstyrke og -retning fra u- og v-komponenter
+ * - Interpolering av verdier for spesifikke geografiske koordinater
+ * - Håndtering av manglende eller ugyldige datapunkter
+ * 
+ * Filen inneholder:
+ * - GribRepository: Interface som definerer grensesnittet for GRIB-data tilgang
+ * - GribRepositoryImpl: Implementasjon av interfacet med alle detaljene
+ * - Hjelpefunksjoner for å finne og interpolere verdier på spesifikke koordinater
+ * 
+ * Denne komponenten er grunnleggende for appens evne til å vise detaljerte værdata
+ * direkte på kartet, noe som gjør det mulig for fiskere å vurdere værforholdene
+ * og planlegge sine fisketurer mer effektivt og sikkert.
+ */
+
 private const val TAG = "GribRepository"
 
 interface GribRepository {
@@ -24,10 +50,7 @@ interface GribRepository {
         override suspend fun getGribData(point: GribPoint): GribData? = withContext(Dispatchers.IO) {
             // Fetch weather data
             try {
-                val weatherFile = gribDataSource.downloadGribFile("weather")
-                if (weatherFile == null) {
-                    return@withContext null
-                }
+                val weatherFile = gribDataSource.downloadGribFile("weather") ?: return@withContext null
                 val weatherData = GribParser.parseGribFile(weatherFile) ?: return@withContext null
 
                 // Fetch pressure data
@@ -114,10 +137,7 @@ interface GribRepository {
                 } else null
 
                 // Get waves data
-                val wavesFile = gribDataSource.downloadGribFile("waves")
-                if (wavesFile == null) {
-                    return@withContext null
-                }
+                val wavesFile = gribDataSource.downloadGribFile("waves") ?: return@withContext null
                 val wavesData = GribParser.parseGribFile(wavesFile) ?: return@withContext null
                 val waveHeight = getValueAtCoordinates(wavesData, point.latitude, point.longitude)
                 val waveDirection = getValueAtCoordinates(wavesData, point.latitude, point.longitude)
