@@ -14,6 +14,7 @@ import org.maplibre.android.style.expressions.Expression
 import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.layers.SymbolLayer
 import org.maplibre.android.style.sources.GeoJsonSource
+import androidx.core.graphics.createBitmap
 
 private const val TAG = "ShipMapUtils"
 private const val SHIP_SOURCE_ID = "ship-source"
@@ -43,11 +44,7 @@ private fun vectorToBitmap(context: Context, drawableId: Int): Bitmap? {
             return null
         }
         
-        val bitmap = Bitmap.createBitmap(
-            drawable.intrinsicWidth,
-            drawable.intrinsicHeight,
-            Bitmap.Config.ARGB_8888
-        )
+        val bitmap = createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight)
         val canvas = Canvas(bitmap)
         drawable.setBounds(0, 0, canvas.width, canvas.height)
         drawable.draw(canvas)

@@ -141,7 +141,6 @@ class GribParser {
 
                     // Special handling for 1D-variables
                     if (dimCount == 1) {
-                        val totalSize = dataArray.size.toInt()
 
                         val value = when (dataVar.dataType) {
                             ucar.ma2.DataType.DOUBLE -> dataArray.getDouble(0).toFloat()
@@ -241,10 +240,10 @@ class GribParser {
                                 } else {
                                     nanCount++
                                 }
-                            } catch (e2: Exception) {
+                            } catch (_: Exception) {
                             }
                         }
-                    } catch (e2: Exception) {
+                    } catch (_: Exception) {
                     }
                 }
 

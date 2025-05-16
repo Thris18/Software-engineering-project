@@ -7,17 +7,15 @@ import android.graphics.Color
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.Uri
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -118,7 +116,6 @@ import org.maplibre.android.style.layers.SymbolLayer
 import org.maplibre.android.style.sources.GeoJsonSource
 import java.time.LocalDateTime
 import java.util.Date
-import androidx.compose.material3.AlertDialog
 
 /**
  * HOVEDKARTSKJERMEN FOR FISKERIAPPLIKASJONEN
@@ -150,6 +147,7 @@ import androidx.compose.material3.AlertDialog
 private const val TAG = "MapScreen"
 private const val SHIP_LAYER_ID = "ship-layer"
 
+@RequiresApi(Build.VERSION_CODES.S)
 @Composable
 fun MapScreen(
     onNavigate: (String) -> Unit,
