@@ -42,6 +42,30 @@ import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.model.fish.FishLog
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+/**
+ * FISKELOGG-DIALOG FOR FISKERIAPPLIKASJONEN
+ * 
+ * Denne filen implementerer dialoggrensesnittet for å vise, redigere og administrere
+ * brukerens fiskelogg direkte fra kartvisningen.
+ * 
+ * Nøkkelfunksjonalitet:
+ * - Visning av alle registrerte fiskefangster i en kompakt dialogform
+ * - Detaljert visning av enkeltfangster når de velges på kartet
+ * - Mulighet for å legge til nye fiskefangster
+ * - Mulighet for å slette eksisterende fangster
+ * - Visning av fangstbilder direkte i dialogen
+ * - Mulighet for å tømme hele fiskeloggen
+ * 
+ * Filen inneholder:
+ * - FishLogDialog: Hovedkomponenten som viser fiskeloggen i dialogformat
+ * - InfoSection: Støttekomponent for å vise informasjon om fiskefangster
+ * 
+ * Dialogen gir brukeren rask tilgang til sin fiskelogg under aktive fisketurer
+ * og gir en umiddelbar oversikt over fangster uten å måtte navigere bort fra kartet.
+ * Dette er spesielt nyttig når brukeren ønsker å sjekke tidligere fangststeder mens
+ * de planlegger hvor de skal fiske neste gang.
+ */
+
 @SuppressLint("ConstantLocale")
 private val dateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
 

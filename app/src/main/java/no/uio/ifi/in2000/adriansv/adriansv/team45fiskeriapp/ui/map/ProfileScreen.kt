@@ -30,6 +30,29 @@ import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing.FishingTr
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.GribViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 
+/**
+ * PROFILSKJERMEN FOR FISKERIAPPLIKASJONEN
+ * 
+ * Denne komponenten håndterer brukerens profilside og fungerer som et knutepunkt for 
+ * brukerens personlige data og innstillinger.
+ * 
+ * Nøkkelfunksjonalitet:
+ * - Visning og redigering av brukerens personlige informasjon (navn, telefon, e-post)
+ * - Administrering av profilbilde
+ * - Tilgang til fiskeloggen med oversikt over fangster
+ * - Tilgang til oversikt over brukerens fisketurer
+ * - Tilgang til appinnstillinger (mørk/lys modus, visning av GRIB-data, varsler, skip)
+ * 
+ * Filen håndterer:
+ * - Lagring av brukerdata i SharedPreferences
+ * - Navigasjon til andre undersider (fiskelogg, fisketurer, innstillinger)
+ * - Opplasting og visning av profilbilder
+ * - Brukergrensesnitt med kort for hver hovedfunksjon
+ * 
+ * Skjermen fungerer som et personlig dashbord for fiskeren, med enkel tilgang 
+ * til alle brukerrelaterte funksjoner i applikasjonen.
+ */
+
 @Composable
 fun ProfileScreen(
     firstName: String,

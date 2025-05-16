@@ -43,6 +43,33 @@ import androidx.compose.ui.window.DialogProperties
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.GribViewModel
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.grib.utils.GribOverlayUtil
 
+/**
+ * INNSTILLINGSDIALOG FOR FISKERIAPPLIKASJONEN
+ * 
+ * Denne filen implementerer en omfattende innstillingskomponent som lar brukeren 
+ * tilpasse applikasjonens utseende og funksjonalitet etter egne preferanser.
+ * 
+ * Nøkkelfunksjonalitet:
+ * - Bytting mellom lys og mørk modus i applikasjonen
+ * - Aktivering/deaktivering av kartlag (GRIB-data, farevarsler, skip)
+ * - Justering av terskelverdier for værvarsler:
+ *   - Vindhastighet
+ *   - Strømhastighet
+ *   - Nedbørsmengde
+ *   - Bølgehøyde
+ * - Lagring av brukerens innstillinger i SharedPreferences
+ * - Umiddelbar oppdatering av kartvisning ved endring av innstillinger
+ * 
+ * Komponenten presenteres som en modal dialog som dekker hele skjermen,
+ * med intuitive kontroller for hvert innstillingsvalg. Endringer i 
+ * terskelverdier for varsler oppdaterer automatisk kartvisningen gjennom
+ * GribViewModel.
+ * 
+ * Denne dialogen er sentral for å gi brukeren kontroll over hvordan
+ * viktig informasjon vises på kartet, noe som øker brukervennligheten
+ * og tillater personlig tilpasning av varslingsnivåer.
+ */
+
 @SuppressLint("DefaultLocale")
 @Composable
 fun SettingsPopup(

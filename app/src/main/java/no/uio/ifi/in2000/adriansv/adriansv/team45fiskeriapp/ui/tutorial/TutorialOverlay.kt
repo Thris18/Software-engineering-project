@@ -34,6 +34,29 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import androidx.compose.ui.viewinterop.AndroidView
 
+/**
+ * VEILEDNINGSSYSTEM FOR FISKERIAPPLIKASJONEN
+ * 
+ * Denne filen implementerer applikasjonens interaktive veiledningssystem (tutorial) som
+ * hjelper nye brukere med å lære hvordan applikasjonen fungerer.
+ * 
+ * Nøkkelfunksjonalitet:
+ * - Steg-for-steg veiledning med instruksjoner og forklaringer
+ * - Visuell overlay som fokuserer på viktige elementer i brukergrensesnittet
+ * - Interaktiv maskot som følger brukeren gjennom veiledningen
+ * - Tilpasset plassering av elementer basert på skjermstørrelse og innhold
+ * 
+ * Systemet består av:
+ * - TutorialOverlay: Hovedkomponenten som viser veiledningen over applikasjonen
+ * - MascotPosition: Dataklasse for håndtering av maskotens plassering
+ * - getMascotPosition: Funksjon som beregner optimal plassering basert på gjeldende steg
+ * 
+ * Veiledningen er designet for å være intuitiv og engasjerende, med en vennlig
+ * maskot som guider brukeren gjennom applikasjonens hovedfunksjoner.
+ * Dette bidrar til å redusere læringskurven og gjøre applikasjonen mer
+ * tilgjengelig for nye brukere.
+ */
+
 @Composable
 fun TutorialOverlay(
     state: TutorialState,

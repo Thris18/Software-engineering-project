@@ -36,6 +36,31 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.R
 
+/**
+ * BÅTVETTREGLER FOR FISKERIAPPLIKASJONEN
+ * 
+ * Denne filen implementerer komponenter for å presentere viktige båtvettregler
+ * for brukerne av appen, noe som bidrar til å fremme sikkerhet på sjøen.
+ * 
+ * Nøkkelfunksjonalitet:
+ * - Presentasjon av de syv offisielle båtvettreglene i en oversiktlig dialog
+ * - Visning av illustrative bilder for hver regel
+ * - Flytende handlingsknapp for å åpne båtvettreglene fra kartvisningen
+ * - Responsiv layout som tilpasser seg ulike skjermstørrelser
+ * - Alterneringsmønster for visning av tekst og bilder (veksler mellom høyre og venstre)
+ * 
+ * Filen inneholder:
+ * - BaatvettButton: Flytende knapp som gir tilgang til båtvettreglene
+ * - BaatvettOverlay: Hovedkomponenten som viser båtvettreglene i en overlay
+ * - BaatvettRule: Hjelpefunksjon for å vise individuelle regler
+ * - Støttefunksjoner for layout og design
+ * 
+ * Denne komponenten bidrar til å øke sikkerhetsbevisstheten hos fiskere
+ * ved å gjøre viktig sikkerhetsinformasjon lett tilgjengelig i appen.
+ * Båtvettreglene er utformet av Sjøfartsdirektoratet og er et viktig
+ * sikkerhetsbidrag for alle som ferdes på sjøen.
+ */
+
 @Composable
 fun BaatvettButton(
     onClick: () -> Unit,

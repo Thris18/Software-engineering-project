@@ -1,7 +1,6 @@
 package no.uio.ifi.in2000.adriansv.adriansv.team45fiskeriapp.ui.fishing
 
 import android.content.Context
-import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -57,6 +56,31 @@ import java.io.FileWriter
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.core.net.toUri
+
+/**
+ * FISKETUR-OVERSIKT FOR FISKERIAPPLIKASJONEN
+ * 
+ * Denne filen implementerer skjermbildet som viser oversikten over brukerens 
+ * tidligere fisketurer. Den fungerer som et arkiv over alle gjennomførte turer.
+ * 
+ * Nøkkelfunksjonalitet:
+ * - Visning av alle lagrede fisketurer i kronologisk rekkefølge
+ * - Sortering av fisketurer etter dato, antall fangster eller varighet
+ * - Visning av skjermdumper/bilder fra hver fisketur
+ * - Detaljert informasjon om hver tur (navn, varighet, dato, antall fangster)
+ * - Mulighet for å slette tidligere fisketurer
+ * - Lagring og lasting av fisketurdata fra lokal JSON-fil
+ * 
+ * Filen inneholder:
+ * - FishingTrip: Datamodell for lagring av fisketur-informasjon
+ * - FishingTripStorage: Hjelpeobjekt for lagring og lesing av fisketur-data
+ * - FishingTripsScreen: Hovedkomponenten som viser oversikt over fisketurer
+ * 
+ * Denne skjermen gir fiskeren en verdifull historisk oversikt over sine 
+ * fisketurer, som både fungerer som en logg og kan hjelpe med planlegging 
+ * av fremtidige turer basert på tidligere erfaringer.
+ */
 
 // Datamodell for fishingtrip
 data class FishingTrip(
@@ -101,7 +125,7 @@ object FishingTripStorage {
             writer.write(Gson().toJson(trips))
         }
         try {
-            val uri = Uri.parse(trip.screenshotUri)
+            val uri = trip.screenshotUri.toUri()
             val imageFile = File(uri.path ?: "")
             if (imageFile.exists()) imageFile.delete()
         } catch (_: Exception) {}
@@ -171,7 +195,7 @@ fun FishingTripsScreen(onBack: () -> Unit) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Image(
-                            painter = rememberAsyncImagePainter(Uri.parse(trip.screenshotUri)),
+                            painter = rememberAsyncImagePainter(trip.screenshotUri.toUri()),
                             contentDescription = "Bilde av fisketur",
                             modifier = Modifier
                                 .size(80.dp)
@@ -230,7 +254,7 @@ fun FishingTripsScreen(onBack: () -> Unit) {
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
-                            painter = rememberAsyncImagePainter(Uri.parse(selectedImageUri)),
+                            painter = rememberAsyncImagePainter(selectedImageUri!!.toUri()),
                             contentDescription = "Stor visning av bilde",
                             modifier = Modifier
                                 .fillMaxWidth()
